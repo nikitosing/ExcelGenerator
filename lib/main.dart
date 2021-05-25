@@ -181,7 +181,8 @@ class _MyHomePageState extends State<MyHomePage> {
                         // Validate returns true if the form is valid, or false otherwise.
                         if (_formKey.currentState!.validate()) {
                           setState(() {
-                            _users[_users.indexOf(user)] = User(_nameController.text,
+                            _users[_users.indexOf(user)] = User(
+                                _nameController.text,
                                 int.parse(_paidController.text));
                           });
                           Navigator.of(context).pop();
@@ -205,9 +206,7 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
-  void _pushSave() {
-
-  }
+  void _pushSave() {}
 
   @override
   Widget build(BuildContext context) {
@@ -239,12 +238,20 @@ class _MyHomePageState extends State<MyHomePage> {
                         .map((user) => DataRow(cells: [
                               DataCell(Text(user.name)),
                               DataCell(Text(user.paid.toString())),
-                              DataCell(const Icon(Icons.edit, size: 20,), onTap: () {
+                              DataCell(
+                                  const Icon(
+                                    Icons.edit,
+                                    size: 20,
+                                  ), onTap: () {
                                 setState(() {
                                   _pushEditUser(user);
                                 });
                               }),
-                              DataCell(const Icon(Icons.delete, size: 20,), onTap: () {
+                              DataCell(
+                                  const Icon(
+                                    Icons.delete,
+                                    size: 20,
+                                  ), onTap: () {
                                 setState(() {
                                   _removeUser(user);
                                 });
