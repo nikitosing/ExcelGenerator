@@ -132,7 +132,71 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void _pushEditUser(User user) {
-
+    final _formKey = GlobalKey<FormState>();
+    final _nameController = TextEditingController(text: user.name);
+    final _paidController = TextEditingController(text: user.paid.toString());
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        // NEW lines from here...
+        builder: (BuildContext context) {
+          return Scaffold(
+            appBar: AppBar(
+              title: const Text('Create User'),
+            ),
+            body: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  TextFormField(
+                    controller: _nameController,
+                    decoration: const InputDecoration(
+                      labelText: 'Name',
+                    ),
+                    // The validator receives the text that the user has entered.
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter some text';
+                      }
+                      return null;
+                    },
+                  ),
+                  TextFormField(
+                    controller: _paidController,
+                    decoration: const InputDecoration(
+                      labelText: 'Paid',
+                    ),
+                    // The validator receives the text that the user has entered.
+                    validator: (value) {
+                      if (value == null || double.tryParse(value) == null) {
+                        return 'Please enter some number';
+                      }
+                      return null;
+                    },
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 16.0),
+                    child: ElevatedButton(
+                      onPressed: () {
+                        // Validate returns true if the form is valid, or false otherwise.
+                        if (_formKey.currentState!.validate()) {
+                          setState(() {
+                            _users[_users.indexOf(user)] = User(_nameController.text,
+                                int.parse(_paidController.text));
+                          });
+                          Navigator.of(context).pop();
+                        }
+                      },
+                      child: Text('Edit'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }, // ...to here.
+      ),
+    );
   }
 
   void _removeUser(User user) {
