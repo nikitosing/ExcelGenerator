@@ -78,21 +78,28 @@ class _MyHomePageState extends State<MyHomePage> {
         title: Text(widget.title),
       ),
       body: Center(
-        child: DataTable(columns: [
-          DataColumn(label: Text(
-            'name',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)
-        )),
-          DataColumn(label: Text(
-              'paid',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)
-          )),  ],
-            rows: (_users)
-            .map((item) => DataRow(cells: [
-          DataCell(Text(item.name)),
-          DataCell(Text(item.paid.toString())),
-        ])).toList()),
-      ),
+          child: SingleChildScrollView(
+              scrollDirection: Axis.vertical,
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: DataTable(
+                    columns: [
+                      const DataColumn(
+                          label: const Text('name',
+                              style: const TextStyle(
+                                  fontSize: 18, fontWeight: FontWeight.bold))),
+                      const DataColumn(
+                          label: const Text('paid',
+                              style: const TextStyle(
+                                  fontSize: 18, fontWeight: FontWeight.bold))),
+                    ],
+                    rows: (_users)
+                        .map((item) => DataRow(cells: [
+                              DataCell(Text(item.name)),
+                              DataCell(Text(item.paid.toString())),
+                            ]))
+                        .toList()),
+              ))),
       floatingActionButton: FloatingActionButton(
         onPressed: _addUser,
         tooltip: 'Increment',
@@ -100,8 +107,6 @@ class _MyHomePageState extends State<MyHomePage> {
       ),
     );
   }
-
-
 }
 
 class Table extends StatefulWidget {
