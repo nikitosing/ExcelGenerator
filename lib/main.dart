@@ -113,7 +113,8 @@ class _MyHomePageState extends State<MyHomePage> {
                         // Validate returns true if the form is valid, or false otherwise.
                         if (_formKey.currentState!.validate()) {
                           setState(() {
-                            _users.add(User(_nameController.text, int.parse(_paidController.text)));
+                            _users.add(User(_nameController.text,
+                                int.parse(_paidController.text)));
                           });
                           Navigator.of(context).pop();
                         }
@@ -130,15 +131,32 @@ class _MyHomePageState extends State<MyHomePage> {
     );
   }
 
-  void _pushEditUser(User user) {}
+  void _pushEditUser(User user) {
+
+  }
+
+  void _removeUser(User user) {
+    setState(() {
+      _users.remove(user);
+    });
+  }
+
+  void _pushSave() {
+
+  }
 
   @override
   Widget build(BuildContext context) {
+    const _textStyle = TextStyle(fontSize: 18, fontWeight: FontWeight.bold);
+    int i = 0;
     return Scaffold(
       appBar: AppBar(
         // Here we take the value from the MyHomePage object that was created by
         // the App.build method, and use it to set our appbar title.
         title: Text(widget.title),
+        actions: [
+          IconButton(icon: const Icon(Icons.save), onPressed: _pushSave),
+        ],
       ),
       body: Center(
           child: SingleChildScrollView(
@@ -148,26 +166,23 @@ class _MyHomePageState extends State<MyHomePage> {
                 child: DataTable(
                     // ignore: prefer_const_literals_to_create_immutables
                     columns: [
-                      const DataColumn(
-                          label: Text('name',
-                              style: TextStyle(
-                                  fontSize: 18, fontWeight: FontWeight.bold))),
-                      const DataColumn(
-                          label: Text('paid',
-                              style: TextStyle(
-                                  fontSize: 18, fontWeight: FontWeight.bold))),
-                      const DataColumn(
-                          label: Text('',
-                              style: TextStyle(
-                                  fontSize: 18, fontWeight: FontWeight.bold))),
+                      const DataColumn(label: Text('name', style: _textStyle)),
+                      const DataColumn(label: Text('paid', style: _textStyle)),
+                      const DataColumn(label: Text('')),
+                      const DataColumn(label: Text('')),
                     ],
                     rows: (_users)
                         .map((user) => DataRow(cells: [
                               DataCell(Text(user.name)),
                               DataCell(Text(user.paid.toString())),
-                              DataCell(const Icon(Icons.edit), onTap: () {
+                              DataCell(const Icon(Icons.edit, size: 20,), onTap: () {
                                 setState(() {
                                   _pushEditUser(user);
+                                });
+                              }),
+                              DataCell(const Icon(Icons.delete, size: 20,), onTap: () {
+                                setState(() {
+                                  _removeUser(user);
                                 });
                               })
                             ]))
