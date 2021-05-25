@@ -63,11 +63,74 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
-  void _addUser() {
-    setState(() {
-      _users.add(User("aaxxa", 133));
-    });
+  void _pushAddingUser() {
+    final _formKey = GlobalKey<FormState>();
+    final _nameController = TextEditingController();
+    final _paidController = TextEditingController();
+    Navigator.of(context).push(
+      MaterialPageRoute<void>(
+        // NEW lines from here...
+        builder: (BuildContext context) {
+          return Scaffold(
+            appBar: AppBar(
+              title: const Text('Create User'),
+            ),
+            body: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: <Widget>[
+                  TextFormField(
+                    controller: _nameController,
+                    decoration: const InputDecoration(
+                      labelText: 'Name',
+                    ),
+                    // The validator receives the text that the user has entered.
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Please enter some text';
+                      }
+                      return null;
+                    },
+                  ),
+                  TextFormField(
+                    controller: _paidController,
+                    decoration: const InputDecoration(
+                      labelText: 'Paid',
+                    ),
+                    // The validator receives the text that the user has entered.
+                    validator: (value) {
+                      if (value == null || double.tryParse(value) == null) {
+                        return 'Please enter some number';
+                      }
+                      return null;
+                    },
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 16.0),
+                    child: ElevatedButton(
+                      onPressed: () {
+                        // Validate returns true if the form is valid, or false otherwise.
+                        if (_formKey.currentState!.validate()) {
+                          setState(() {
+                            _users.add(User(_nameController.text, int.parse(_paidController.text)));
+                          });
+                          Navigator.of(context).pop();
+                        }
+                      },
+                      child: Text('Add'),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }, // ...to here.
+      ),
+    );
   }
+
+  void _pushEditUser(User user) {}
 
   @override
   Widget build(BuildContext context) {
@@ -83,25 +146,35 @@ class _MyHomePageState extends State<MyHomePage> {
               child: SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 child: DataTable(
+                    // ignore: prefer_const_literals_to_create_immutables
                     columns: [
                       const DataColumn(
-                          label: const Text('name',
-                              style: const TextStyle(
+                          label: Text('name',
+                              style: TextStyle(
                                   fontSize: 18, fontWeight: FontWeight.bold))),
                       const DataColumn(
-                          label: const Text('paid',
-                              style: const TextStyle(
+                          label: Text('paid',
+                              style: TextStyle(
+                                  fontSize: 18, fontWeight: FontWeight.bold))),
+                      const DataColumn(
+                          label: Text('',
+                              style: TextStyle(
                                   fontSize: 18, fontWeight: FontWeight.bold))),
                     ],
                     rows: (_users)
-                        .map((item) => DataRow(cells: [
-                              DataCell(Text(item.name)),
-                              DataCell(Text(item.paid.toString())),
+                        .map((user) => DataRow(cells: [
+                              DataCell(Text(user.name)),
+                              DataCell(Text(user.paid.toString())),
+                              DataCell(const Icon(Icons.edit), onTap: () {
+                                setState(() {
+                                  _pushEditUser(user);
+                                });
+                              })
                             ]))
                         .toList()),
               ))),
       floatingActionButton: FloatingActionButton(
-        onPressed: _addUser,
+        onPressed: _pushAddingUser,
         tooltip: 'Increment',
         child: const Icon(Icons.add),
       ),
