@@ -120,20 +120,89 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
+  void _saveUser(User user, List<TextEditingController> controllers) {
+    if (controllers.isNotEmpty) {
+      user.name = controllers[0].text;
+    }
+    if (controllers.length > 1) {
+      user.dateStartOfEducation = controllers[1].text;
+    }
+    for (var i = 2; i < controllers.length; ++i) {
+      user.paid[i - 2] = int.parse(controllers[i].text);
+    }
+  }
+
   void _pushSave() {}
+
+  DataRow _mapUserToTable(User user) {
+    var _controllers = <TextEditingController>[];
+    var _cells = <DataCell>[];
+    _controllers.add(TextEditingController(text: user.name));
+    _cells.add(DataCell(TextFormField(
+        keyboardType: TextInputType.text,
+        validator: (value) {
+          if (value == null) {
+            return 'Введите Ф.И';
+          }
+          return null;
+        },
+        controller: _controllers[0],
+        onFieldSubmitted: (val) {
+          _saveUser(user, _controllers);
+        })));
+    _controllers.add(TextEditingController(text: user.dateStartOfEducation));
+    _cells.add(DataCell(TextFormField(
+        keyboardType: TextInputType.datetime,
+        validator: (value) {
+          if (value == null) {
+            return 'Введите дату';
+          }
+          return null;
+        },
+        controller: _controllers[1],
+        onFieldSubmitted: (val) {
+          _saveUser(user, _controllers);
+        })));
+    for (var i = 0; i < months.length; ++i) {
+      _controllers.add(TextEditingController(text: user.paid[i].toString()));
+      _cells.add(DataCell(TextFormField(
+          keyboardType: TextInputType.text,
+          validator: (value) {
+            if (value == null || double.tryParse(value) == null) {
+              return 'Введите число';
+            }
+            return null;
+          },
+          controller: _controllers.last,
+          onFieldSubmitted: (val) {
+            _saveUser(user, _controllers);
+          })));
+    }
+    _cells.add(DataCell(
+        const Icon(
+          Icons.delete,
+          size: 20,
+        ), onTap: () {
+      setState(() {
+        _removeUser(user);
+      });
+    }));
+    return DataRow(cells: _cells);
+  }
 
   @override
   Widget build(BuildContext context) {
+    final _monthControllers = <TextEditingController>[];
     const _textStyle = TextStyle(fontSize: 18, fontWeight: FontWeight.bold);
     var columns_ = <DataColumn>[];
-    columns_.add(DataColumn(label: Text('Ф.И.', style: _textStyle)));
-    columns_
-        .add(DataColumn(label: Text('Дата начала занятий', style: _textStyle)));
+    columns_.add(const DataColumn(label: Text('Ф.И.', style: _textStyle)));
+    columns_.add(const DataColumn(
+        label: Text('Дата начала занятий', style: _textStyle)));
     for (var i = 0; i < months.length; i++) {
       //const DataColumn(label: Text(months[i], style: _textStyle))
       columns_.add(DataColumn(label: Text(months[i], style: _textStyle)));
     }
-    columns_.add(DataColumn(label: Text('', style: _textStyle)));
+    columns_.add(const DataColumn(label: Text('', style: _textStyle)));
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.title),
@@ -148,143 +217,8 @@ class _MyHomePageState extends State<MyHomePage> {
                 scrollDirection: Axis.horizontal,
                 child: DataTable(
                     columns: columns_,
-                    rows: (_users)
-                        .map((user) => DataRow(cells: [
-                              DataCell(TextFormField(
-                                initialValue: user.name,
-                                keyboardType: TextInputType.text,
-                                onFieldSubmitted: (val) {
-                                  user.name = val;
-                                  print('onSubmited $val');
-                                },
-                              )),
-                              DataCell(TextFormField(
-                                initialValue: user.dateStartOfEducation,
-                                keyboardType: TextInputType.datetime,
-                                onFieldSubmitted: (val) {
-                                  user.dateStartOfEducation = val;
-                                  print('onSubmited $val');
-                                },
-                              )),
-                              DataCell(TextFormField(
-                                initialValue: user.paid[0].toString(),
-                                keyboardType: TextInputType.number,
-                                onFieldSubmitted: (val) {
-                                  user.paid[0] = val as int;
-                                  user.calculateResult();
-                                  print('onSubmited $val');
-                                },
-                              )),
-                              DataCell(TextFormField(
-                                initialValue: user.paid[0].toString(),
-                                keyboardType: TextInputType.number,
-                                onFieldSubmitted: (val) {
-                                  user.paid[1] = val as int;
-                                  user.calculateResult();
-                                  print('onSubmited $val');
-                                },
-                              )),
-                              DataCell(TextFormField(
-                                initialValue: user.paid[0].toString(),
-                                keyboardType: TextInputType.number,
-                                onFieldSubmitted: (val) {
-                                  user.paid[2] = val as int;
-                                  user.calculateResult();
-                                  print('onSubmited $val');
-                                },
-                              )),
-                              DataCell(TextFormField(
-                                initialValue: user.paid[0].toString(),
-                                keyboardType: TextInputType.number,
-                                onFieldSubmitted: (val) {
-                                  user.paid[3] = val as int;
-                                  user.calculateResult();
-                                  print('onSubmited $val');
-                                },
-                              )),
-                              DataCell(TextFormField(
-                                initialValue: user.paid[0].toString(),
-                                keyboardType: TextInputType.number,
-                                onFieldSubmitted: (val) {
-                                  user.paid[4] = val as int;
-                                  user.calculateResult();
-                                  print('onSubmited $val');
-                                },
-                              )),
-                              DataCell(TextFormField(
-                                initialValue: user.paid[0].toString(),
-                                keyboardType: TextInputType.number,
-                                onFieldSubmitted: (val) {
-                                  user.paid[5] = val as int;
-                                  user.calculateResult();
-                                  print('onSubmited $val');
-                                },
-                              )),
-                              DataCell(TextFormField(
-                                initialValue: user.paid[0].toString(),
-                                keyboardType: TextInputType.number,
-                                onFieldSubmitted: (val) {
-                                  user.paid[6] = val as int;
-                                  user.calculateResult();
-                                  print('onSubmited $val');
-                                },
-                              )),
-                              DataCell(TextFormField(
-                                initialValue: user.paid[0].toString(),
-                                keyboardType: TextInputType.number,
-                                onFieldSubmitted: (val) {
-                                  user.paid[7] = val as int;
-                                  user.calculateResult();
-                                  print('onSubmited $val');
-                                },
-                              )),
-                              DataCell(TextFormField(
-                                initialValue: user.paid[0].toString(),
-                                keyboardType: TextInputType.number,
-                                onFieldSubmitted: (val) {
-                                  user.paid[8] = val as int;
-                                  user.calculateResult();
-                                  print('onSubmited $val');
-                                },
-                              )),
-                              DataCell(TextFormField(
-                                initialValue: user.paid[0].toString(),
-                                keyboardType: TextInputType.number,
-                                onFieldSubmitted: (val) {
-                                  user.paid[9] = val as int;
-                                  user.calculateResult();
-                                  print('onSubmited $val');
-                                },
-                              )),
-                              DataCell(TextFormField(
-                                initialValue: user.paid[0].toString(),
-                                keyboardType: TextInputType.number,
-                                onFieldSubmitted: (val) {
-                                  user.paid[10] = val as int;
-                                  user.calculateResult();
-                                  print('onSubmited $val');
-                                },
-                              )),
-                              DataCell(TextFormField(
-                                initialValue: user.paid[0].toString(),
-                                keyboardType: TextInputType.number,
-                                onFieldSubmitted: (val) {
-                                  user.paid[11] = val as int;
-                                  user.calculateResult();
-                                  print('onSubmited $val');
-                                },
-                              )),
-                              DataCell(
-                                  const Icon(
-                                    Icons.delete,
-                                    size: 20,
-                                  ), onTap: () {
-                                setState(() {
-                                  _removeUser(user);
-                                });
-                              })
-                            ]))
-                        .toList()),
+                    rows:
+                        (_users).map((user) => _mapUserToTable(user)).toList()),
               ))),
       floatingActionButton: FloatingActionButton(
         onPressed: _pushAddingUser,
@@ -330,7 +264,7 @@ class User {
 
   User.ByName(String name) {
     this.name = name;
-    this.paid = new List.filled(months.length, 0, growable: false);
+    paid = List.filled(months.length, 0, growable: false);
   }
 }
 
