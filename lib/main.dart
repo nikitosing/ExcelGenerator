@@ -125,39 +125,78 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void _pushSave() {}
 
+  void _saveUser(User user, Map controllers) {
+    user.name = controllers['name'].text;
+    user.dateStartOfEducation = controllers['date'].text;
+    for (var i = 0; i < months.length; ++i) {
+      user.paid[i] = controllers[months[i]].text == ''
+          ? 0
+          : int.parse(controllers[months[i]].text);
+    }
+  }
+
   DataRow _mapUserToTable(User user) {
+    var _controllers = {};
+    _controllers['name'] = TextEditingController(text: user.name);
     var _cells = LinkedHashMap<String, DataCell>();
     _cells['name'] = (DataCell(TextFormField(
-        initialValue: user.name,
-        decoration: const InputDecoration(hintText: "Введите Ф.И"),
-        keyboardType: TextInputType.text,
-        onFieldSubmitted: (val) {
-          user.name = val;
-        })));
+      controller: _controllers['name'],
+      decoration: const InputDecoration(hintText: "Введите Ф.И"),
+      keyboardType: TextInputType.text,
+      onFieldSubmitted: (val) {
+        setState(() {
+          _saveUser(user, _controllers);
+          user.calculateResult();
+        });
+      },
+      onTap: () {
+        _saveUser(user, _controllers);
+        setState(() {
+          user.calculateResult();
+        });
+      },
+    )));
+    _controllers['date'] =
+        TextEditingController(text: user.dateStartOfEducation);
     _cells['date'] = (DataCell(TextFormField(
-        initialValue: user.dateStartOfEducation,
-        decoration:
-            const InputDecoration(hintText: "Введите дату начала обучения"),
-        keyboardType: TextInputType.datetime,
-        onFieldSubmitted: (val) {
-          user.dateStartOfEducation = val;
-        })));
+      controller: _controllers['date'],
+      decoration:
+          const InputDecoration(hintText: "Введите дату начала обучения"),
+      keyboardType: TextInputType.datetime,
+      onFieldSubmitted: (val) {
+        _saveUser(user, _controllers);
+        setState(() {
+          user.calculateResult();
+        });
+      },
+      onTap: () {
+        _saveUser(user, _controllers);
+        setState(() {
+          user.calculateResult();
+        });
+      },
+    )));
     for (var i = 0; i < months.length; ++i) {
+      _controllers[months[i]] = TextEditingController(
+          text: user.paid[i].toString().replaceAll(RegExp(r'^0+'), ""));
       _cells[months[i]] = (DataCell(TextFormField(
-          initialValue: user.paid[i].toString().replaceAll(RegExp(r'^0+'), ""),
-          keyboardType: TextInputType.text,
-          inputFormatters: [
-            FilteringTextInputFormatter.allow(RegExp("[0-9]+"))
-          ],
-          onFieldSubmitted: (val) {
-            user.paid[i] = int.parse(val);
-            setState(() {
-              user.calculateResult();
-            });
-            print(user.result);
-          })));
+        keyboardType: TextInputType.text,
+        controller: _controllers[months[i]],
+        inputFormatters: [FilteringTextInputFormatter.allow(RegExp("[0-9]+"))],
+        onFieldSubmitted: (val) {
+          _saveUser(user, _controllers);
+          setState(() {
+            user.calculateResult();
+          });
+        },
+        onTap: () {
+          _saveUser(user, _controllers);
+          setState(() {
+            user.calculateResult();
+          });
+        },
+      )));
     }
-    print("ya dealu result");
     _cells['Итого'] = DataCell(Text(user.result.toString()));
     _cells['remove'] = (DataCell(
         const Icon(
@@ -173,7 +212,6 @@ class _MyHomePageState extends State<MyHomePage> {
 
   @override
   Widget build(BuildContext context) {
-    final _monthControllers = <TextEditingController>[];
     const _textStyle = TextStyle(fontSize: 18, fontWeight: FontWeight.bold);
     var columns_ = <DataColumn>[];
     columns_.add(const DataColumn(label: Text('Ф.И.', style: _textStyle)));
@@ -207,20 +245,6 @@ class _MyHomePageState extends State<MyHomePage> {
         child: const Icon(Icons.add),
       ),
     );
-  }
-}
-
-class Table extends StatefulWidget {
-  //const Table({Key key}) : super(key: key);
-
-  @override
-  _TableState createState() => _TableState();
-}
-
-class _TableState extends State<Table> {
-  @override
-  Widget build(BuildContext context) {
-    return Container();
   }
 }
 
