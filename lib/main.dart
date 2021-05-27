@@ -178,7 +178,7 @@ class _MyHomePageState extends State<MyHomePage> {
     )));
     for (var i = 0; i < months.length; ++i) {
       _controllers[months[i]] = TextEditingController(
-          text: user.paid[i].toString().replaceAll(RegExp(r'^0+'), ""));
+          text: user.paid[i].toString());
       _cells[months[i]] = (DataCell(TextFormField(
         keyboardType: TextInputType.text,
         controller: _controllers[months[i]],
