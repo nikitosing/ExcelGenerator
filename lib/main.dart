@@ -1,6 +1,7 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:excel/excel.dart';
+import 'package:flutter/services.dart';
 
 var months = [
   'Сентябрь',
@@ -140,12 +141,6 @@ class _MyHomePageState extends State<MyHomePage> {
     _controllers.add(TextEditingController(text: user.name));
     _cells.add(DataCell(TextFormField(
         keyboardType: TextInputType.text,
-        validator: (value) {
-          if (value == null) {
-            return 'Введите Ф.И';
-          }
-          return null;
-        },
         controller: _controllers[0],
         onFieldSubmitted: (val) {
           _saveUser(user, _controllers);
@@ -153,12 +148,6 @@ class _MyHomePageState extends State<MyHomePage> {
     _controllers.add(TextEditingController(text: user.dateStartOfEducation));
     _cells.add(DataCell(TextFormField(
         keyboardType: TextInputType.datetime,
-        validator: (value) {
-          if (value == null) {
-            return 'Введите дату';
-          }
-          return null;
-        },
         controller: _controllers[1],
         onFieldSubmitted: (val) {
           _saveUser(user, _controllers);
@@ -167,15 +156,13 @@ class _MyHomePageState extends State<MyHomePage> {
       _controllers.add(TextEditingController(text: user.paid[i].toString()));
       _cells.add(DataCell(TextFormField(
           keyboardType: TextInputType.text,
-          validator: (value) {
-            if (value == null || double.tryParse(value) == null) {
-              return 'Введите число';
-            }
-            return null;
-          },
           controller: _controllers.last,
+          inputFormatters: [
+            FilteringTextInputFormatter.allow(RegExp("[0-9]+"))
+          ],
           onFieldSubmitted: (val) {
-            _saveUser(user, _controllers);
+            //_saveUser(user, _controllers);
+            print("axaaxax");
           })));
     }
     _cells.add(DataCell(
