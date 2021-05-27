@@ -1,3 +1,5 @@
+import 'dart:collection';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:excel/excel.dart';
@@ -121,51 +123,43 @@ class _MyHomePageState extends State<MyHomePage> {
     });
   }
 
-  void _saveUser(User user, List<TextEditingController> controllers) {
-    if (controllers.isNotEmpty) {
-      user.name = controllers[0].text;
-    }
-    if (controllers.length > 1) {
-      user.dateStartOfEducation = controllers[1].text;
-    }
-    for (var i = 2; i < controllers.length; ++i) {
-      user.paid[i - 2] = int.parse(controllers[i].text);
-    }
-  }
-
   void _pushSave() {}
 
   DataRow _mapUserToTable(User user) {
-    var _controllers = <TextEditingController>[];
-    var _cells = <DataCell>[];
-    _controllers.add(TextEditingController(text: user.name));
-    _cells.add(DataCell(TextFormField(
+    var _cells = LinkedHashMap<String, DataCell>();
+    _cells['name'] = (DataCell(TextFormField(
+        initialValue: user.name,
+        decoration: const InputDecoration(hintText: "Введите Ф.И"),
         keyboardType: TextInputType.text,
-        controller: _controllers[0],
         onFieldSubmitted: (val) {
-          _saveUser(user, _controllers);
+          user.name = val;
         })));
-    _controllers.add(TextEditingController(text: user.dateStartOfEducation));
-    _cells.add(DataCell(TextFormField(
+    _cells['date'] = (DataCell(TextFormField(
+        initialValue: user.dateStartOfEducation,
+        decoration:
+            const InputDecoration(hintText: "Введите дату начала обучения"),
         keyboardType: TextInputType.datetime,
-        controller: _controllers[1],
         onFieldSubmitted: (val) {
-          _saveUser(user, _controllers);
+          user.dateStartOfEducation = val;
         })));
     for (var i = 0; i < months.length; ++i) {
-      _controllers.add(TextEditingController(text: user.paid[i].toString()));
-      _cells.add(DataCell(TextFormField(
+      _cells[months[i]] = (DataCell(TextFormField(
+          initialValue: user.paid[i].toString().replaceAll(RegExp(r'^0+'), ""),
           keyboardType: TextInputType.text,
-          controller: _controllers.last,
           inputFormatters: [
             FilteringTextInputFormatter.allow(RegExp("[0-9]+"))
           ],
           onFieldSubmitted: (val) {
-            //_saveUser(user, _controllers);
-            print("axaaxax");
+            user.paid[i] = int.parse(val);
+            setState(() {
+              user.calculateResult();
+            });
+            print(user.result);
           })));
     }
-    _cells.add(DataCell(
+    print("ya dealu result");
+    _cells['Итого'] = DataCell(Text(user.result.toString()));
+    _cells['remove'] = (DataCell(
         const Icon(
           Icons.delete,
           size: 20,
@@ -174,7 +168,7 @@ class _MyHomePageState extends State<MyHomePage> {
         _removeUser(user);
       });
     }));
-    return DataRow(cells: _cells);
+    return DataRow(cells: _cells.values.toList());
   }
 
   @override
@@ -237,14 +231,14 @@ class User {
   late int result;
 
   void calculateResult() {
-    this.result = paid.reduce((value, element) => value + element);
+    result = paid.reduce((value, element) => value + element);
   }
 
   User() {
     result = 0;
-    this.name = '';
-    this.dateStartOfEducation = '';
-    this.paid = new List.filled(months.length, 0,
+    name = '';
+    dateStartOfEducation = '';
+    paid = List.filled(months.length, 0,
         growable: false); //TODO Replace it on new List(months.length)
     //     null safety issue
   }
