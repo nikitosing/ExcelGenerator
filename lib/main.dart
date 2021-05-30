@@ -177,8 +177,8 @@ class _MyHomePageState extends State<MyHomePage> {
       },
     )));
     for (var i = 0; i < months.length; ++i) {
-      _controllers[months[i]] = TextEditingController(
-          text: user.paid[i].toString());
+      _controllers[months[i]] =
+          TextEditingController(text: user.paid[i].toString());
       _cells[months[i]] = (DataCell(TextFormField(
         keyboardType: TextInputType.text,
         controller: _controllers[months[i]],
@@ -210,18 +210,22 @@ class _MyHomePageState extends State<MyHomePage> {
     return DataRow(cells: _cells.values.toList());
   }
 
-  @override
-  Widget build(BuildContext context) {
+  List<DataColumn> _buildColumns() {
     const _textStyle = TextStyle(fontSize: 18, fontWeight: FontWeight.bold);
-    var columns_ = <DataColumn>[];
-    columns_.add(const DataColumn(label: Text('Ф.И.', style: _textStyle)));
-    columns_.add(const DataColumn(
+    var _columns = <DataColumn>[];
+    _columns.add(const DataColumn(label: Text('Ф.И.', style: _textStyle)));
+    _columns.add(const DataColumn(
         label: Text('Дата начала занятий', style: _textStyle)));
     for (var i = 0; i < months.length; i++) {
       //const DataColumn(label: Text(months[i], style: _textStyle))
-      columns_.add(DataColumn(label: Text(months[i], style: _textStyle)));
+      _columns.add(DataColumn(label: Text(months[i], style: _textStyle)));
     }
-    columns_.add(const DataColumn(label: Text('', style: _textStyle)));
+    _columns.add(const DataColumn(label: Text('', style: _textStyle)));
+    return _columns;
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: Text(widget.title),
@@ -235,7 +239,7 @@ class _MyHomePageState extends State<MyHomePage> {
               child: SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 child: DataTable(
-                    columns: columns_,
+                    columns: _buildColumns(),
                     rows:
                         (_users).map((user) => _mapUserToTable(user)).toList()),
               ))),
