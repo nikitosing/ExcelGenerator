@@ -125,75 +125,75 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void _pushSave() {}
 
-  void _saveUser(User user, Map controllers) {
-    user.name = controllers['name'].text;
-    user.dateStartOfEducation = controllers['date'].text;
-    for (var i = 0; i < months.length; ++i) {
-      user.paid[i] = controllers[months[i]].text == ''
-          ? 0
-          : int.parse(controllers[months[i]].text);
-    }
-  }
-
   DataRow _mapUserToTable(User user) {
     var _controllers = {};
-    _controllers['name'] = TextEditingController(text: user.name);
+    _controllers['name'] = TextEditingController();
+    _controllers['name'].value = TextEditingValue(
+      text: user.name,
+      selection: TextSelection.collapsed(offset: user.name.length),
+    );
     var _cells = LinkedHashMap<String, DataCell>();
     _cells['name'] = (DataCell(TextFormField(
       controller: _controllers['name'],
       decoration: const InputDecoration(hintText: "Введите Ф.И"),
       keyboardType: TextInputType.text,
-      onFieldSubmitted: (val) {
-        setState(() {
-          _saveUser(user, _controllers);
-          user.calculateResult();
-        });
-      },
       onTap: () {
-        _saveUser(user, _controllers);
-        setState(() {
-          user.calculateResult();
-        });
+        _controllers['name'].selection = TextSelection(
+          baseOffset: 0,
+          extentOffset: _controllers['name'].text.length,
+        );
+      },
+      onChanged: (val) {
+        user.name = val;
+        user.calculateResult();
+        setState(() {});
       },
     )));
-    _controllers['date'] =
-        TextEditingController(text: user.dateStartOfEducation);
+    _controllers['date'] = TextEditingController();
+    _controllers['date'].value = TextEditingValue(
+      text: user.dateStartOfEducation,
+      selection:
+          TextSelection.collapsed(offset: user.dateStartOfEducation.length),
+    );
     _cells['date'] = (DataCell(TextFormField(
       controller: _controllers['date'],
       decoration:
           const InputDecoration(hintText: "Введите дату начала обучения"),
       keyboardType: TextInputType.datetime,
-      onFieldSubmitted: (val) {
-        _saveUser(user, _controllers);
-        setState(() {
-          user.calculateResult();
-        });
+      onChanged: (val) {
+        user.dateStartOfEducation = val;
+        user.calculateResult();
+        setState(() {});
       },
       onTap: () {
-        _saveUser(user, _controllers);
-        setState(() {
-          user.calculateResult();
-        });
+        _controllers['date'].selection = TextSelection(
+          baseOffset: 0,
+          extentOffset: _controllers['date'].text.length,
+        );
       },
     )));
     for (var i = 0; i < months.length; ++i) {
       _controllers[months[i]] =
           TextEditingController(text: user.paid[i].toString());
+      _controllers[months[i]].value = TextEditingValue(
+        text: user.paid[i].toString(),
+        selection:
+            TextSelection.collapsed(offset: user.paid[i].toString().length),
+      );
       _cells[months[i]] = (DataCell(TextFormField(
         keyboardType: TextInputType.text,
         controller: _controllers[months[i]],
         inputFormatters: [FilteringTextInputFormatter.allow(RegExp("[0-9]+"))],
-        onFieldSubmitted: (val) {
-          _saveUser(user, _controllers);
-          setState(() {
-            user.calculateResult();
-          });
+        onChanged: (val) {
+          user.paid[i] = int.parse(val);
+          user.calculateResult();
+          setState(() {});
         },
         onTap: () {
-          _saveUser(user, _controllers);
-          setState(() {
-            user.calculateResult();
-          });
+          _controllers[months[i]].selection = TextSelection(
+            baseOffset: 0,
+            extentOffset: _controllers[months[i]].text.length,
+          );
         },
       )));
     }
