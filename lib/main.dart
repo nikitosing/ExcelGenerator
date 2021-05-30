@@ -133,45 +133,52 @@ class _MyHomePageState extends State<MyHomePage> {
       selection: TextSelection.collapsed(offset: user.name.length),
     );
     var _cells = LinkedHashMap<String, DataCell>();
-    _cells['name'] = (DataCell(TextFormField(
-      controller: _controllers['name'],
-      decoration: const InputDecoration(hintText: "Введите Ф.И"),
-      keyboardType: TextInputType.text,
-      onTap: () {
-        _controllers['name'].selection = TextSelection(
-          baseOffset: 0,
-          extentOffset: _controllers['name'].text.length,
-        );
-      },
-      onChanged: (val) {
-        user.name = val;
-        user.calculateResult();
-        setState(() {});
-      },
-    )));
+    _cells['name'] = (DataCell(Focus(
+        onFocusChange: (focus) => {
+              if (focus)
+                {
+                  _controllers['name'].selection = TextSelection(
+                    baseOffset: 0,
+                    extentOffset: _controllers['name'].text.length,
+                  )
+                }
+            },
+        child: TextFormField(
+          controller: _controllers['name'],
+          decoration: const InputDecoration(hintText: "Введите Ф.И"),
+          keyboardType: TextInputType.text,
+          onChanged: (val) {
+            user.name = val;
+            user.calculateResult();
+            setState(() {});
+          },
+        ))));
     _controllers['date'] = TextEditingController();
     _controllers['date'].value = TextEditingValue(
       text: user.dateStartOfEducation,
       selection:
           TextSelection.collapsed(offset: user.dateStartOfEducation.length),
     );
-    _cells['date'] = (DataCell(TextFormField(
-      controller: _controllers['date'],
-      decoration:
-          const InputDecoration(hintText: "Введите дату начала обучения"),
-      keyboardType: TextInputType.datetime,
-      onChanged: (val) {
-        user.dateStartOfEducation = val;
-        user.calculateResult();
-        setState(() {});
-      },
-      onTap: () {
-        _controllers['date'].selection = TextSelection(
-          baseOffset: 0,
-          extentOffset: _controllers['date'].text.length,
-        );
-      },
-    )));
+    _cells['date'] = (DataCell(Focus(
+        onFocusChange: (focus) {
+          if (focus) {
+            _controllers['date'].selection = TextSelection(
+              baseOffset: 0,
+              extentOffset: _controllers['date'].text.length,
+            );
+          }
+        },
+        child: TextFormField(
+          controller: _controllers['date'],
+          decoration:
+              const InputDecoration(hintText: "Введите дату начала обучения"),
+          keyboardType: TextInputType.datetime,
+          onChanged: (val) {
+            user.dateStartOfEducation = val;
+            user.calculateResult();
+            setState(() {});
+          },
+        ))));
     for (var i = 0; i < months.length; ++i) {
       _controllers[months[i]] =
           TextEditingController(text: user.paid[i].toString());
@@ -180,22 +187,27 @@ class _MyHomePageState extends State<MyHomePage> {
         selection:
             TextSelection.collapsed(offset: user.paid[i].toString().length),
       );
-      _cells[months[i]] = (DataCell(TextFormField(
-        keyboardType: TextInputType.text,
-        controller: _controllers[months[i]],
-        inputFormatters: [FilteringTextInputFormatter.allow(RegExp("[0-9]+"))],
-        onChanged: (val) {
-          user.paid[i] = int.parse(val);
-          user.calculateResult();
-          setState(() {});
-        },
-        onTap: () {
-          _controllers[months[i]].selection = TextSelection(
-            baseOffset: 0,
-            extentOffset: _controllers[months[i]].text.length,
-          );
-        },
-      )));
+      _cells[months[i]] = (DataCell(Focus(
+          onFocusChange: (focus) {
+            if (focus) {
+              _controllers[months[i]].selection = TextSelection(
+                baseOffset: 0,
+                extentOffset: _controllers[months[i]].text.length,
+              );
+            }
+          },
+          child: TextFormField(
+            keyboardType: TextInputType.text,
+            controller: _controllers[months[i]],
+            inputFormatters: [
+              FilteringTextInputFormatter.allow(RegExp("[0-9]+"))
+            ],
+            onChanged: (val) {
+              user.paid[i] = int.parse(val);
+              user.calculateResult();
+              setState(() {});
+            },
+          ))));
     }
     _cells['Итого'] = DataCell(Text(user.result.toString()));
     _cells['remove'] = (DataCell(
