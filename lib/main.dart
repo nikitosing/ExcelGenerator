@@ -134,6 +134,7 @@ class _MyHomePageState extends State<MyHomePage> {
     );
     var _cells = LinkedHashMap<String, DataCell>();
     _cells['name'] = (DataCell(Focus(
+        skipTraversal: true,
         onFocusChange: (focus) => {
               if (focus)
                 {
@@ -160,6 +161,7 @@ class _MyHomePageState extends State<MyHomePage> {
           TextSelection.collapsed(offset: user.dateStartOfEducation.length),
     );
     _cells['date'] = (DataCell(Focus(
+        skipTraversal: true,
         onFocusChange: (focus) {
           if (focus) {
             _controllers['date'].selection = TextSelection(
@@ -188,6 +190,7 @@ class _MyHomePageState extends State<MyHomePage> {
             TextSelection.collapsed(offset: user.paid[i].toString().length),
       );
       _cells[months[i]] = (DataCell(Focus(
+          skipTraversal: true,
           onFocusChange: (focus) {
             if (focus) {
               _controllers[months[i]].selection = TextSelection(
@@ -283,7 +286,7 @@ class User {
     //     null safety issue
   }
 
-  User.ByName(String name) {
+  User.byName(String name) {
     this.name = name;
     paid = List.filled(months.length, 0, growable: false);
   }
