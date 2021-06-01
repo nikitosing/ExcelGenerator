@@ -4,6 +4,7 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:excel/excel.dart';
 import 'package:flutter/services.dart';
+import 'package:syncfusion_flutter_xlsio/xlsio.dart';
 
 var months = [
   'Сентябрь',
@@ -59,80 +60,21 @@ class _MyHomePageState extends State<MyHomePage> {
         return 1;
       });
     });
-    // final _formKey = GlobalKey<FormState>();
-    // final _nameController = TextEditingController();
-    // final _paidController = TextEditingController();
-    // Navigator.of(context).push(
-    //   MaterialPageRoute<void>(
-    //     builder: (BuildContext context) {
-    //       return Scaffold(
-    //         appBar: AppBar(
-    //           title: const Text('Create User'),
-    //         ),
-    //         body: Form(
-    //           key: _formKey,
-    //           child: Column(
-    //             crossAxisAlignment: CrossAxisAlignment.start,
-    //             children: <Widget>[
-    //               TextFormField(
-    //                 controller: _nameController,
-    //                 decoration: const InputDecoration(
-    //                   labelText: 'Name',
-    //                 ),
-    //                 validator: (value) {
-    //                   if (value == null || value.isEmpty) {
-    //                     return 'Please enter some text';
-    //                   }
-    //                   return null;
-    //                 },
-    //               ),
-    //               TextFormField(
-    //                 controller: _paidController,
-    //                 decoration: const InputDecoration(
-    //                   labelText: 'Paid',
-    //                 ),
-    //                 // The validator receives the text that the user has entered.
-    //                 validator: (value) {
-    //                   if (value == null || double.tryParse(value) == null) {
-    //                     return 'Please enter some number';
-    //                   }
-    //                   return null;
-    //                 },
-    //               ),
-    //               Padding(
-    //                 padding: const EdgeInsets.symmetric(vertical: 16.0),
-    //                 child: ElevatedButton(
-    //                   onPressed: () {
-    //                     if (_formKey.currentState!.validate()) {
-    //                       setState(() {
-    //                         _users.add(User());
-    //                       });
-    //                       Navigator.of(context).pop();
-    //                     }
-    //                   },
-    //                   child: Text('Add'),
-    //                 ),
-    //               ),
-    //             ],
-    //           ),
-    //         ),
-    //       );
-    //     }, // ...to here.
-    //   ),
-    // );
   }
 
   void _removeUser(User user) {
     setState(() {
-      if (!user.toRemove) {
-        _users.remove(user);
-        _users.add(user);
-      }
       user.changeRemove();
+      _users.remove(user);
+      _users.add(user);
     });
   }
 
-  void _pushSave() {}
+  void _pushSave() {
+    var table = Excel.createExcel();
+    table.rename('sheet1', 'Краснодар НД????');
+    var sheet = table['Краснодар НД????'];
+  }
 
   DataRow _mapUserToTable(User user) {
     var _controllers = {};
@@ -227,9 +169,7 @@ class _MyHomePageState extends State<MyHomePage> {
           Icons.delete,
           size: 20,
         ), onTap: () {
-      setState(() {
-        _removeUser(user);
-      });
+      _removeUser(user);
     }));
     return DataRow(
         cells: _cells.values.toList(),
