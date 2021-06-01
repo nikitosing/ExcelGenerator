@@ -50,9 +50,14 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   final _users = <User>[User()];
 
-  void _pushAddingUser() {
+  void _addUser() {
     setState(() {
       _users.add(User());
+      _users.sort((a, b) {
+        if (a.toRemove == b.toRemove) return 0;
+        if (!a.toRemove) return -1;
+        return 1;
+      });
     });
     // final _formKey = GlobalKey<FormState>();
     // final _nameController = TextEditingController();
@@ -119,7 +124,11 @@ class _MyHomePageState extends State<MyHomePage> {
 
   void _removeUser(User user) {
     setState(() {
-      _users.remove(user);
+      if (!user.toRemove) {
+        _users.remove(user);
+        _users.add(user);
+      }
+      user.changeRemove();
     });
   }
 
@@ -222,7 +231,15 @@ class _MyHomePageState extends State<MyHomePage> {
         _removeUser(user);
       });
     }));
-    return DataRow(cells: _cells.values.toList());
+    return DataRow(
+        cells: _cells.values.toList(),
+        color: MaterialStateProperty.resolveWith<Color>(
+            (Set<MaterialState> states) {
+          if (user.toRemove) {
+            return Colors.deepOrange;
+          }
+          return Colors.transparent; // Use the default value.
+        }));
   }
 
   List<DataColumn> _buildColumns() {
@@ -249,17 +266,17 @@ class _MyHomePageState extends State<MyHomePage> {
         ],
       ),
       body: Center(
-          child: SingleChildScrollView(
-              scrollDirection: Axis.vertical,
-              child: SingleChildScrollView(
+        child: SingleChildScrollView(
+            scrollDirection: Axis.vertical,
+            child: SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 child: DataTable(
-                    columns: _buildColumns(),
-                    rows:
-                        (_users).map((user) => _mapUserToTable(user)).toList()),
-              ))),
+                  columns: _buildColumns(),
+                  rows: (_users.map((user) => _mapUserToTable(user)).toList()),
+                ))),
+      ),
       floatingActionButton: FloatingActionButton(
-        onPressed: _pushAddingUser,
+        onPressed: _addUser,
         tooltip: 'Добавить пользователя',
         child: const Icon(Icons.add),
       ),
@@ -272,9 +289,14 @@ class User {
   late String dateStartOfEducation;
   late List<int> paid;
   late int result;
+  bool toRemove = false;
 
   void calculateResult() {
     result = paid.reduce((value, element) => value + element);
+  }
+
+  void changeRemove() {
+    toRemove = !toRemove;
   }
 
   User() {
