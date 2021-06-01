@@ -59,67 +59,6 @@ class _MyHomePageState extends State<MyHomePage> {
         return 1;
       });
     });
-    // final _formKey = GlobalKey<FormState>();
-    // final _nameController = TextEditingController();
-    // final _paidController = TextEditingController();
-    // Navigator.of(context).push(
-    //   MaterialPageRoute<void>(
-    //     builder: (BuildContext context) {
-    //       return Scaffold(
-    //         appBar: AppBar(
-    //           title: const Text('Create User'),
-    //         ),
-    //         body: Form(
-    //           key: _formKey,
-    //           child: Column(
-    //             crossAxisAlignment: CrossAxisAlignment.start,
-    //             children: <Widget>[
-    //               TextFormField(
-    //                 controller: _nameController,
-    //                 decoration: const InputDecoration(
-    //                   labelText: 'Name',
-    //                 ),
-    //                 validator: (value) {
-    //                   if (value == null || value.isEmpty) {
-    //                     return 'Please enter some text';
-    //                   }
-    //                   return null;
-    //                 },
-    //               ),
-    //               TextFormField(
-    //                 controller: _paidController,
-    //                 decoration: const InputDecoration(
-    //                   labelText: 'Paid',
-    //                 ),
-    //                 // The validator receives the text that the user has entered.
-    //                 validator: (value) {
-    //                   if (value == null || double.tryParse(value) == null) {
-    //                     return 'Please enter some number';
-    //                   }
-    //                   return null;
-    //                 },
-    //               ),
-    //               Padding(
-    //                 padding: const EdgeInsets.symmetric(vertical: 16.0),
-    //                 child: ElevatedButton(
-    //                   onPressed: () {
-    //                     if (_formKey.currentState!.validate()) {
-    //                       setState(() {
-    //                         _users.add(User());
-    //                       });
-    //                       Navigator.of(context).pop();
-    //                     }
-    //                   },
-    //                   child: Text('Add'),
-    //                 ),
-    //               ),
-    //             ],
-    //           ),
-    //         ),
-    //       );
-    //     }, // ...to here.
-    //   ),
-    // );
   }
 
   void _removeUser(User user) {
@@ -321,5 +260,5 @@ class User {
 // 2.1. базовый экспорт: разобраться с либой, выводить просто строчки                                          - pending
 // 2.2. разобраться со стилями, чтобы все красиво +- как в примере выводилось                                  - pending
 // 3. добавить автоподсчет ИТОГО                                                                               - done
-// 4. настроить логику удаления (как в скринах) (чтобы падала вниз и раскрашивалась строчка)                   - pending
-// 5. если делать будет нечего, то заняться тем, чтобы убрать хардкод в моменте наполненния колонок для строки - pending
+// 4. настроить логику удаления (как в скринах) (чтобы падала вниз и раскрашивалась строчка)                   - done
+// 5. если делать будет нечего, то заняться тем, чтобы убрать хардкод в моменте наполненния колонок для строки - done
