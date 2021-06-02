@@ -1,10 +1,10 @@
 import 'dart:collection';
-
+import 'dart:io';
+import 'package:intl/intl.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:excel/excel.dart';
 import 'package:flutter/services.dart';
-import 'package:syncfusion_flutter_xlsio/xlsio.dart';
 
 var months = [
   'Сентябрь',
@@ -20,6 +20,10 @@ var months = [
   'Итого',
   'Доп. оплаты'
 ];
+
+var columns = ['Кол. Чел', 'Ф. И.', 'Дата начала занятий'] + months;
+
+String currentName = 'Краснодар Губерния';
 
 void main() {
   runApp(const MyApp());
@@ -71,9 +75,38 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   void _pushSave() {
-    var table = Excel.createExcel();
-    table.rename('sheet1', 'Краснодар НД????');
-    var sheet = table['Краснодар НД????'];
+    var excel = Excel.createExcel();
+    excel.rename('Sheet1', currentName);
+    var sheet = excel[currentName];
+    sheet.insertRowIterables(columns, 0);
+    int row = 1;
+    for (User user in _users) {
+      sheet.updateCell(
+          CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: row), row);
+      sheet.updateCell(
+          CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: row), user.name);
+      sheet.updateCell(
+          CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: row),
+          user.dateStartOfEducation);
+      int column = 3;
+      for (int paid in user.paid) {
+        sheet.updateCell(
+            CellIndex.indexByColumnRow(columnIndex: column, rowIndex: row),
+            paid);
+        column++;
+      }
+      row++;
+    }
+    DateTime now = DateTime.now();
+    String formattedDate = DateFormat('yyyy-MM-dd').format(now);
+    saveExcel(excel, 'E:\\work\\130k\\Отчет ' + formattedDate + '.xlsx');
+  }
+
+  void saveExcel(Excel excel, String filePath) {
+    var tmp = excel.encode();
+    File(filePath)
+      ..createSync(recursive: true)
+      ..writeAsBytesSync(tmp!);
   }
 
   DataRow _mapUserToTable(User user) {
