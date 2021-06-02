@@ -161,7 +161,6 @@ class _MyHomePageState extends State<MyHomePage> {
           keyboardType: TextInputType.datetime,
           onChanged: (val) {
             user.dateStartOfEducation = val;
-            user.calculateResult();
             setState(() {});
           },
         ))));
@@ -265,7 +264,9 @@ class User {
   bool toRemove = false;
 
   void calculateResult() {
+    paid[paid.length - 2] = 0;
     result = paid.reduce((value, element) => value + element);
+    paid[paid.length - 2] = result;
   }
 
   void changeRemove() {
