@@ -104,9 +104,9 @@ class _MyHomePageState extends State<MyHomePage> {
 
   Future<void> saveExcel(Excel excel, String filePath) async {
     var tmp = await excel.encode();
-      File(filePath)
-        ..createSync(recursive: true)
-        ..writeAsBytesSync(tmp);
+    File(filePath)
+      ..createSync(recursive: true)
+      ..writeAsBytesSync(tmp);
   }
 
   DataRow _mapUserToTable(User user) {
@@ -237,14 +237,24 @@ class _MyHomePageState extends State<MyHomePage> {
         ],
       ),
       body: Center(
-        child: SingleChildScrollView(
-            scrollDirection: Axis.vertical,
-            child: SingleChildScrollView(
-                scrollDirection: Axis.horizontal,
-                child: DataTable(
-                  columns: _buildColumns(),
-                  rows: (_users.map((user) => _mapUserToTable(user)).toList()),
-                ))),
+        child: Column(children: [
+          TextFormField(
+            decoration:
+                const InputDecoration(hintText: "Введите название филиала"),
+            onChanged: (val) {
+              currentName = val;
+            },
+          ),
+          SingleChildScrollView(
+              scrollDirection: Axis.vertical,
+              child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: DataTable(
+                    columns: _buildColumns(),
+                    rows:
+                        (_users.map((user) => _mapUserToTable(user)).toList()),
+                  )))
+        ]),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _addUser,
