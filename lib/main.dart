@@ -99,14 +99,14 @@ class _MyHomePageState extends State<MyHomePage> {
     }
     DateTime now = DateTime.now();
     String formattedDate = DateFormat('yyyy-MM-dd').format(now);
-    saveExcel(excel, 'E:\\work\\130k\\Отчет ' + formattedDate + '.xlsx');
+    saveExcel(excel, 'D:\\excelGenerator\\Отчет ' + formattedDate + '.xlsx');
   }
 
-  void saveExcel(Excel excel, String filePath) {
-    var tmp = excel.encode();
-    File(filePath)
-      ..createSync(recursive: true)
-      ..writeAsBytesSync(tmp!);
+  Future<void> saveExcel(Excel excel, String filePath) async {
+    var tmp = await excel.encode();
+      File(filePath)
+        ..createSync(recursive: true)
+        ..writeAsBytesSync(tmp);
   }
 
   DataRow _mapUserToTable(User user) {
@@ -134,7 +134,6 @@ class _MyHomePageState extends State<MyHomePage> {
           keyboardType: TextInputType.text,
           onChanged: (val) {
             user.name = val;
-            user.calculateResult();
             setState(() {});
           },
         ))));
