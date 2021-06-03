@@ -106,7 +106,7 @@ class _MyHomePageState extends State<MyHomePage> {
     var tmp = await excel.encode();
     File(filePath)
       ..createSync(recursive: true)
-      ..writeAsBytesSync(tmp);
+      ..writeAsBytesSync(tmp!);
   }
 
   DataRow _mapUserToTable(User user) {
