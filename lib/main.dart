@@ -1,3 +1,4 @@
+
 import 'dart:collection';
 import 'dart:convert';
 import 'dart:io';
@@ -34,18 +35,30 @@ void main() {
   runApp(const MyApp());
 }
 
+Future<void> getState() async {
+  late File file;
+  if (Platform.isWindows) {
+    file = File('excel_generator_state.json');
+  } else {
+    Directory tempDir = await getTemporaryDirectory();
+    file = File('${tempDir.path}\\excel_generator_state.json');
+  }
+  if (file.existsSync()) {
+    var json = jsonDecode(file.readAsStringSync());
+    _users =
+        (json['users'] as List).map((user) => User.fromJson(user)).toList();
+    currentName = json['name'];
+  }
+}
+
 class MyApp extends StatelessWidget {
   const MyApp({Key? key}) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
-    if (File('excel_generator_state.json').existsSync()) {
-      var state = File('excel_generator_state.json');
-      var json = jsonDecode(state.readAsStringSync());
-      _users =
-          (json['users'] as List).map((user) => User.fromJson(user)).toList();
-      currentName = json['name'];
-    }
+    getState();
+
+    sleep(const Duration(milliseconds: 2500));
     return MaterialApp(
       title: 'ExcelGenerator',
       theme: ThemeData(
@@ -75,8 +88,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
     if (state == AppLifecycleState.paused) {
-      print(state);
-      // keepState();
+      _saveState();
     }
   }
 
@@ -86,10 +98,16 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     super.dispose();
   }
 
-  void _saveState() {
-    var state = File('excel_generator_state.json');
+  Future<void> _saveState() async {
+    late File file;
+    if (Platform.isWindows) {
+      file = File('excel_generator_state.json');
+    } else {
+      Directory tempDir = await getTemporaryDirectory();
+      file = File('${tempDir.path}\\excel_generator_state.json');
+    }
     var json = jsonEncode({'name': currentName, 'users': _users});
-    state.writeAsString(json);
+    file.writeAsString(json);
   }
 
   void _addUser() {
