@@ -1,6 +1,7 @@
 import 'dart:collection';
 import 'dart:convert';
 import 'dart:io';
+import 'dart:typed_data';
 import 'package:intl/intl.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -119,7 +120,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     });
   }
 
-  void _pushSave() {
+  Future<void> _pushSave() async {
     var excel = Excel.createExcel();
     excel.rename('Sheet1', currentName);
     var sheet = excel[currentName];
@@ -144,11 +145,17 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     }
     DateTime now = DateTime.now();
     String formattedDate = DateFormat('yyyy-MM-dd').format(now);
-    saveExcel(excel, 'D:\\excelGenerator\\Отчет ' + formattedDate + '.xlsx');
+    //saveExcel(excel, 'D:\\excelGenerator\\Отчет ' + formattedDate + '.xlsx');
+    final path = await getSavePath(suggestedName: "Отчет ${formattedDate}.xlsx", acceptedTypeGroups: [XTypeGroup(label: 'Excel', extensions: ['xlsx'])]);
+    final name = "Отчет ${formattedDate}.xlsx";
+    final data = Uint8List.fromList(excel.encode()!);
+    final mimeType = "application/vnd.ms-excel";
+    final file = XFile.fromData(data, name: name, mimeType: mimeType);
+    await file.saveTo(path);
   }
 
-  Future<void> saveExcel(Excel excel, String filePath) async {
-    var tmp = await excel.encode();
+  void saveExcel(Excel excel, String filePath) {
+    var tmp = excel.encode();
     File(filePath)
       ..createSync(recursive: true)
       ..writeAsBytesSync(tmp!);
