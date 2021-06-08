@@ -42,7 +42,8 @@ class MyApp extends StatelessWidget {
     if (File('excel_generator_state.json').existsSync()) {
       var state = File('excel_generator_state.json');
       var json = jsonDecode(state.readAsStringSync());
-      _users = (json['users'] as List).map((user) => User.fromJson(user)).toList();
+      _users =
+          (json['users'] as List).map((user) => User.fromJson(user)).toList();
       currentName = json['name'];
     }
     return MaterialApp(
@@ -275,14 +276,16 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
       ),
       body: Center(
         child: ListView(children: [
-          TextFormField(
-            initialValue: currentName,
-            decoration:
-                const InputDecoration(hintText: "Введите название филиала"),
-            onChanged: (val) {
-              currentName = val;
-            },
-          ),
+          Padding(
+              padding: EdgeInsets.all(16.0),
+              child: TextFormField(
+                initialValue: currentName,
+                decoration:
+                    const InputDecoration(hintText: "Введите название филиала"),
+                onChanged: (val) {
+                  currentName = val;
+                },
+              )),
           SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: DataTable(
