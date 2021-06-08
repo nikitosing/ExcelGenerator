@@ -1,4 +1,3 @@
-
 import 'dart:collection';
 import 'dart:convert';
 import 'dart:io';
@@ -36,13 +35,8 @@ void main() {
 }
 
 Future<void> getState() async {
-  late File file;
-  if (Platform.isWindows) {
-    file = File('excel_generator_state.json');
-  } else {
-    Directory tempDir = await getTemporaryDirectory();
-    file = File('${tempDir.path}\\excel_generator_state.json');
-  }
+  Directory tempDir = await getTemporaryDirectory();
+  var file = File('${tempDir.path}\\excel_generator_state.json');
   if (file.existsSync()) {
     var json = jsonDecode(file.readAsStringSync());
     _users =
@@ -99,13 +93,8 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
   }
 
   Future<void> _saveState() async {
-    late File file;
-    if (Platform.isWindows) {
-      file = File('excel_generator_state.json');
-    } else {
-      Directory tempDir = await getTemporaryDirectory();
-      file = File('${tempDir.path}\\excel_generator_state.json');
-    }
+    Directory tempDir = await getTemporaryDirectory();
+    var file = File('${tempDir.path}\\excel_generator_state.json');
     var json = jsonEncode({'name': currentName, 'users': _users});
     file.writeAsString(json);
   }
