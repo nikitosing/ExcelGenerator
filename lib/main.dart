@@ -1,10 +1,13 @@
 import 'dart:collection';
+import 'dart:convert';
 import 'dart:io';
 import 'package:intl/intl.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:excel/excel.dart';
+import 'package:path_provider/path_provider.dart';
 import 'package:flutter/services.dart';
+import 'package:file_selector/file_selector.dart';
 
 var months = [
   'Сентябрь',
@@ -25,6 +28,8 @@ var columns = ['Кол. Чел', 'Ф. И.', 'Дата начала заняти�
 
 String currentName = 'Краснодар Губерния';
 
+var _users = <User>[User()];
+
 void main() {
   runApp(const MyApp());
 }
@@ -34,6 +39,12 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    if (File('excel_generator_state.json').existsSync()) {
+      var state = File('excel_generator_state.json');
+      var json = jsonDecode(state.readAsStringSync());
+      _users = (json['users'] as List).map((user) => User.fromJson(user)).toList();
+      currentName = json['name'];
+    }
     return MaterialApp(
       title: 'ExcelGenerator',
       theme: ThemeData(
@@ -52,8 +63,33 @@ class MyHomePage extends StatefulWidget {
   State<MyHomePage> createState() => _MyHomePageState();
 }
 
-class _MyHomePageState extends State<MyHomePage> {
-  final _users = <User>[User()];
+class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
+  @override
+  initState() {
+    super.initState();
+    WidgetsBinding.instance!.addObserver(this);
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    if (state == AppLifecycleState.paused) {
+      print(state);
+      // keepState();
+    }
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance!.removeObserver(this);
+    super.dispose();
+  }
+
+  void _saveState() {
+    var state = File('excel_generator_state.json');
+    var json = jsonEncode({'name': currentName, 'users': _users});
+    state.writeAsString(json);
+  }
 
   void _addUser() {
     setState(() {
@@ -64,6 +100,7 @@ class _MyHomePageState extends State<MyHomePage> {
         return 1;
       });
     });
+    _saveState();
   }
 
   void _removeUser(User user) {
@@ -237,8 +274,9 @@ class _MyHomePageState extends State<MyHomePage> {
         ],
       ),
       body: Center(
-        child: Column(children: [
+        child: ListView(children: [
           TextFormField(
+            initialValue: currentName,
             decoration:
                 const InputDecoration(hintText: "Введите название филиала"),
             onChanged: (val) {
@@ -246,14 +284,11 @@ class _MyHomePageState extends State<MyHomePage> {
             },
           ),
           SingleChildScrollView(
-              scrollDirection: Axis.vertical,
-              child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: DataTable(
-                    columns: _buildColumns(),
-                    rows:
-                        (_users.map((user) => _mapUserToTable(user)).toList()),
-                  )))
+              scrollDirection: Axis.horizontal,
+              child: DataTable(
+                columns: _buildColumns(),
+                rows: (_users.map((user) => _mapUserToTable(user)).toList()),
+              ))
         ]),
       ),
       floatingActionButton: FloatingActionButton(
@@ -282,6 +317,23 @@ class User {
     toRemove = !toRemove;
   }
 
+  Map toJson() => {
+        'name': name,
+        'dateStartOfEducation': dateStartOfEducation,
+        'paid': paid,
+        'result': result,
+        'toRemove': toRemove
+      };
+
+  factory User.fromJson(dynamic json) {
+    return User.allData(
+        json['name'] as String,
+        json['dateStartOfEducation'] as String,
+        json['paid'].cast<int>(),
+        json['result'] as int,
+        json['toRemove'] as bool);
+  }
+
   User() {
     result = 0;
     name = '';
@@ -295,6 +347,9 @@ class User {
     this.name = name;
     paid = List.filled(months.length, 0, growable: false);
   }
+
+  User.allData(this.name, this.dateStartOfEducation, this.paid, this.result,
+      this.toRemove);
 }
 
 // TODO:
