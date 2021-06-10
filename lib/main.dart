@@ -10,6 +10,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:flutter/services.dart';
 import 'package:file_selector/file_selector.dart';
 
+
 var months = [
   'Сентябрь',
   'Октябрь',
@@ -36,7 +37,7 @@ void main() {
 }
 
 Future<void> getState() async {
-  Directory tempDir = await getTemporaryDirectory();
+  Directory tempDir = await getApplicationSupportDirectory();
   var file = File('${tempDir.path}\\excel_generator_state.json');
   if (file.existsSync()) {
     var json = jsonDecode(file.readAsStringSync());
@@ -52,8 +53,6 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     getState();
-
-    //sleep(const Duration(milliseconds: 2500));
     return MaterialApp(
       title: 'ExcelGenerator',
       theme: ThemeData(
@@ -94,7 +93,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
   }
 
   Future<void> _saveState() async {
-    Directory tempDir = await getTemporaryDirectory();
+    Directory tempDir = await getApplicationSupportDirectory();
     var file = File('${tempDir.path}\\excel_generator_state.json');
     var json = jsonEncode({'name': currentName, 'users': _users});
     file.writeAsString(json);
@@ -148,11 +147,11 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     String formattedDate = DateFormat('yyyy-MM-dd').format(now);
     //saveExcel(excel, 'D:\\excelGenerator\\Отчет ' + formattedDate + '.xlsx');
     final path = await getSavePath(
-        suggestedName: "Отчет ${formattedDate}.xlsx",
+        suggestedName: "Отчет $formattedDate.xlsx",
         acceptedTypeGroups: [
           XTypeGroup(label: 'Excel', extensions: ['xlsx'])
         ]);
-    final name = "Отчет ${formattedDate}.xlsx";
+    final name = "Отчет $formattedDate.xlsx";
     final data = Uint8List.fromList(excel.encode()!);
     final mimeType = "application/vnd.ms-excel";
     final file = XFile.fromData(data, name: name, mimeType: mimeType);
@@ -170,6 +169,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     var _controllers = {};
     var _cells = LinkedHashMap<String, DataCell>();
     _cells['name'] = (DataCell(TextFormField(
+      autofocus: true,
       initialValue: user.name,
       decoration: const InputDecoration(hintText: "Введите Ф.И"),
       keyboardType: TextInputType.text,
@@ -177,32 +177,15 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
         user.name = val;
       },
     )));
-    _controllers['date'] = TextEditingController();
-    _controllers['date'].value = TextEditingValue(
-      text: user.dateStartOfEducation,
-      selection:
-          TextSelection.collapsed(offset: user.dateStartOfEducation.length),
-    );
-    _cells['date'] = (DataCell(Focus(
-        skipTraversal: true,
-        onFocusChange: (focus) {
-          if (focus) {
-            _controllers['date'].selection = TextSelection(
-              baseOffset: 0,
-              extentOffset: _controllers['date'].text.length,
-            );
-          }
-        },
-        child: TextFormField(
-          controller: _controllers['date'],
+    _cells['date'] = (DataCell(TextFormField(
+          initialValue: user.dateStartOfEducation,
           decoration:
               const InputDecoration(hintText: "Введите дату начала обучения"),
           keyboardType: TextInputType.datetime,
           onChanged: (val) {
             user.dateStartOfEducation = val;
-            setState(() {});
           },
-        ))));
+        )));
     for (var i = 0; i < months.length; ++i) {
       _controllers[months[i]] =
           TextEditingController(text: user.paid[i].toString());
@@ -279,7 +262,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
       body: Center(
         child: ListView(children: [
           Padding(
-              padding: EdgeInsets.all(16.0),
+              padding: const EdgeInsets.all(16.0),
               child: TextFormField(
                 initialValue: currentName,
                 decoration:
