@@ -53,7 +53,7 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     getState();
 
-    sleep(const Duration(milliseconds: 2500));
+    //sleep(const Duration(milliseconds: 2500));
     return MaterialApp(
       title: 'ExcelGenerator',
       theme: ThemeData(
@@ -121,6 +121,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
   }
 
   Future<void> _pushSave() async {
+    _saveState();
     var excel = Excel.createExcel();
     excel.rename('Sheet1', currentName);
     var sheet = excel[currentName];
@@ -146,7 +147,11 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     DateTime now = DateTime.now();
     String formattedDate = DateFormat('yyyy-MM-dd').format(now);
     //saveExcel(excel, 'D:\\excelGenerator\\Отчет ' + formattedDate + '.xlsx');
-    final path = await getSavePath(suggestedName: "Отчет ${formattedDate}.xlsx", acceptedTypeGroups: [XTypeGroup(label: 'Excel', extensions: ['xlsx'])]);
+    final path = await getSavePath(
+        suggestedName: "Отчет ${formattedDate}.xlsx",
+        acceptedTypeGroups: [
+          XTypeGroup(label: 'Excel', extensions: ['xlsx'])
+        ]);
     final name = "Отчет ${formattedDate}.xlsx";
     final data = Uint8List.fromList(excel.encode()!);
     final mimeType = "application/vnd.ms-excel";
@@ -163,32 +168,15 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
 
   DataRow _mapUserToTable(User user) {
     var _controllers = {};
-    _controllers['name'] = TextEditingController();
-    _controllers['name'].value = TextEditingValue(
-      text: user.name,
-      selection: TextSelection.collapsed(offset: user.name.length),
-    );
     var _cells = LinkedHashMap<String, DataCell>();
-    _cells['name'] = (DataCell(Focus(
-        skipTraversal: true,
-        onFocusChange: (focus) => {
-              if (focus)
-                {
-                  _controllers['name'].selection = TextSelection(
-                    baseOffset: 0,
-                    extentOffset: _controllers['name'].text.length,
-                  )
-                }
-            },
-        child: TextFormField(
-          controller: _controllers['name'],
-          decoration: const InputDecoration(hintText: "Введите Ф.И"),
-          keyboardType: TextInputType.text,
-          onChanged: (val) {
-            user.name = val;
-            setState(() {});
-          },
-        ))));
+    _cells['name'] = (DataCell(TextFormField(
+      initialValue: user.name,
+      decoration: const InputDecoration(hintText: "Введите Ф.И"),
+      keyboardType: TextInputType.text,
+      onChanged: (val) {
+        user.name = val;
+      },
+    )));
     _controllers['date'] = TextEditingController();
     _controllers['date'].value = TextEditingValue(
       text: user.dateStartOfEducation,
@@ -234,7 +222,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
             }
           },
           child: TextFormField(
-            keyboardType: TextInputType.text,
+            keyboardType: TextInputType.number,
             controller: _controllers[months[i]],
             inputFormatters: [
               FilteringTextInputFormatter.allow(RegExp("[0-9]+"))
