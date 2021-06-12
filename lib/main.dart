@@ -9,6 +9,7 @@ import 'package:excel/excel.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:flutter/services.dart';
 import 'package:file_selector/file_selector.dart';
+import 'package:flutter_file_dialog/flutter_file_dialog.dart';
 
 var months = [
   'Сентябрь',
@@ -32,6 +33,7 @@ String currentName = '';
 var _users = <User>[User()];
 
 Future<void> main() async {
+  runApp(const LoadingScreen());
   await getState();
   runApp(const MyApp());
 }
@@ -45,6 +47,29 @@ Future<void> getState() async {
     _users =
         (json['users'] as List).map((user) => User.fromJson(user)).toList();
     currentName = json['name'];
+  }
+}
+
+class LoadingScreen extends StatelessWidget {
+  const LoadingScreen({Key? key}) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    return MaterialApp(
+        title: 'ExcelGenerator',
+        theme: ThemeData(
+          primarySwatch: Colors.cyan,
+        ),
+        home: Scaffold(
+            appBar: AppBar(
+              title: const Text('ExcelGenerator_1'),
+              actions: [
+                IconButton(icon: const Icon(Icons.save), onPressed: () {}),
+              ],
+            ),
+            body: const Center(
+              child: const ScaffoldMessenger(child: Text('Loading...')),
+            )));
   }
 }
 
@@ -145,16 +170,20 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     DateTime now = DateTime.now();
     String formattedDate = DateFormat('yyyy-MM-dd').format(now);
     //saveExcel(excel, 'D:\\excelGenerator\\Отчет ' + formattedDate + '.xlsx');
-    final path = await getSavePath(
-        suggestedName: "Отчет $formattedDate.xlsx",
-        acceptedTypeGroups: [
-          XTypeGroup(label: 'Excel', extensions: ['xlsx'])
-        ]);
     final name = "Отчет $formattedDate.xlsx";
     final data = Uint8List.fromList(excel.encode()!);
-    final mimeType = "application/vnd.ms-excel";
-    final file = XFile.fromData(data, name: name, mimeType: mimeType);
-    await file.saveTo(path);
+    if (Platform.isWindows) {
+      final path = await getSavePath(suggestedName: name, acceptedTypeGroups: [
+        XTypeGroup(label: 'Excel', extensions: ['xlsx'])
+      ]);
+      final mimeType = "application/vnd.ms-excel";
+      final file = XFile.fromData(data, name: name, mimeType: mimeType);
+      await file.saveTo(path);
+    } else if (Platform.isAndroid) {
+      final params = SaveFileDialogParams(data: data, fileName: name);
+      final filePath = await FlutterFileDialog.saveFile(params: params);
+      print(filePath);
+    }
   }
 
   void saveExcel(Excel excel, String filePath) {
