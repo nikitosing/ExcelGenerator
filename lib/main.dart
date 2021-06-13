@@ -236,7 +236,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
         initialValue: user.paid[i] == null ? '' : user.paid[i].toString(),
         inputFormatters: [FilteringTextInputFormatter.allow(RegExp("[0-9]+"))],
         onChanged: (val) {
-          user.paid[i] = int.parse(val);
+          user.paid[i] = val == '' ? 0 : int.parse(val);
           user.calculateResult();
           setState(() {});
         },
