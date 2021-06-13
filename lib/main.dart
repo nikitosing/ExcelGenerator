@@ -68,7 +68,7 @@ class LoadingScreen extends StatelessWidget {
               ],
             ),
             body: const Center(
-              child: const ScaffoldMessenger(child: Text('Loading...')),
+              child: ScaffoldMessenger(child: Text('Loading...')),
             )));
   }
 }
@@ -148,7 +148,13 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     var excel = Excel.createExcel();
     excel.rename('Sheet1', currentName);
     var sheet = excel[currentName];
-    sheet.insertRowIterables(columns, 0);
+    for (int i = 0; i < columns.length; ++i) {
+      var cellStyle = CellStyle(
+          bold: true, fontSize: 10, textWrapping: TextWrapping.WrapText);
+      sheet.updateCell(
+          CellIndex.indexByColumnRow(columnIndex: i, rowIndex: 0), columns[i],
+          cellStyle: cellStyle);
+    }
     int row = 1;
     for (User user in _users) {
       sheet.updateCell(
@@ -166,6 +172,15 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
         column++;
       }
       row++;
+    }
+    for (int i = 0; i < months.length; ++i) {
+      var value = 0;
+      for (var user in _users) {
+        value += user.paid[i];
+      }
+      sheet.updateCell(
+          CellIndex.indexByColumnRow(columnIndex: i + 3, rowIndex: row), value,
+          cellStyle: CellStyle(backgroundColorHex: '#3792cb'));
     }
     DateTime now = DateTime.now();
     String formattedDate = DateFormat('yyyy-MM-dd').format(now);
