@@ -31,6 +31,7 @@ var columns = ['Кол. Чел', 'Ф. И.', 'Дата начала заняти�
 String currentName = '';
 
 var _users = <User>[User()];
+const _title = 'ExcelGenerator';
 
 Future<void> main() async {
   runApp(const LoadingScreen());
@@ -56,13 +57,13 @@ class LoadingScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-        title: 'ExcelGenerator',
+        title: _title,
         theme: ThemeData(
           primarySwatch: Colors.cyan,
         ),
         home: Scaffold(
             appBar: AppBar(
-              title: const Text('ExcelGenerator_1'),
+              title: const Text(_title),
               actions: [
                 IconButton(icon: const Icon(Icons.save), onPressed: () {}),
               ],
@@ -79,11 +80,11 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'ExcelGenerator',
+      title: _title,
       theme: ThemeData(
         primarySwatch: Colors.cyan,
       ),
-      home: const MyHomePage(title: 'ExcelGenerator_1'),
+      home: const MyHomePage(title: _title),
     );
   }
 }
@@ -174,12 +175,12 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
       row++;
     }
     for (int i = 0; i < months.length; ++i) {
-      var value = 0;
+      num value = 0;
       for (var user in _users) {
-        value += user.paid[i];
+        value += user.paid[i] ?? 0;
       }
       sheet.updateCell(
-          CellIndex.indexByColumnRow(columnIndex: i + 3, rowIndex: row), value,
+          CellIndex.indexByColumnRow(columnIndex: i + 3, rowIndex: row), value.toInt(),
           cellStyle: CellStyle(backgroundColorHex: '#3792cb'));
     }
     DateTime now = DateTime.now();
@@ -191,25 +192,16 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
       final path = await getSavePath(suggestedName: name, acceptedTypeGroups: [
         XTypeGroup(label: 'Excel', extensions: ['xlsx'])
       ]);
-      final mimeType = "application/vnd.ms-excel";
+      const mimeType = "application/vnd.ms-excel";
       final file = XFile.fromData(data, name: name, mimeType: mimeType);
       await file.saveTo(path);
     } else if (Platform.isAndroid) {
       final params = SaveFileDialogParams(data: data, fileName: name);
       final filePath = await FlutterFileDialog.saveFile(params: params);
-      print(filePath);
     }
   }
 
-  void saveExcel(Excel excel, String filePath) {
-    var tmp = excel.encode();
-    File(filePath)
-      ..createSync(recursive: true)
-      ..writeAsBytesSync(tmp!);
-  }
-
   DataRow _mapUserToTable(User user) {
-    var _controllers = {};
     var _cells = LinkedHashMap<String, DataCell>();
     _cells['name'] = (DataCell(TextFormField(
       initialValue: user.name,
@@ -239,26 +231,9 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
       },
     )));
     for (var i = 0; i < months.length; ++i) {
-      _controllers[months[i]] =
-          TextEditingController(text: user.paid[i].toString());
-      _controllers[months[i]].value = TextEditingValue(
-        text: user.paid[i].toString(),
-        selection:
-            TextSelection.collapsed(offset: user.paid[i].toString().length),
-      );
-      _cells[months[i]] = (DataCell(Focus(
-          skipTraversal: true,
-          onFocusChange: (focus) {
-            if (focus) {
-              _controllers[months[i]].selection = TextSelection(
-                baseOffset: 0,
-                extentOffset: _controllers[months[i]].text.length,
-              );
-            }
-          },
-          child: TextFormField(
+      _cells[months[i]] = (DataCell(TextFormField(
             keyboardType: TextInputType.number,
-            controller: _controllers[months[i]],
+            initialValue: user.paid[i] == null ? '' : user.paid[i].toString(),
             inputFormatters: [
               FilteringTextInputFormatter.allow(RegExp("[0-9]+"))
             ],
@@ -272,7 +247,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
                 _saveState();
               }
             },
-          ))));
+          )));
     }
     _cells['Итого'] = DataCell(Text(user.result.toString()));
     _cells['remove'] = (DataCell(
@@ -353,13 +328,15 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
 class User {
   late String name;
   late String dateStartOfEducation;
-  late List<int> paid;
-  late int result;
+  late List<dynamic> paid;
+  late num result;
   bool toRemove = false;
 
   void calculateResult() {
     paid[paid.length - 2] = 0;
-    result = paid.reduce((value, element) => value + element);
+    for (var el in paid) {
+      result += el ?? 0.toInt();
+    }
     paid[paid.length - 2] = result;
   }
 
@@ -388,14 +365,12 @@ class User {
     result = 0;
     name = '';
     dateStartOfEducation = '';
-    paid = List.filled(months.length, 0,
-        growable: false); //TODO Replace it on new List(months.length)
-    //     null safety issue
+    paid = List.filled(months.length, null, growable: false);
   }
 
   User.byName(String name) {
     this.name = name;
-    paid = List.filled(months.length, 0, growable: false);
+    paid = List.filled(months.length, null, growable: false);
   }
 
   User.allData(this.name, this.dateStartOfEducation, this.paid, this.result,
