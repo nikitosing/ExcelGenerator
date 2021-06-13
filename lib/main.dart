@@ -253,7 +253,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
           Icons.delete,
           size: 20,
         ), onTap: () {
-      _saveState();
+      if (Platform.isWindows) _saveState();
       _removeUser(user);
     }));
     return DataRow(
