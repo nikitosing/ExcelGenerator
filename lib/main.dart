@@ -277,6 +277,16 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
         }));
   }
 
+  void _debugDeleteAll() {
+    _users = <User>[User()];
+    _users[0].name = 'asd';
+    _users[0].dateStartOfEducation = 'asd';
+    numberOfDeletedUsers = 0;
+    setState(() {});
+    //_saveState();
+    print(_users[0].name);
+  }
+
   List<DataColumn> _buildColumns() {
     const _textStyle = TextStyle(fontSize: 18, fontWeight: FontWeight.bold);
     var _columns = <DataColumn>[];
@@ -296,7 +306,8 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
       appBar: AppBar(
         title: Text(widget.title),
         actions: [
-          IconButton(icon: const Icon(Icons.save), onPressed: _pushSave),
+          IconButton(onPressed: _debugDeleteAll, icon: const Icon(Icons.delete_forever_outlined)),
+          IconButton(onPressed: _pushSave, icon: const Icon(Icons.save))
         ],
       ),
       body: Center(
