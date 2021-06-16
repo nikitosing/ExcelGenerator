@@ -127,7 +127,8 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
 
   void _addUser() {
     if (_users[_users.length - 1 - numberOfDeletedUsers].name != '' &&
-        _users[_users.length - 1 - numberOfDeletedUsers].dateStartOfEducation != '') {
+        _users[_users.length - 1 - numberOfDeletedUsers].dateStartOfEducation !=
+            '') {
       setState(() {
         _users.add(User());
         _users.sort((a, b) {
@@ -306,34 +307,46 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
       appBar: AppBar(
         title: Text(widget.title),
         actions: [
-          IconButton(onPressed: _debugDeleteAll, icon: const Icon(Icons.delete_forever_outlined)),
+          IconButton(
+              onPressed: _debugDeleteAll,
+              icon: const Icon(Icons.delete_forever_outlined)),
           IconButton(onPressed: _pushSave, icon: const Icon(Icons.save))
         ],
       ),
       body: Center(
-        child: ListView(children: [
-          Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: TextFormField(
-                initialValue: currentName,
-                decoration:
-                    const InputDecoration(hintText: "Введите название филиала"),
-                onChanged: (val) {
-                  currentName = val;
-                },
-                onTap: () {
-                  if (Platform.isWindows) {
-                    _saveState();
-                  }
-                },
-              )),
-          SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: DataTable(
-                columns: _buildColumns(),
-                rows: (_users.map((user) => _mapUserToTable(user)).toList()),
-              ))
-        ]),
+        child: Scrollbar(
+            showTrackOnHover: true,
+            interactive: true,
+            child: Column(children: [
+              Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: TextFormField(
+                    initialValue: currentName,
+                    decoration: const InputDecoration(
+                        hintText: "Введите название филиала"),
+                    onChanged: (val) {
+                      currentName = val;
+                    },
+                    onTap: () {
+                      if (Platform.isWindows) {
+                        _saveState();
+                      }
+                    },
+                  )),
+              Expanded(
+                child: SingleChildScrollView(
+                  primary: true,
+                  scrollDirection: Axis.horizontal,
+                    child: SingleChildScrollView(
+                        scrollDirection: Axis.vertical,
+                        child: DataTable(
+                          columns: _buildColumns(),
+                          rows: (_users
+                              .map((user) => _mapUserToTable(user))
+                              .toList()),
+                        ))),
+              )
+            ])),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: _addUser,
