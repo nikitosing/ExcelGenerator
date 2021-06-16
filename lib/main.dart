@@ -186,7 +186,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     DateTime now = DateTime.now();
     String formattedDate = DateFormat('yyyy-MM-dd').format(now);
     //saveExcel(excel, 'D:\\excelGenerator\\Отчет ' + formattedDate + '.xlsx');
-    final name = "Отчет $formattedDate.xlsx";
+    final name = "Отчет $currentName $formattedDate.xlsx";
     final data = Uint8List.fromList(excel.encode()!);
     if (Platform.isWindows) {
       final path = await getSavePath(suggestedName: name, acceptedTypeGroups: [
