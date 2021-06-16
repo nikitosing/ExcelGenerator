@@ -31,6 +31,7 @@ var columns = ['Кол. Чел', 'Ф. И.', 'Дата начала заняти�
 String currentName = '';
 
 var _users = <User>[User()];
+var numberOfDeletedUsers = 0;
 const _title = 'ExcelGenerator';
 
 Future<void> main() async {
@@ -136,11 +137,13 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
   }
 
   void _removeUser(User user) {
-    setState(() {
-      user.changeRemove();
-      _users.remove(user);
-      _users.add(user);
-    });
+    if (!user.toRemove) {
+      setState(() {
+        user.changeRemove();
+        _users.remove(user);
+        _users.add(user);
+      });
+    }
   }
 
   Future<void> _pushSave() async {
@@ -204,6 +207,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
   DataRow _mapUserToTable(User user) {
     var _cells = LinkedHashMap<String, DataCell>();
     _cells['name'] = (DataCell(TextFormField(
+      readOnly: user.toRemove,
       initialValue: user.name,
       decoration: const InputDecoration(hintText: "Введите Ф.И"),
       keyboardType: TextInputType.text,
@@ -217,6 +221,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
       },
     )));
     _cells['date'] = (DataCell(TextFormField(
+      readOnly: user.toRemove,
       initialValue: user.dateStartOfEducation,
       decoration:
           const InputDecoration(hintText: "Введите дату начала обучения"),
@@ -232,6 +237,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     )));
     for (var i = 0; i < months.length; ++i) {
       _cells[months[i]] = (DataCell(TextFormField(
+        readOnly: user.toRemove,
         keyboardType: TextInputType.number,
         initialValue: user.paid[i] == null ? '' : user.paid[i].toString(),
         inputFormatters: [FilteringTextInputFormatter.allow(RegExp("[0-9]+"))],
