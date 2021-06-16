@@ -126,18 +126,22 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
   }
 
   void _addUser() {
-    setState(() {
-      _users.add(User());
-      _users.sort((a, b) {
-        if (a.toRemove == b.toRemove) return 0;
-        if (!a.toRemove) return -1;
-        return 1;
+    if (_users[_users.length - 1 - numberOfDeletedUsers].name != '' &&
+        _users[_users.length - 1 - numberOfDeletedUsers].dateStartOfEducation != '') {
+      setState(() {
+        _users.add(User());
+        _users.sort((a, b) {
+          if (a.toRemove == b.toRemove) return 0;
+          if (!a.toRemove) return -1;
+          return 1;
+        });
       });
-    });
+    }
   }
 
   void _removeUser(User user) {
     if (!user.toRemove) {
+      ++numberOfDeletedUsers;
       setState(() {
         user.changeRemove();
         _users.remove(user);
