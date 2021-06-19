@@ -2,6 +2,7 @@ import 'dart:collection';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:typed_data';
+import 'package:flutter/painting.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -98,6 +99,9 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
+  static const _columnTextStyle =
+      TextStyle(fontSize: 18, fontWeight: FontWeight.bold);
+
   @override
   initState() {
     super.initState();
@@ -211,20 +215,6 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
 
   DataRow _mapUserToTable(User user) {
     var _cells = LinkedHashMap<String, DataCell>();
-    _cells['name'] = (DataCell(TextFormField(
-      readOnly: user.toRemove,
-      initialValue: user.name,
-      decoration: const InputDecoration(hintText: "Введите Ф.И"),
-      keyboardType: TextInputType.text,
-      onChanged: (val) {
-        user.name = val;
-      },
-      onTap: () {
-        if (Platform.isWindows) {
-          _saveState();
-        }
-      },
-    )));
     _cells['date'] = (DataCell(TextFormField(
       readOnly: user.toRemove,
       initialValue: user.dateStartOfEducation,
@@ -284,20 +274,17 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     _users[0].dateStartOfEducation = 'asd';
     numberOfDeletedUsers = 0;
     setState(() {});
-    //_saveState();
-    print(_users[0].name);
+    _saveState();
   }
 
   List<DataColumn> _buildColumns() {
-    const _textStyle = TextStyle(fontSize: 18, fontWeight: FontWeight.bold);
     var _columns = <DataColumn>[];
-    _columns.add(const DataColumn(label: Text('Ф.И.', style: _textStyle)));
     _columns.add(const DataColumn(
-        label: Text('Дата начала занятий', style: _textStyle)));
+        label: Text('Дата начала занятий', style: _columnTextStyle)));
     for (var i = 0; i < months.length; i++) {
-      _columns.add(DataColumn(label: Text(months[i], style: _textStyle)));
+      _columns.add(DataColumn(label: Text(months[i], style: _columnTextStyle)));
     }
-    _columns.add(const DataColumn(label: Text('', style: _textStyle)));
+    _columns.add(const DataColumn(label: Text('', style: _columnTextStyle)));
     return _columns;
   }
 
@@ -305,7 +292,19 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.title),
+        title: TextFormField(
+          initialValue: currentName,
+          decoration:
+              const InputDecoration(hintText: "Введите название филиала"),
+          onChanged: (val) {
+            currentName = val;
+          },
+          onTap: () {
+            if (Platform.isWindows) {
+              _saveState();
+            }
+          },
+        ),
         actions: [
           IconButton(
               onPressed: _debugDeleteAll,
@@ -314,40 +313,55 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
         ],
       ),
       body: Center(
-        child: Scrollbar(
-            showTrackOnHover: true,
-            interactive: true,
-            child: Column(children: [
-              Padding(
-                  padding: const EdgeInsets.all(16.0),
-                  child: TextFormField(
-                    initialValue: currentName,
-                    decoration: const InputDecoration(
-                        hintText: "Введите название филиала"),
-                    onChanged: (val) {
-                      currentName = val;
-                    },
-                    onTap: () {
-                      if (Platform.isWindows) {
-                        _saveState();
-                      }
-                    },
-                  )),
-              Expanded(
-                child: SingleChildScrollView(
-                  primary: true,
-                  scrollDirection: Axis.horizontal,
-                    child: SingleChildScrollView(
-                        scrollDirection: Axis.vertical,
-                        child: DataTable(
-                          columns: _buildColumns(),
-                          rows: (_users
-                              .map((user) => _mapUserToTable(user))
+              child: Container(width: MediaQuery.of(context).size.width,
+                height: MediaQuery.of(context).size.height, child: SingleChildScrollView(
+                      scrollDirection: Axis.vertical,
+                      primary: false,
+                      child: Row(
+                    children: [
+                      DataTable(
+                          columns: const [
+                            DataColumn(label: Text("Ф.И.", style: _columnTextStyle))
+                          ],
+                          rows: _users
+                              .map((user) => DataRow(cells: [
+                            DataCell(TextFormField(
+                              readOnly: user.toRemove,
+                              initialValue: user.name,
+                              inputFormatters: [
+                                FilteringTextInputFormatter.deny(
+                                    RegExp("[0-9]+"))
+                              ],
+                              maxLength: 60,
+                              decoration: const InputDecoration(
+                                  hintText: "Введите Ф.И", counterText: ""),
+                              keyboardType: TextInputType.text,
+                              onChanged: (val) {
+                                user.name = val;
+                              },
+                              onTap: () {
+                                if (Platform.isWindows) {
+                                  _saveState();
+                                }
+                              },
+                            ))
+                          ]))
                               .toList()),
-                        ))),
-              )
-            ])),
-      ),
+                      Expanded(
+                        child: Scrollbar(
+                          isAlwaysShown: true,
+                            child: SingleChildScrollView(
+                            primary: true,
+                            scrollDirection: Axis.horizontal,
+                            child: DataTable(
+                              columns: _buildColumns(),
+                              rows: (_users
+                                  .map((user) => _mapUserToTable(user))
+                                  .toList()),
+                            ))),
+                      )
+                    ],
+                  )))),
       floatingActionButton: FloatingActionButton(
         onPressed: _addUser,
         tooltip: 'Добавить пользователя',
