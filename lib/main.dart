@@ -314,7 +314,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
   }
 
   Widget _generateFirstColumnRow(user) {
-    var _key = Key(user.name + user.dateStartOfEducation);
+    var _key = GlobalKey<_MyHomePageState>();
     return Container(
       child: TextFormField(
         key: _key,
