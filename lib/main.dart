@@ -154,18 +154,32 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     }
     int row = 1;
     for (User user in _users) {
+      var _cellStyle = CellStyle(backgroundColorHex: () {
+        switch (user.status) {
+          case UserStatus.normal:
+            return '#ffffff';
+          case UserStatus.toFormat:
+            return '#FFFF00';
+          case UserStatus.toRemove:
+            return 'FF5722';
+        }
+      }());
       sheet.updateCell(
-          CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: row), row);
+          CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: row), row,
+          cellStyle: _cellStyle);
       sheet.updateCell(
-          CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: row), user.name);
+          CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: row), user.name,
+          cellStyle: _cellStyle);
       sheet.updateCell(
           CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: row),
-          user.dateStartOfEducation);
+          '${user.dateStartOfEducation.day}/${user.dateStartOfEducation.month}/${user.dateStartOfEducation.year}',
+          cellStyle: _cellStyle);
       int column = 3;
-      for (int paid in user.paid) {
+      for (var paid in user.paid) {
         sheet.updateCell(
             CellIndex.indexByColumnRow(columnIndex: column, rowIndex: row),
-            paid);
+            paid ?? '',
+            cellStyle: _cellStyle);
         column++;
       }
       row++;
@@ -311,7 +325,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     return Container(
       child: TextFormField(
         key: _key,
-        readOnly: user.toRemove,
+        readOnly: user.status == UserStatus.toRemove,
         initialValue: user.name,
         inputFormatters: [FilteringTextInputFormatter.deny(RegExp("[0-9]+"))],
         maxLength: 60,
@@ -380,7 +394,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
       _cells[months[i]] = Container(
         child: TextFormField(
             key: _key,
-            readOnly: user.toRemove,
+            readOnly: user.status == UserStatus.toRemove,
             keyboardType: TextInputType.number,
             initialValue: user.paid[i] == null ? '' : user.paid[i].toString(),
             inputFormatters: [
