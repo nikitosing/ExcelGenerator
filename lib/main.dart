@@ -106,6 +106,7 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
   var _users = _usersOnMachine;
+
   @override
   initState() {
     super.initState();
@@ -137,22 +138,21 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     if (_users[_users.length - 1 - numberOfDeletedUsers].name != '' &&
         _users[_users.length - 1 - numberOfDeletedUsers].dateStartOfEducation !=
             '') {
-        _users.add(User());
-        _users.sort((a, b) {
-          if (a.toRemove == b.toRemove) return 0;
-          if (!a.toRemove) return -1;
-          return 1;
-        });
-      }
+      _users.add(User());
+      _users.sort((a, b) {
+        if (a.toRemove == b.toRemove) return 0;
+        if (!a.toRemove) return -1;
+        return 1;
+      });
     }
-
+  }
 
   void _removeUser(User user) {
     if (!user.toRemove) {
       ++numberOfDeletedUsers;
-        user.changeRemove();
-        _users.remove(user);
-        _users.add(user);
+      user.changeRemove();
+      _users.remove(user);
+      _users.add(user);
     }
   }
 
@@ -217,7 +217,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
   void _debugDeleteAll() {
     _users = <User>[User()];
     _users[0].name = '';
-    _users[0].dateStartOfEducation = '';
+    _users[0].dateStartOfEducation = DateTime(2010);
     numberOfDeletedUsers = 0;
     setState(() {});
     _saveState();
@@ -268,8 +268,11 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
           rightHandSideColumnWidth: 1620,
           isFixedHeader: true,
           headerWidgets: _buildColumns(),
-          leftSideChildren: _users.map((user) => _generateFirstColumnRow(user)).toList(),
-          rightSideChildren: _users.map((user) => _generateRightHandSideColumnRow(user)).toList(),
+          leftSideChildren:
+              _users.map((user) => _generateFirstColumnRow(user)).toList(),
+          rightSideChildren: _users
+              .map((user) => _generateRightHandSideColumnRow(user))
+              .toList(),
           itemCount: _users.length,
           horizontalScrollbarStyle: const ScrollbarStyle(
             isAlwaysShown: true,
@@ -314,7 +317,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
   }
 
   Widget _generateFirstColumnRow(user) {
-    var _key = GlobalKey<_MyHomePageState>();
+    var _key = Key(user.dateStartOfEducation.toString() + user.name);
     return Container(
       child: TextFormField(
         key: _key,
@@ -343,26 +346,33 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
   }
 
   Widget _generateRightHandSideColumnRow(user) {
-    var _key = Key(user.name + user.dateStartOfEducation);
+    var _key = Key(user.name + user.dateStartOfEducation.toString());
     var _cells = LinkedHashMap<String, Widget>();
-    var _color =
-    user.toRemove ? Colors.deepOrange : Colors.transparent;
+    var _color = user.toRemove ? Colors.deepOrange : Colors.transparent;
     _cells['date'] = Container(
       child: TextFormField(
-        key: _key,
-        readOnly: user.toRemove,
-        initialValue: user.dateStartOfEducation,
-        decoration: const InputDecoration(hintText: "Введите дату"),
-        keyboardType: TextInputType.datetime,
-        onChanged: (val) {
-          user.dateStartOfEducation = val;
-        },
-        onTap: () {
-          if (Platform.isWindows) {
-            _saveState();
-          }
-        },
-      ),
+          key: _key,
+          readOnly: true,
+          initialValue: user.dateStartOfEducation == DateTime(1337)
+              ? ''
+              : '${user.dateStartOfEducation.day}/${user.dateStartOfEducation.month}/${user.dateStartOfEducation.year}',
+          decoration: const InputDecoration(hintText: "Выберите дату"),
+          keyboardType: TextInputType.datetime,
+          onTap: () {
+            if (!user.toRemove) {
+              showDatePicker(
+                      context: context,
+                      initialDate: DateTime.now(),
+                      firstDate: DateTime(2001),
+                      lastDate: DateTime.now())
+                  .then((date) => setState(() {
+                        user.dateStartOfEducation = date;
+                      }));
+            }
+            if (Platform.isWindows) {
+              _saveState();
+            }
+          }),
       width: 200,
       height: 52,
       padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
@@ -374,9 +384,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
             key: _key,
             readOnly: user.toRemove,
             keyboardType: TextInputType.number,
-            initialValue: user.paid[i] == null
-                ? ''
-                : user.paid[i].toString(),
+            initialValue: user.paid[i] == null ? '' : user.paid[i].toString(),
             inputFormatters: [
               FilteringTextInputFormatter.allow(RegExp("[0-9]+"))
             ],
@@ -423,7 +431,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
 
 class User {
   late String name;
-  late String dateStartOfEducation;
+  late DateTime dateStartOfEducation;
   late List<dynamic> paid;
   late num result;
   bool toRemove = false;
@@ -443,7 +451,7 @@ class User {
 
   Map toJson() => {
         'name': name,
-        'dateStartOfEducation': dateStartOfEducation,
+        'dateStartOfEducation': dateStartOfEducation.toString(),
         'paid': paid,
         'result': result,
         'toRemove': toRemove
@@ -452,7 +460,7 @@ class User {
   factory User.fromJson(dynamic json) {
     return User.allData(
         json['name'] as String,
-        json['dateStartOfEducation'] as String,
+        DateTime.parse(json['dateStartOfEducation']),
         json['paid'].cast<int>(),
         json['result'] as int,
         json['toRemove'] as bool);
@@ -461,7 +469,7 @@ class User {
   User() {
     result = 0;
     name = '';
-    dateStartOfEducation = '';
+    dateStartOfEducation = DateTime(1337);
     paid = List.filled(months.length, null, growable: false);
   }
 
