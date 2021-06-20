@@ -125,8 +125,8 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
       _users.add(User());
       _users.sort((a, b) {
         if (a.status == b.status) return 0;
-        if (a.status == UserStatus.normal) return 1;
-        return -1;
+        if (b.status == UserStatus.toRemove) return -1;
+        return 1;
       });
     }
   }
@@ -293,7 +293,13 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     }
     _columns.add(Container(
         child: const Text(''),
-        width: 100,
+        width: 50,
+        height: 52,
+        padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
+        alignment: Alignment.centerLeft));
+    _columns.add(Container(
+        child: const Text(''),
+        width: 50,
         height: 52,
         padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
         alignment: Alignment.centerLeft));
@@ -403,6 +409,19 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
       padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
       alignment: Alignment.centerLeft,
     );
+    _cells['edit'] = Container(
+      child: IconButton(
+          onPressed: () {
+            user.status = UserStatus.toFormat;
+            setState(() {});
+            if (Platform.isWindows) _saveState();
+          },
+          icon: const Icon(Icons.edit, size: 20)),
+      width: 50,
+      height: 52,
+      padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
+      alignment: Alignment.centerLeft,
+    );
     _cells['remove'] = Container(
       child: IconButton(
           onPressed: () {
@@ -411,7 +430,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
             if (Platform.isWindows) _saveState();
           },
           icon: const Icon(Icons.delete, size: 20)),
-      width: 100,
+      width: 50,
       height: 52,
       padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
       alignment: Alignment.centerLeft,
