@@ -11,6 +11,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:flutter/services.dart';
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter_file_dialog/flutter_file_dialog.dart';
+import 'package:horizontal_data_table/horizontal_data_table.dart';
 
 var months = [
   'Сентябрь',
@@ -31,7 +32,7 @@ var columns = ['Кол. Чел', 'Ф. И.', 'Дата начала заняти�
 
 String currentName = '';
 
-var _users = <User>[User()];
+var _usersOnMachine = <User>[User()];
 var numberOfDeletedUsers = 0;
 const _title = 'ExcelGenerator';
 
@@ -46,7 +47,7 @@ Future<void> getState() async {
   var file = File('${tempDir.path}\\excel_generator_state.json');
   if (file.existsSync()) {
     var json = jsonDecode(file.readAsStringSync());
-    _users =
+    _usersOnMachine =
         (json['users'] as List).map((user) => User.fromJson(user)).toList();
     currentName = json['name'];
   }
@@ -99,9 +100,7 @@ class MyHomePage extends StatefulWidget {
 }
 
 class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
-  static const _columnTextStyle =
-      TextStyle(fontSize: 18, fontWeight: FontWeight.bold);
-
+  var _users = _usersOnMachine;
   @override
   initState() {
     super.initState();
@@ -133,25 +132,22 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     if (_users[_users.length - 1 - numberOfDeletedUsers].name != '' &&
         _users[_users.length - 1 - numberOfDeletedUsers].dateStartOfEducation !=
             '') {
-      setState(() {
         _users.add(User());
         _users.sort((a, b) {
           if (a.toRemove == b.toRemove) return 0;
           if (!a.toRemove) return -1;
           return 1;
         });
-      });
+      }
     }
-  }
+
 
   void _removeUser(User user) {
     if (!user.toRemove) {
       ++numberOfDeletedUsers;
-      setState(() {
         user.changeRemove();
         _users.remove(user);
         _users.add(user);
-      });
     }
   }
 
@@ -270,22 +266,11 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
 
   void _debugDeleteAll() {
     _users = <User>[User()];
-    _users[0].name = 'asd';
-    _users[0].dateStartOfEducation = 'asd';
+    _users[0].name = '';
+    _users[0].dateStartOfEducation = '';
     numberOfDeletedUsers = 0;
     setState(() {});
     _saveState();
-  }
-
-  List<DataColumn> _buildColumns() {
-    var _columns = <DataColumn>[];
-    _columns.add(const DataColumn(
-        label: Text('Дата начала занятий', style: _columnTextStyle)));
-    for (var i = 0; i < months.length; i++) {
-      _columns.add(DataColumn(label: Text(months[i], style: _columnTextStyle)));
-    }
-    _columns.add(const DataColumn(label: Text('', style: _columnTextStyle)));
-    return _columns;
   }
 
   @override
@@ -312,62 +297,171 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
           IconButton(onPressed: _pushSave, icon: const Icon(Icons.save))
         ],
       ),
-      body: Center(
-              child: Container(width: MediaQuery.of(context).size.width,
-                height: MediaQuery.of(context).size.height, child: SingleChildScrollView(
-                      scrollDirection: Axis.vertical,
-                      primary: false,
-                      child: Row(
-                    children: [
-                      DataTable(
-                          columns: const [
-                            DataColumn(label: Text("Ф.И.", style: _columnTextStyle))
-                          ],
-                          rows: _users
-                              .map((user) => DataRow(cells: [
-                            DataCell(TextFormField(
-                              readOnly: user.toRemove,
-                              initialValue: user.name,
-                              inputFormatters: [
-                                FilteringTextInputFormatter.deny(
-                                    RegExp("[0-9]+"))
-                              ],
-                              maxLength: 60,
-                              decoration: const InputDecoration(
-                                  hintText: "Введите Ф.И", counterText: ""),
-                              keyboardType: TextInputType.text,
-                              onChanged: (val) {
-                                user.name = val;
-                              },
-                              onTap: () {
-                                if (Platform.isWindows) {
-                                  _saveState();
-                                }
-                              },
-                            ))
-                          ]))
-                              .toList()),
-                      Expanded(
-                        child: Scrollbar(
-                          isAlwaysShown: true,
-                            child: SingleChildScrollView(
-                            primary: true,
-                            scrollDirection: Axis.horizontal,
-                            child: DataTable(
-                              columns: _buildColumns(),
-                              rows: (_users
-                                  .map((user) => _mapUserToTable(user))
-                                  .toList()),
-                            ))),
-                      )
-                    ],
-                  )))),
+      body: _getBodyWidget(),
       floatingActionButton: FloatingActionButton(
-        onPressed: _addUser,
+        onPressed: () {
+          setState(() {
+            _addUser();
+          });
+        },
         tooltip: 'Добавить пользователя',
         child: const Icon(Icons.add),
       ),
     );
+  }
+
+  Widget _getBodyWidget() {
+    return Container(
+      child: HorizontalDataTable(
+          leftHandSideColumnWidth: 150,
+          rightHandSideColumnWidth: 1620,
+          isFixedHeader: true,
+          headerWidgets: _buildColumns(),
+          leftSideItemBuilder: _generateFirstColumnRow,
+          rightSideItemBuilder: _generateRightHandSideColumnRow,
+          itemCount: _users.length,
+          horizontalScrollbarStyle: const ScrollbarStyle(
+            isAlwaysShown: true,
+            thickness: 5.0,
+            radius: Radius.circular(5.0),
+          )),
+      height: MediaQuery.of(context).size.height,
+    );
+  }
+
+  List<Widget> _buildColumns() {
+    const _columnTextStyle =
+        TextStyle(fontSize: 18, fontWeight: FontWeight.bold);
+    var _columns = <Widget>[];
+    _columns.add(Container(
+        child: const Text('Ф.И.', style: _columnTextStyle),
+        width: 150,
+        height: 52,
+        padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
+        alignment: Alignment.centerLeft));
+    _columns.add(Container(
+        child: const Text('Дата начала занятий', style: _columnTextStyle),
+        width: 200,
+        height: 52,
+        padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
+        alignment: Alignment.centerLeft));
+    for (var i = 0; i < months.length; i++) {
+      _columns.add(Container(
+          child: Text(months[i], style: _columnTextStyle),
+          width: i == months.length - 3 ? 220 : 100,
+          height: 52,
+          padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
+          alignment: Alignment.centerLeft));
+    }
+    _columns.add(Container(
+        child: const Text(''),
+        width: 100,
+        height: 52,
+        padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
+        alignment: Alignment.centerLeft));
+    return _columns;
+  }
+
+  Widget _generateFirstColumnRow(BuildContext context, int index) {
+    return Container(
+      child: TextFormField(
+        readOnly: _users[index].toRemove,
+        initialValue: _users[index].name,
+        inputFormatters: [FilteringTextInputFormatter.deny(RegExp("[0-9]+"))],
+        maxLength: 60,
+        decoration:
+            const InputDecoration(hintText: "Введите Ф.И", counterText: ""),
+        keyboardType: TextInputType.text,
+        onChanged: (val) {
+          _users[index].name = val;
+        },
+        onTap: () {
+          if (Platform.isWindows) {
+            _saveState();
+          }
+        },
+      ),
+      width: 150,
+      height: 52,
+      padding: EdgeInsets.fromLTRB(5, 0, 0, 0),
+      alignment: Alignment.centerLeft,
+      color: _users[index].toRemove ? Colors.deepOrange : Colors.transparent,
+    );
+  }
+
+  Widget _generateRightHandSideColumnRow(BuildContext context, int index) {
+    var _cells = LinkedHashMap<String, Widget>();
+    var _color =
+        _users[index].toRemove ? Colors.deepOrange : Colors.transparent;
+    _cells['date'] = Container(
+      child: TextFormField(
+        readOnly: _users[index].toRemove,
+        initialValue: _users[index].dateStartOfEducation,
+        decoration: const InputDecoration(hintText: "Введите дату"),
+        keyboardType: TextInputType.datetime,
+        onChanged: (val) {
+          _users[index].dateStartOfEducation = val;
+        },
+        onTap: () {
+          if (Platform.isWindows) {
+            _saveState();
+          }
+        },
+      ),
+      width: 200,
+      height: 52,
+      padding: EdgeInsets.fromLTRB(5, 0, 0, 0),
+      alignment: Alignment.centerLeft,
+    );
+    for (var i = 0; i < months.length; ++i) {
+      _cells[months[i]] = Container(
+        child: TextFormField(
+            readOnly: _users[index].toRemove,
+            keyboardType: TextInputType.number,
+            initialValue: _users[index].paid[i] == null
+                ? ''
+                : _users[index].paid[i].toString(),
+            inputFormatters: [
+              FilteringTextInputFormatter.allow(RegExp("[0-9]+"))
+            ],
+            onChanged: (val) {
+              _users[index].paid[i] = val == '' ? 0 : int.parse(val);
+              _users[index].calculateResult();
+              setState(() {});
+            },
+            onTap: () {
+              if (Platform.isWindows) {
+                _saveState();
+              }
+            }),
+        width: i == months.length - 3 ? 220 : 100,
+        height: 52,
+        padding: EdgeInsets.fromLTRB(5, 0, 0, 0),
+        alignment: Alignment.centerLeft,
+      );
+    }
+    _cells['Итого'] = Container(
+      child: Text(_users[index].result.toString()),
+      width: 100,
+      height: 52,
+      padding: EdgeInsets.fromLTRB(5, 0, 0, 0),
+      alignment: Alignment.centerLeft,
+    );
+    _cells['remove'] = Container(
+      child: IconButton(
+          onPressed: () {
+            _removeUser(_users[index]);
+            setState(() {});
+            if (Platform.isWindows) _saveState();
+          },
+          icon: const Icon(Icons.delete, size: 20)),
+      width: 100,
+      height: 52,
+      padding: EdgeInsets.fromLTRB(5, 0, 0, 0),
+      alignment: Alignment.centerLeft,
+    );
+    return Container(
+        child: Row(children: _cells.values.toList()), color: _color);
   }
 }
 
