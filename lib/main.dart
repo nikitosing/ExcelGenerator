@@ -12,23 +12,7 @@ import 'package:flutter/services.dart';
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter_file_dialog/flutter_file_dialog.dart';
 import 'package:horizontal_data_table/horizontal_data_table.dart';
-
-var months = [
-  'Сентябрь',
-  'Октябрь',
-  'Ноябрь',
-  'Декабрь',
-  'Январь',
-  'Февраль',
-  'Март',
-  'Апрель',
-  'Май',
-  'Сентябрь следующего года',
-  'Итого',
-  'Доп. оплаты'
-];
-
-var columns = ['Кол. Чел', 'Ф. И.', 'Дата начала занятий'] + months;
+import 'common.dart';
 
 String currentName = '';
 
@@ -137,20 +121,20 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
   void _addUser() {
     if (_users[_users.length - 1 - numberOfDeletedUsers].name != '' &&
         _users[_users.length - 1 - numberOfDeletedUsers].dateStartOfEducation !=
-            '') {
+            DateTime(1337)) {
       _users.add(User());
       _users.sort((a, b) {
-        if (a.toRemove == b.toRemove) return 0;
-        if (!a.toRemove) return -1;
-        return 1;
+        if (a.status == b.status) return 0;
+        if (a.status == UserStatus.normal) return 1;
+        return -1;
       });
     }
   }
 
   void _removeUser(User user) {
-    if (!user.toRemove) {
+    if (user.status != UserStatus.toRemove) {
       ++numberOfDeletedUsers;
-      user.changeRemove();
+      user.setRemove();
       _users.remove(user);
       _users.add(user);
     }
@@ -341,14 +325,22 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
       height: 52,
       padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
       alignment: Alignment.centerLeft,
-      color: user.toRemove ? Colors.deepOrange : Colors.transparent,
+      color: () {
+        switch (user.status) {
+          case UserStatus.normal:
+            return Colors.transparent;
+          case UserStatus.toFormat:
+            return Colors.yellowAccent;
+          case UserStatus.toRemove:
+            return Colors.deepOrange;
+        }
+      }(),
     );
   }
 
   Widget _generateRightHandSideColumnRow(user) {
     var _key = Key(user.name + user.dateStartOfEducation.toString());
     var _cells = LinkedHashMap<String, Widget>();
-    var _color = user.toRemove ? Colors.deepOrange : Colors.transparent;
     _cells['date'] = Container(
       child: TextFormField(
           key: _key,
@@ -425,7 +417,18 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
       alignment: Alignment.centerLeft,
     );
     return Container(
-        child: Row(children: _cells.values.toList()), color: _color);
+      child: Row(children: _cells.values.toList()),
+      color: () {
+        switch (user.status) {
+          case UserStatus.normal:
+            return Colors.transparent;
+          case UserStatus.toFormat:
+            return Colors.yellowAccent;
+          case UserStatus.toRemove:
+            return Colors.deepOrange;
+        }
+      }(),
+    );
   }
 }
 
@@ -434,6 +437,7 @@ class User {
   late DateTime dateStartOfEducation;
   late List<dynamic> paid;
   late num result;
+  UserStatus status = UserStatus.normal;
   bool toRemove = false;
 
   void calculateResult() {
@@ -445,8 +449,8 @@ class User {
     paid[paid.length - 2] = result;
   }
 
-  void changeRemove() {
-    toRemove = !toRemove;
+  void setRemove() {
+    status = UserStatus.toRemove;
   }
 
   Map toJson() => {
@@ -454,7 +458,7 @@ class User {
         'dateStartOfEducation': dateStartOfEducation.toString(),
         'paid': paid,
         'result': result,
-        'toRemove': toRemove
+        'status': status.index,
       };
 
   factory User.fromJson(dynamic json) {
@@ -463,7 +467,7 @@ class User {
         DateTime.parse(json['dateStartOfEducation']),
         json['paid'].cast<int>(),
         json['result'] as int,
-        json['toRemove'] as bool);
+        UserStatus.values[json['status']]);
   }
 
   User() {
@@ -479,7 +483,7 @@ class User {
   }
 
   User.allData(this.name, this.dateStartOfEducation, this.paid, this.result,
-      this.toRemove);
+      this.status);
 }
 
 // TODO:
