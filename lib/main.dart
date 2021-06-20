@@ -49,6 +49,11 @@ Future<void> getState() async {
     var json = jsonDecode(file.readAsStringSync());
     _usersOnMachine =
         (json['users'] as List).map((user) => User.fromJson(user)).toList();
+    for (var user in _usersOnMachine) {
+      if (user.toRemove) {
+        ++numberOfDeletedUsers;
+      }
+    }
     currentName = json['name'];
   }
 }
@@ -209,61 +214,6 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     }
   }
 
-  DataRow _mapUserToTable(User user) {
-    var _cells = LinkedHashMap<String, DataCell>();
-    _cells['date'] = (DataCell(TextFormField(
-      readOnly: user.toRemove,
-      initialValue: user.dateStartOfEducation,
-      decoration:
-          const InputDecoration(hintText: "Введите дату начала обучения"),
-      keyboardType: TextInputType.datetime,
-      onChanged: (val) {
-        user.dateStartOfEducation = val;
-      },
-      onTap: () {
-        if (Platform.isWindows) {
-          _saveState();
-        }
-      },
-    )));
-    for (var i = 0; i < months.length; ++i) {
-      _cells[months[i]] = (DataCell(TextFormField(
-        readOnly: user.toRemove,
-        keyboardType: TextInputType.number,
-        initialValue: user.paid[i] == null ? '' : user.paid[i].toString(),
-        inputFormatters: [FilteringTextInputFormatter.allow(RegExp("[0-9]+"))],
-        onChanged: (val) {
-          user.paid[i] = val == '' ? 0 : int.parse(val);
-          user.calculateResult();
-          setState(() {});
-        },
-        onTap: () {
-          if (Platform.isWindows) {
-            _saveState();
-          }
-        },
-      )));
-    }
-    _cells['Итого'] = DataCell(Text(user.result.toString()));
-    _cells['remove'] = (DataCell(
-        const Icon(
-          Icons.delete,
-          size: 20,
-        ), onTap: () {
-      if (Platform.isWindows) _saveState();
-      _removeUser(user);
-    }));
-    return DataRow(
-        cells: _cells.values.toList(),
-        color: MaterialStateProperty.resolveWith<Color>(
-            (Set<MaterialState> states) {
-          if (user.toRemove) {
-            return Colors.deepOrange;
-          }
-          return Colors.transparent; // Use the default value.
-        }));
-  }
-
   void _debugDeleteAll() {
     _users = <User>[User()];
     _users[0].name = '';
@@ -278,6 +228,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     return Scaffold(
       appBar: AppBar(
         title: TextFormField(
+          key: Key(currentName),
           initialValue: currentName,
           decoration:
               const InputDecoration(hintText: "Введите название филиала"),
@@ -311,14 +262,14 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
   }
 
   Widget _getBodyWidget() {
-    return Container(
+    return SizedBox(
       child: HorizontalDataTable(
           leftHandSideColumnWidth: 150,
           rightHandSideColumnWidth: 1620,
           isFixedHeader: true,
           headerWidgets: _buildColumns(),
-          leftSideItemBuilder: _generateFirstColumnRow,
-          rightSideItemBuilder: _generateRightHandSideColumnRow,
+          leftSideChildren: _users.map((user) => _generateFirstColumnRow(user)).toList(),
+          rightSideChildren: _users.map((user) => _generateRightHandSideColumnRow(user)).toList(),
           itemCount: _users.length,
           horizontalScrollbarStyle: const ScrollbarStyle(
             isAlwaysShown: true,
@@ -362,18 +313,20 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     return _columns;
   }
 
-  Widget _generateFirstColumnRow(BuildContext context, int index) {
+  Widget _generateFirstColumnRow(user) {
+    var _key = Key(user.name + user.dateStartOfEducation);
     return Container(
       child: TextFormField(
-        readOnly: _users[index].toRemove,
-        initialValue: _users[index].name,
+        key: _key,
+        readOnly: user.toRemove,
+        initialValue: user.name,
         inputFormatters: [FilteringTextInputFormatter.deny(RegExp("[0-9]+"))],
         maxLength: 60,
         decoration:
             const InputDecoration(hintText: "Введите Ф.И", counterText: ""),
         keyboardType: TextInputType.text,
         onChanged: (val) {
-          _users[index].name = val;
+          user.name = val;
         },
         onTap: () {
           if (Platform.isWindows) {
@@ -383,24 +336,26 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
       ),
       width: 150,
       height: 52,
-      padding: EdgeInsets.fromLTRB(5, 0, 0, 0),
+      padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
       alignment: Alignment.centerLeft,
-      color: _users[index].toRemove ? Colors.deepOrange : Colors.transparent,
+      color: user.toRemove ? Colors.deepOrange : Colors.transparent,
     );
   }
 
-  Widget _generateRightHandSideColumnRow(BuildContext context, int index) {
+  Widget _generateRightHandSideColumnRow(user) {
+    var _key = Key(user.name + user.dateStartOfEducation);
     var _cells = LinkedHashMap<String, Widget>();
     var _color =
-        _users[index].toRemove ? Colors.deepOrange : Colors.transparent;
+    user.toRemove ? Colors.deepOrange : Colors.transparent;
     _cells['date'] = Container(
       child: TextFormField(
-        readOnly: _users[index].toRemove,
-        initialValue: _users[index].dateStartOfEducation,
+        key: _key,
+        readOnly: user.toRemove,
+        initialValue: user.dateStartOfEducation,
         decoration: const InputDecoration(hintText: "Введите дату"),
         keyboardType: TextInputType.datetime,
         onChanged: (val) {
-          _users[index].dateStartOfEducation = val;
+          user.dateStartOfEducation = val;
         },
         onTap: () {
           if (Platform.isWindows) {
@@ -410,23 +365,24 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
       ),
       width: 200,
       height: 52,
-      padding: EdgeInsets.fromLTRB(5, 0, 0, 0),
+      padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
       alignment: Alignment.centerLeft,
     );
     for (var i = 0; i < months.length; ++i) {
       _cells[months[i]] = Container(
         child: TextFormField(
-            readOnly: _users[index].toRemove,
+            key: _key,
+            readOnly: user.toRemove,
             keyboardType: TextInputType.number,
-            initialValue: _users[index].paid[i] == null
+            initialValue: user.paid[i] == null
                 ? ''
-                : _users[index].paid[i].toString(),
+                : user.paid[i].toString(),
             inputFormatters: [
               FilteringTextInputFormatter.allow(RegExp("[0-9]+"))
             ],
             onChanged: (val) {
-              _users[index].paid[i] = val == '' ? 0 : int.parse(val);
-              _users[index].calculateResult();
+              user.paid[i] = val == '' ? 0 : int.parse(val);
+              user.calculateResult();
               setState(() {});
             },
             onTap: () {
@@ -436,28 +392,28 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
             }),
         width: i == months.length - 3 ? 220 : 100,
         height: 52,
-        padding: EdgeInsets.fromLTRB(5, 0, 0, 0),
+        padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
         alignment: Alignment.centerLeft,
       );
     }
     _cells['Итого'] = Container(
-      child: Text(_users[index].result.toString()),
+      child: Text(user.result.toString()),
       width: 100,
       height: 52,
-      padding: EdgeInsets.fromLTRB(5, 0, 0, 0),
+      padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
       alignment: Alignment.centerLeft,
     );
     _cells['remove'] = Container(
       child: IconButton(
           onPressed: () {
-            _removeUser(_users[index]);
+            _removeUser(user);
             setState(() {});
             if (Platform.isWindows) _saveState();
           },
           icon: const Icon(Icons.delete, size: 20)),
       width: 100,
       height: 52,
-      padding: EdgeInsets.fromLTRB(5, 0, 0, 0),
+      padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
       alignment: Alignment.centerLeft,
     );
     return Container(
