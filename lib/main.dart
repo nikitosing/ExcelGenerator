@@ -119,14 +119,20 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     file.writeAsString(json);
   }
 
+  void _sortUsers() {
+    _users.sort((a, b) {
+      return a.status.index - b.status.index;
+    });
+  }
+
   void _addUser() {
     if (_users.length == numberOfDeletedUsers ||
-       (_users[_users.length - 1 - numberOfDeletedUsers].name != '' &&
-        _users[_users.length - 1 - numberOfDeletedUsers].dateStartOfEducation != DateTime(1337))) {
+        (_users[_users.length - 1 - numberOfDeletedUsers].name != '' &&
+            _users[_users.length - 1 - numberOfDeletedUsers]
+                    .dateStartOfEducation !=
+                DateTime(1337))) {
       _users.add(User());
-      _users.sort((a, b) {
-        return a.status.index - b.status.index;
-      });
+      _sortUsers();
     }
   }
 
@@ -356,7 +362,8 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
       child: TextFormField(
           key: _key,
           readOnly: true,
-          initialValue: user.dateStartOfEducation == DateTime(1337) || user.dateStartOfEducation == null
+          initialValue: user.dateStartOfEducation == DateTime(1337) ||
+                  user.dateStartOfEducation == null
               ? ''
               : '${user.dateStartOfEducation.day}/${user.dateStartOfEducation.month}/${user.dateStartOfEducation.year}',
           decoration: const InputDecoration(hintText: "Выберите дату"),
@@ -420,6 +427,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
           onPressed: () {
             user.status = UserStatus.toFormat;
             ++numberOfDeletedUsers;
+            _sortUsers();
             setState(() {});
             if (Platform.isWindows) _saveState();
           },
@@ -433,6 +441,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
       child: IconButton(
           onPressed: () {
             user.status = UserStatus.toRemove;
+            _sortUsers();
             setState(() {});
             if (Platform.isWindows) _saveState();
           },
@@ -490,7 +499,9 @@ class User {
   factory User.fromJson(dynamic json) {
     return User.allData(
         json['name'] as String,
-        DateTime.parse(json['dateStartOfEducation']),
+        json['dateStartOfEducation'] == "null"
+            ? DateTime(1337)
+            : DateTime.parse(json['dateStartOfEducation']),
         json['paid'].cast<num>(),
         json['result'] as num,
         UserStatus.values[json['status']]);
