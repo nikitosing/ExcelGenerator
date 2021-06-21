@@ -13,6 +13,7 @@ import 'package:file_selector/file_selector.dart';
 import 'package:flutter_file_dialog/flutter_file_dialog.dart';
 import 'package:horizontal_data_table/horizontal_data_table.dart';
 import 'common.dart';
+import 'decimal_text_input_formatter.dart';
 
 String currentName = '';
 
@@ -28,7 +29,7 @@ Future<void> main() async {
 
 Future<void> getState() async {
   Directory tempDir = await getApplicationSupportDirectory();
-  var file = File('${tempDir.path}\\excel_generator_state.json');
+  var file = File('${tempDir.path}\\excel_generator_state1.json');
   if (file.existsSync()) {
     var json = jsonDecode(file.readAsStringSync());
     _usersOnMachine =
@@ -113,30 +114,19 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
 
   Future<void> _saveState() async {
     Directory tempDir = await getApplicationSupportDirectory();
-    var file = File('${tempDir.path}\\excel_generator_state.json');
+    var file = File('${tempDir.path}\\excel_generator_state1.json');
     var json = jsonEncode({'name': currentName, 'users': _users});
     file.writeAsString(json);
   }
 
   void _addUser() {
-    if (_users[_users.length - 1 - numberOfDeletedUsers].name != '' &&
-        _users[_users.length - 1 - numberOfDeletedUsers].dateStartOfEducation !=
-            DateTime(1337)) {
+    if (_users.length == numberOfDeletedUsers ||
+       (_users[_users.length - 1 - numberOfDeletedUsers].name != '' &&
+        _users[_users.length - 1 - numberOfDeletedUsers].dateStartOfEducation != DateTime(1337))) {
       _users.add(User());
       _users.sort((a, b) {
-        if (a.status == b.status) return 0;
-        if (b.status == UserStatus.toRemove) return -1;
-        return 1;
+        return a.status.index - b.status.index;
       });
-    }
-  }
-
-  void _removeUser(User user) {
-    if (user.status != UserStatus.toRemove) {
-      ++numberOfDeletedUsers;
-      user.setRemove();
-      _users.remove(user);
-      _users.add(user);
     }
   }
 
@@ -159,9 +149,9 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
           case UserStatus.normal:
             return '#ffffff';
           case UserStatus.toFormat:
-            return '#FFFF00';
+            return '#FF5722';
           case UserStatus.toRemove:
-            return 'FF5722';
+            return '#FFFF00';
         }
       }());
       sheet.updateCell(
@@ -187,11 +177,12 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     for (int i = 0; i < months.length; ++i) {
       num value = 0;
       for (var user in _users) {
-        value += user.paid[i] ?? 0;
+        value += user.paid[i] == null || user.status == UserStatus.toFormat
+            ? 0
+            : user.paid[i];
       }
       sheet.updateCell(
-          CellIndex.indexByColumnRow(columnIndex: i + 3, rowIndex: row),
-          value.toInt(),
+          CellIndex.indexByColumnRow(columnIndex: i + 3, rowIndex: row), value,
           cellStyle: CellStyle(backgroundColorHex: '#3792cb'));
     }
     DateTime now = DateTime.now();
@@ -350,9 +341,9 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
           case UserStatus.normal:
             return Colors.transparent;
           case UserStatus.toFormat:
-            return Colors.yellowAccent;
-          case UserStatus.toRemove:
             return Colors.deepOrange;
+          case UserStatus.toRemove:
+            return Colors.yellowAccent;
         }
       }(),
     );
@@ -396,15 +387,16 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
             key: _key,
             readOnly: user.status == UserStatus.toRemove,
             keyboardType: TextInputType.number,
-            initialValue: user.paid[i] == null ? '' : user.paid[i].toString(),
-            inputFormatters: [
-              FilteringTextInputFormatter.allow(RegExp("[0-9]+"))
-            ],
+            initialValue:
+                user.paid[i] == null ? '' : user.paid[i].toStringAsFixed(2),
+            inputFormatters: [DecimalTextInputFormatter(decimalRange: 2)],
             onChanged: (val) {
-              user.paid[i] = val == '' ? 0 : int.parse(val);
+              user.paid[i] = val == '' ? 0 : num.parse(val);
               user.calculateResult();
               setState(() {});
             },
+            decoration: const InputDecoration(counterText: ""),
+            maxLength: 12,
             onTap: () {
               if (Platform.isWindows) {
                 _saveState();
@@ -417,7 +409,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
       );
     }
     _cells['Итого'] = Container(
-      child: Text(user.result.toString()),
+      child: Text(user.result.toStringAsFixed(2)),
       width: 100,
       height: 52,
       padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
@@ -427,6 +419,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
       child: IconButton(
           onPressed: () {
             user.status = UserStatus.toFormat;
+            ++numberOfDeletedUsers;
             setState(() {});
             if (Platform.isWindows) _saveState();
           },
@@ -439,7 +432,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     _cells['remove'] = Container(
       child: IconButton(
           onPressed: () {
-            _removeUser(user);
+            user.status = UserStatus.toRemove;
             setState(() {});
             if (Platform.isWindows) _saveState();
           },
@@ -456,9 +449,9 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
           case UserStatus.normal:
             return Colors.transparent;
           case UserStatus.toFormat:
-            return Colors.yellowAccent;
-          case UserStatus.toRemove:
             return Colors.deepOrange;
+          case UserStatus.toRemove:
+            return Colors.yellowAccent;
         }
       }(),
     );
@@ -498,8 +491,8 @@ class User {
     return User.allData(
         json['name'] as String,
         DateTime.parse(json['dateStartOfEducation']),
-        json['paid'].cast<int>(),
-        json['result'] as int,
+        json['paid'].cast<num>(),
+        json['result'] as num,
         UserStatus.values[json['status']]);
   }
 
