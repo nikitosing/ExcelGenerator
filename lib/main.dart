@@ -356,7 +356,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
       child: TextFormField(
           key: _key,
           readOnly: true,
-          initialValue: user.dateStartOfEducation == DateTime(1337)
+          initialValue: user.dateStartOfEducation == DateTime(1337) || user.dateStartOfEducation == null
               ? ''
               : '${user.dateStartOfEducation.day}/${user.dateStartOfEducation.month}/${user.dateStartOfEducation.year}',
           decoration: const InputDecoration(hintText: "Выберите дату"),
