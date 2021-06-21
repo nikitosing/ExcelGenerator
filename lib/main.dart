@@ -168,7 +168,9 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
           cellStyle: _cellStyle);
       sheet.updateCell(
           CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: row),
-          '${user.dateStartOfEducation.day}/${user.dateStartOfEducation.month}/${user.dateStartOfEducation.year}',
+          user.dateStartOfEducation == DateTime(1337)
+              ? ''
+              : '${user.dateStartOfEducation.day}/${user.dateStartOfEducation.month}/${user.dateStartOfEducation.year}',
           cellStyle: _cellStyle);
       int column = 3;
       for (var paid in user.paid) {
