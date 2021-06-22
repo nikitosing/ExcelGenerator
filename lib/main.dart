@@ -287,33 +287,45 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     _columns.add(Container(
         child: const Text('Ф.И.', style: _columnTextStyle),
         width: 150,
-        height: 52,
+        height: 104,
         padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
         alignment: Alignment.centerLeft));
     _columns.add(Container(
         child: const Text('Дата начала занятий', style: _columnTextStyle),
         width: 200,
-        height: 52,
+        height: 104,
         padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
         alignment: Alignment.centerLeft));
     for (var i = 0; i < months.length; i++) {
+      num _sum = 0;
+      for (var user in _users) {
+        if (user.status == UserStatus.toFormat) break;
+        _sum += user.paid[i] ?? 0;
+      }
       _columns.add(Container(
-          child: Text(months[i], style: _columnTextStyle),
+          child: Column(
+            children: [
+              Expanded(child: Text(months[i], style: _columnTextStyle)),
+              Expanded(
+                  child: Text(_sum.toString(),
+                      textAlign: TextAlign.left, style: _columnTextStyle))
+            ],
+          ),
           width: i == months.length - 3 ? 220 : 100,
-          height: 52,
+          height: 104,
           padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
           alignment: Alignment.centerLeft));
     }
     _columns.add(Container(
         child: const Text(''),
         width: 50,
-        height: 52,
+        height: 104,
         padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
         alignment: Alignment.centerLeft));
     _columns.add(Container(
         child: const Text(''),
         width: 50,
-        height: 52,
+        height: 104,
         padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
         alignment: Alignment.centerLeft));
     return _columns;
@@ -394,7 +406,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
       _cells[months[i]] = Container(
         child: TextFormField(
             key: _key,
-            readOnly: user.status == UserStatus.toRemove,
+            readOnly: user.status != UserStatus.normal,
             keyboardType: TextInputType.number,
             initialValue:
                 user.paid[i] == null ? '' : user.paid[i].toStringAsFixed(2),
@@ -427,11 +439,13 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     _cells['edit'] = Container(
       child: IconButton(
           onPressed: () {
-            user.status = UserStatus.toFormat;
-            ++numberOfDeletedUsers;
-            _sortUsers();
-            setState(() {});
-            if (Platform.isWindows) _saveState();
+            if (user.status == UserStatus.normal) {
+              user.status = UserStatus.toFormat;
+              ++numberOfDeletedUsers;
+              _sortUsers();
+              setState(() {});
+              if (Platform.isWindows) _saveState();
+            }
           },
           icon: const Icon(Icons.edit, size: 20)),
       width: 50,
@@ -442,10 +456,12 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     _cells['remove'] = Container(
       child: IconButton(
           onPressed: () {
-            user.status = UserStatus.toRemove;
-            _sortUsers();
-            setState(() {});
-            if (Platform.isWindows) _saveState();
+            if (user.status == UserStatus.normal) {
+              user.status = UserStatus.toRemove;
+              _sortUsers();
+              setState(() {});
+              if (Platform.isWindows) _saveState();
+            }
           },
           icon: const Icon(Icons.delete, size: 20)),
       width: 50,
