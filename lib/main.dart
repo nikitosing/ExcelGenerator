@@ -14,6 +14,8 @@ import 'package:flutter_file_dialog/flutter_file_dialog.dart';
 import 'package:horizontal_data_table/horizontal_data_table.dart';
 import 'common.dart';
 import 'decimal_text_input_formatter.dart';
+import 'package:flutter_xlider/flutter_xlider.dart';
+import 'package:overlay_container/overlay_container.dart';
 
 String currentName = '';
 
@@ -205,7 +207,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
       ]);
       const mimeType = "application/vnd.ms-excel";
       final file = XFile.fromData(data, name: name, mimeType: mimeType);
-      await file.saveTo(path);
+      await file.saveTo(path!);
     } else if (Platform.isAndroid) {
       final params = SaveFileDialogParams(data: data, fileName: name);
       final filePath = await FlutterFileDialog.saveFile(params: params);
@@ -246,21 +248,51 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
           IconButton(onPressed: _pushSave, icon: const Icon(Icons.save))
         ],
       ),
-      body: Column(children: [
+      body: Stack(children: [
+        _getBodyWidget(),
         Align(
-          alignment: Alignment.centerLeft,
+            alignment: Alignment.topLeft,
             child: SizedBox(
-                width: 430,
-                height: 50,
-                child: Slider(
-                    min: 0,
-                    max: 400.0,
-                    value: _nameColumnWidth,
-                    onChanged: (double value) {
-                      _nameColumnWidth = value;
-                      setState(() {});
-                    }))),
-        _getBodyWidget()
+                width: MediaQuery.of(context).size.width - 100,
+                height: 104,
+                child: FlutterSlider(
+                  trackBar: const FlutterSliderTrackBar(
+                    inactiveTrackBar: BoxDecoration(
+                      color: Colors.transparent,
+                    ),
+                    activeTrackBar: BoxDecoration(
+                      color: Colors.transparent,
+                    ),
+                    activeDisabledTrackBarColor: Colors.transparent,
+                    inactiveDisabledTrackBarColor: Colors.transparent,
+                  ),
+                  handlerWidth: 5,
+                  handlerAnimation:
+                      const FlutterSliderHandlerAnimation(scale: 1),
+                  handler: FlutterSliderHandler(
+                      foregroundDecoration:
+                          BoxDecoration(color: Colors.grey[400]),
+                      child: const SizedBox(
+                          width: 9,
+                          height: double.infinity,
+                          child: MouseRegion(
+                              cursor: SystemMouseCursors.resizeColumn))),
+                  handlerHeight: double.infinity,
+                  touchSize: 10,
+                  visibleTouchArea: false,
+                  selectByTap: false,
+                  jump: false,
+                  values: [_nameColumnWidth],
+                  tooltip: FlutterSliderTooltip(
+                    disabled: true,
+                  ),
+                  max: MediaQuery.of(context).size.width - 100,
+                  min: 0,
+                  onDragging: (handlerIndex, lowerValue, upperValue) {
+                    _nameColumnWidth = lowerValue < 45 ? 45 : lowerValue;
+                    setState(() {});
+                  },
+                )))
       ]),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
@@ -275,9 +307,10 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
   }
 
   Widget _getBodyWidget() {
-    return Expanded(
-        child: Center(
+    return SizedBox(
       child: HorizontalDataTable(
+          leftHandSideColBackgroundColor: const Color(0xFAFAFA),
+          rightHandSideColBackgroundColor: const Color(0xFAFAFA),
           leftHandSideColumnWidth: _nameColumnWidth,
           rightHandSideColumnWidth: 1620,
           isFixedHeader: true,
@@ -293,8 +326,8 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
             thickness: 5.0,
             radius: Radius.circular(5.0),
           )),
-      //height: MediaQuery.of(context).size.height,
-    ));
+      height: MediaQuery.of(context).size.height,
+    );
   }
 
   List<Widget> _buildColumns() {
@@ -302,17 +335,20 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
         TextStyle(fontSize: 18, fontWeight: FontWeight.bold);
     var _columns = <Widget>[];
     _columns.add(Container(
-        child: const Center(child: Text('Ф.И.', style: _columnTextStyle)),
+        child: const Center(
+            child: Text('Ф.И.',
+                style: _columnTextStyle, textAlign: TextAlign.center)),
         width: _nameColumnWidth,
         height: 104,
         padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
-        alignment: Alignment.centerLeft));
+        alignment: Alignment.center));
     _columns.add(Container(
-        child: const Text('Дата начала занятий', style: _columnTextStyle),
+        child: const Text('Дата начала занятий',
+            style: _columnTextStyle, textAlign: TextAlign.center),
         width: 200,
         height: 104,
         padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
-        alignment: Alignment.centerLeft));
+        alignment: Alignment.center));
     for (var i = 0; i < months.length; i++) {
       num _sum = 0;
       for (var user in _users) {
@@ -322,16 +358,18 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
       _columns.add(Container(
           child: Column(
             children: [
-              Expanded(child: Text(months[i], style: _columnTextStyle)),
+              Expanded(
+                  child: Text(months[i],
+                      style: _columnTextStyle, textAlign: TextAlign.center)),
               Expanded(
                   child: Text(_sum.toString(),
-                      textAlign: TextAlign.left, style: _columnTextStyle))
+                      textAlign: TextAlign.center, style: _columnTextStyle))
             ],
           ),
           width: i == months.length - 3 ? 220 : 100,
           height: 104,
           padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
-          alignment: Alignment.centerLeft));
+          alignment: Alignment.center));
     }
     _columns.add(Container(
         child: const Text(''),
