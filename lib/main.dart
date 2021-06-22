@@ -91,6 +91,7 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
   var _users = _usersOnMachine;
+  double _nameColumnWidth = 100;
 
   @override
   initState() {
@@ -245,7 +246,22 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
           IconButton(onPressed: _pushSave, icon: const Icon(Icons.save))
         ],
       ),
-      body: _getBodyWidget(),
+      body: Column(children: [
+        Align(
+          alignment: Alignment.centerLeft,
+            child: SizedBox(
+                width: 430,
+                height: 50,
+                child: Slider(
+                    min: 0,
+                    max: 400.0,
+                    value: _nameColumnWidth,
+                    onChanged: (double value) {
+                      _nameColumnWidth = value;
+                      setState(() {});
+                    }))),
+        _getBodyWidget()
+      ]),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           setState(() {
@@ -259,9 +275,10 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
   }
 
   Widget _getBodyWidget() {
-    return SizedBox(
+    return Expanded(
+        child: Center(
       child: HorizontalDataTable(
-          leftHandSideColumnWidth: 150,
+          leftHandSideColumnWidth: _nameColumnWidth,
           rightHandSideColumnWidth: 1620,
           isFixedHeader: true,
           headerWidgets: _buildColumns(),
@@ -276,8 +293,8 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
             thickness: 5.0,
             radius: Radius.circular(5.0),
           )),
-      height: MediaQuery.of(context).size.height,
-    );
+      //height: MediaQuery.of(context).size.height,
+    ));
   }
 
   List<Widget> _buildColumns() {
@@ -285,8 +302,8 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
         TextStyle(fontSize: 18, fontWeight: FontWeight.bold);
     var _columns = <Widget>[];
     _columns.add(Container(
-        child: const Text('Ф.И.', style: _columnTextStyle),
-        width: 150,
+        child: const Center(child: Text('Ф.И.', style: _columnTextStyle)),
+        width: _nameColumnWidth,
         height: 104,
         padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
         alignment: Alignment.centerLeft));
@@ -352,7 +369,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
           }
         },
       ),
-      width: 150,
+      width: _nameColumnWidth,
       height: 52,
       padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
       alignment: Alignment.centerLeft,
