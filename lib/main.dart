@@ -8,10 +8,9 @@ import 'package:path_provider/path_provider.dart';
 import 'common.dart';
 import 'user_table.dart';
 
-String currentName = '';
 
-var _usersOnMachine = <User>[User()];
-var numberOfDeletedUsers = 0;
+var affilates = {};
+
 const _title = 'ExcelGenerator';
 
 Future<void> main() async {
@@ -22,17 +21,9 @@ Future<void> main() async {
 
 Future<void> getState() async {
   Directory tempDir = await getApplicationSupportDirectory();
-  var file = File('${tempDir.path}\\excel_generator_state1.json');
+  var file = File('${tempDir.path}\\excel_generator_state2.json');
   if (file.existsSync()) {
-    var json = jsonDecode(file.readAsStringSync());
-    _usersOnMachine =
-        (json['users'] as List).map((user) => User.fromJson(user)).toList();
-    for (var user in _usersOnMachine) {
-      if (user.status == UserStatus.toEdit) {
-        ++numberOfDeletedUsers;
-      }
-    }
-    currentName = json['name'];
+    affilates = jsonDecode(file.readAsStringSync());
   }
 }
 
@@ -67,9 +58,9 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: _title,
       theme: ThemeData(
-        primarySwatch: Colors.cyan,
+        primarySwatch: Colors.grey,
       ),
-      home: UserTable(users: _usersOnMachine, name: currentName),
+      home: UserTable(users: affilates[affilates.keys.first].map((user) => User.fromJson(user)).toList(), name: affilates.keys.first),
     );
   }
 }

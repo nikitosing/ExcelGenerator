@@ -35,11 +35,13 @@ class _UserTableState extends State<UserTable> with WidgetsBindingObserver {
 
   double _nameColumnWidth = 100;
   int numberOfDeletedUsers = 0;
+   var entryName = '';
 
   @override
   initState() {
     super.initState();
     WidgetsBinding.instance!.addObserver(this);
+    entryName = widget.name;
     for (var user in widget.users) {
       if (user.status == UserStatus.toEdit) {
         ++numberOfDeletedUsers;
@@ -63,9 +65,18 @@ class _UserTableState extends State<UserTable> with WidgetsBindingObserver {
 
   Future<void> _saveState() async {
     Directory tempDir = await getApplicationSupportDirectory();
-    var file = File('${tempDir.path}\\excel_generator_state1.json');
-    var json = jsonEncode({'name': widget.name, 'users': widget.users});
-    file.writeAsString(json);
+    var file = File('${tempDir.path}\\excel_generator_state2.json');
+    var json = jsonDecode('{}');
+    if (file.existsSync()) {
+      json = jsonDecode(file.readAsStringSync());
+      if (entryName != widget.name) {
+        json.remove(entryName);
+        entryName = widget.name;
+      }
+    }
+    json[widget.name] = widget.users;
+
+    file.writeAsString(jsonEncode(json));
   }
 
   void _sortUsers() {
