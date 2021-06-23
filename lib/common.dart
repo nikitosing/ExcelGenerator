@@ -18,5 +18,5 @@ var columns = ['Кол. Чел', 'Ф. И.', 'Дата начала заняти�
 enum UserStatus {
   normal,
   toRemove,
-  toFormat,
+  toEdit,
 }

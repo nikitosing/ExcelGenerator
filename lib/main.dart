@@ -15,7 +15,6 @@ import 'package:horizontal_data_table/horizontal_data_table.dart';
 import 'common.dart';
 import 'decimal_text_input_formatter.dart';
 import 'package:flutter_xlider/flutter_xlider.dart';
-import 'package:overlay_container/overlay_container.dart';
 
 String currentName = '';
 
@@ -37,7 +36,7 @@ Future<void> getState() async {
     _usersOnMachine =
         (json['users'] as List).map((user) => User.fromJson(user)).toList();
     for (var user in _usersOnMachine) {
-      if (user.toRemove) {
+      if (user.status == UserStatus.toEdit) {
         ++numberOfDeletedUsers;
       }
     }
@@ -153,16 +152,10 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     }
     int row = 1;
     for (User user in _users) {
-      var _cellStyle = CellStyle(backgroundColorHex: () {
-        switch (user.status) {
-          case UserStatus.normal:
-            return '#ffffff';
-          case UserStatus.toFormat:
-            return '#FF5722';
-          case UserStatus.toRemove:
-            return '#FFFF00';
-        }
-      }());
+      if (user.status == UserStatus.toEdit) {
+        break;
+      }
+      var _cellStyle = CellStyle(backgroundColorHex: user.status == UserStatus.normal ? '#ffffff' : '#FFFF00');
       sheet.updateCell(
           CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: row), row,
           cellStyle: _cellStyle);
@@ -188,14 +181,41 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     for (int i = 0; i < months.length; ++i) {
       num value = 0;
       for (var user in _users) {
-        value += user.paid[i] == null || user.status == UserStatus.toFormat
-            ? 0
-            : user.paid[i];
+        if (user.status == UserStatus.toEdit) {
+          break;
+        }
+        value += user.paid[i] ?? 0;
       }
       sheet.updateCell(
           CellIndex.indexByColumnRow(columnIndex: i + 3, rowIndex: row), value,
           cellStyle: CellStyle(backgroundColorHex: '#3792cb'));
     }
+    row += 2;
+    for (var i = _users.length - numberOfDeletedUsers; i < _users.length; ++i) {
+      var _cellStyle = CellStyle(backgroundColorHex: '#FF5722');
+      sheet.updateCell(
+          CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: row), row - 2,
+          cellStyle: _cellStyle);
+      sheet.updateCell(
+          CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: row), _users[i].name,
+          cellStyle: _cellStyle);
+      sheet.updateCell(
+          CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: row),
+          _users[i].dateStartOfEducation == DateTime(1337)
+              ? ''
+              : '${_users[i].dateStartOfEducation.day}/${_users[i].dateStartOfEducation.month}/${_users[i].dateStartOfEducation.year}',
+          cellStyle: _cellStyle);
+      int column = 3;
+      for (var paid in _users[i].paid) {
+        sheet.updateCell(
+            CellIndex.indexByColumnRow(columnIndex: column, rowIndex: row),
+            paid ?? '',
+            cellStyle: _cellStyle);
+        column++;
+      }
+      row++;
+    }
+
     DateTime now = DateTime.now();
     String formattedDate = DateFormat('yyyy-MM-dd').format(now);
     //saveExcel(excel, 'D:\\excelGenerator\\Отчет ' + formattedDate + '.xlsx');
@@ -352,7 +372,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
     for (var i = 0; i < months.length; i++) {
       num _sum = 0;
       for (var user in _users) {
-        if (user.status == UserStatus.toFormat) break;
+        if (user.status == UserStatus.toEdit) break;
         _sum += user.paid[i] ?? 0;
       }
       _columns.add(Container(
@@ -415,7 +435,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
         switch (user.status) {
           case UserStatus.normal:
             return Colors.transparent;
-          case UserStatus.toFormat:
+          case UserStatus.toEdit:
             return Colors.deepOrange;
           case UserStatus.toRemove:
             return Colors.yellowAccent;
@@ -438,7 +458,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
           decoration: const InputDecoration(hintText: "Выберите дату"),
           keyboardType: TextInputType.datetime,
           onTap: () {
-            if (!user.toRemove) {
+            if (user.status == UserStatus.normal) {
               showDatePicker(
                       context: context,
                       initialDate: DateTime.now(),
@@ -495,7 +515,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
       child: IconButton(
           onPressed: () {
             if (user.status == UserStatus.normal) {
-              user.status = UserStatus.toFormat;
+              user.status = UserStatus.toEdit;
               ++numberOfDeletedUsers;
               _sortUsers();
               setState(() {});
@@ -530,7 +550,7 @@ class _MyHomePageState extends State<MyHomePage> with WidgetsBindingObserver {
         switch (user.status) {
           case UserStatus.normal:
             return Colors.transparent;
-          case UserStatus.toFormat:
+          case UserStatus.toEdit:
             return Colors.deepOrange;
           case UserStatus.toRemove:
             return Colors.yellowAccent;
@@ -546,7 +566,6 @@ class User {
   late List<dynamic> paid;
   late num result;
   UserStatus status = UserStatus.normal;
-  bool toRemove = false;
 
   void calculateResult() {
     paid[paid.length - 2] = 0;
