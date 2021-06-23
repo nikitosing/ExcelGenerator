@@ -5,11 +5,13 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 
-import 'common.dart';
+import 'affiliates_controller.dart';
 import 'user_table.dart';
 
-
-var affilates = {};
+var affiliateCnt = 1;
+var affiliates = {
+  '0': {'name': '', 'users': []}
+};
 
 const _title = 'ExcelGenerator';
 
@@ -21,9 +23,19 @@ Future<void> main() async {
 
 Future<void> getState() async {
   Directory tempDir = await getApplicationSupportDirectory();
-  var file = File('${tempDir.path}\\excel_generator_state2.json');
+  var file = File('${tempDir.path}\\excel_generator_state3.json');
   if (file.existsSync()) {
-    affilates = jsonDecode(file.readAsStringSync());
+    var json = jsonDecode(file.readAsStringSync());
+    affiliates = {};
+    for (var entry in json.entries) {
+      affiliateCnt = 0;
+      affiliates[entry.key] = {
+        'name': entry.value['name'],
+        'users':
+            entry.value['users'].map((user) => User.fromJson(user)).toList()
+      };
+    }
+    affiliateCnt = int.parse(affiliates.keys.last);
   }
 }
 
@@ -33,9 +45,12 @@ class LoadingScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      debugShowCheckedModeBanner: true,
+      showSemanticsDebugger: true,
+      debugShowMaterialGrid: true,
         title: _title,
         theme: ThemeData(
-          primarySwatch: Colors.cyan,
+          primarySwatch: Colors.grey,
         ),
         home: Scaffold(
             appBar: AppBar(
@@ -56,14 +71,16 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: _title,
-      theme: ThemeData(
-        primarySwatch: Colors.grey,
-      ),
-      home: UserTable(users: affilates[affilates.keys.first].map((user) => User.fromJson(user)).toList(), name: affilates.keys.first),
-    );
+        title: _title,
+        theme: ThemeData(
+          primarySwatch: Colors.grey,
+        ),
+        home: AffiliatesController(
+            affiliates: affiliates, affiliatesCnt: affiliateCnt));
   }
 }
+
+//UserTable(users: affilates[affilates.keys.first].map((user) => User.fromJson(user)).toList(), name: affilates.keys.first),
 
 // TODO:
 // 1. сделать кнопку сохранить для строки или автоматом как-нибудь все это дело чтобы сохранялось              - done

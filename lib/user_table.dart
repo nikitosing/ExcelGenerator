@@ -19,10 +19,15 @@ import 'common.dart';
 import 'decimal_text_input_formatter.dart';
 
 class UserTable extends StatefulWidget {
-  var users = [];
-  var name = '';
+  final users;
+  final name;
+  final affiliateId;
 
-  UserTable({Key? key, this.users = const [], this.name = ''})
+  const UserTable(
+      {Key? key,
+      this.users = const [],
+      this.name = '',
+      required this.affiliateId})
       : super(key: key);
 
   @override
@@ -35,14 +40,20 @@ class _UserTableState extends State<UserTable> with WidgetsBindingObserver {
 
   double _nameColumnWidth = 100;
   int numberOfDeletedUsers = 0;
-   var entryName = '';
+  var entryName = '';
+  var name = '';
+  var users = [];
+  var affiliateId = '';
 
   @override
   initState() {
     super.initState();
     WidgetsBinding.instance!.addObserver(this);
+    users = widget.users;
+    name = widget.name;
     entryName = widget.name;
-    for (var user in widget.users) {
+    affiliateId = widget.affiliateId;
+    for (var user in users) {
       if (user.status == UserStatus.toEdit) {
         ++numberOfDeletedUsers;
       }
@@ -65,172 +76,37 @@ class _UserTableState extends State<UserTable> with WidgetsBindingObserver {
 
   Future<void> _saveState() async {
     Directory tempDir = await getApplicationSupportDirectory();
-    var file = File('${tempDir.path}\\excel_generator_state2.json');
+    var file = File('${tempDir.path}\\excel_generator_state3.json');
     var json = jsonDecode('{}');
     if (file.existsSync()) {
       json = jsonDecode(file.readAsStringSync());
-      if (entryName != widget.name) {
-        json.remove(entryName);
-        entryName = widget.name;
-      }
     }
-    json[widget.name] = widget.users;
+    json[affiliateId]['users'] = users;
+    json[affiliateId]['name'] = name;
 
     file.writeAsString(jsonEncode(json));
   }
 
   void _sortUsers() {
-    widget.users.sort((a, b) {
+    users.sort((a, b) {
       return a.status.index - b.status.index;
     });
   }
 
   void _addUser() {
-    if (widget.users.length == numberOfDeletedUsers ||
-        (widget.users[widget.users.length - 1 - numberOfDeletedUsers].name !=
-                '' &&
-            widget.users[widget.users.length - 1 - numberOfDeletedUsers]
+    if (users.length == numberOfDeletedUsers ||
+        (users[users.length - 1 - numberOfDeletedUsers].name != '' &&
+            users[users.length - 1 - numberOfDeletedUsers]
                     .dateStartOfEducation !=
                 DateTime(1337))) {
-      widget.users.add(User());
+      users.add(User());
       _sortUsers();
     }
-  }
-
-  Future<void> _pushSave() async {
-    _saveState();
-    var excel = Excel.createExcel();
-    excel.rename('Sheet1', widget.name);
-    var sheet = excel[widget.name];
-    for (int i = 0; i < columns.length; ++i) {
-      var cellStyle = CellStyle(
-          bold: true, fontSize: 10, textWrapping: TextWrapping.WrapText);
-      sheet.updateCell(
-          CellIndex.indexByColumnRow(columnIndex: i, rowIndex: 0), columns[i],
-          cellStyle: cellStyle);
-    }
-    int row = 1;
-    for (User user in widget.users) {
-      if (user.status == UserStatus.toEdit) {
-        break;
-      }
-      var _cellStyle = CellStyle(
-          backgroundColorHex:
-              user.status == UserStatus.normal ? '#ffffff' : '#FFFF00');
-      sheet.updateCell(
-          CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: row), row,
-          cellStyle: _cellStyle);
-      sheet.updateCell(
-          CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: row), user.name,
-          cellStyle: _cellStyle);
-      sheet.updateCell(
-          CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: row),
-          user.dateStartOfEducation == DateTime(1337)
-              ? ''
-              : '${user.dateStartOfEducation.day}/${user.dateStartOfEducation.month}/${user.dateStartOfEducation.year}',
-          cellStyle: _cellStyle);
-      int column = 3;
-      for (var paid in user.paid) {
-        sheet.updateCell(
-            CellIndex.indexByColumnRow(columnIndex: column, rowIndex: row),
-            paid ?? '',
-            cellStyle: _cellStyle);
-        column++;
-      }
-      row++;
-    }
-    for (int i = 0; i < months.length; ++i) {
-      num value = 0;
-      for (var user in widget.users) {
-        if (user.status == UserStatus.toEdit) {
-          break;
-        }
-        value += user.paid[i] ?? 0;
-      }
-      sheet.updateCell(
-          CellIndex.indexByColumnRow(columnIndex: i + 3, rowIndex: row), value,
-          cellStyle: CellStyle(backgroundColorHex: '#3792cb'));
-    }
-    row += 2;
-    for (var i = widget.users.length - numberOfDeletedUsers;
-        i < widget.users.length;
-        ++i) {
-      var _cellStyle = CellStyle(backgroundColorHex: '#FF5722');
-      sheet.updateCell(
-          CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: row), row - 2,
-          cellStyle: _cellStyle);
-      sheet.updateCell(
-          CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: row),
-          widget.users[i].name,
-          cellStyle: _cellStyle);
-      sheet.updateCell(
-          CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: row),
-          widget.users[i].dateStartOfEducation == DateTime(1337)
-              ? ''
-              : '${widget.users[i].dateStartOfEducation.day}/${widget.users[i].dateStartOfEducation.month}/${widget.users[i].dateStartOfEducation.year}',
-          cellStyle: _cellStyle);
-      int column = 3;
-      for (var paid in widget.users[i].paid) {
-        sheet.updateCell(
-            CellIndex.indexByColumnRow(columnIndex: column, rowIndex: row),
-            paid ?? '',
-            cellStyle: _cellStyle);
-        column++;
-      }
-      row++;
-    }
-
-    DateTime now = DateTime.now();
-    String formattedDate = DateFormat('yyyy-MM-dd').format(now);
-    //saveExcel(excel, 'D:\\excelGenerator\\Отчет ' + formattedDate + '.xlsx');
-    final name = "Отчет ${widget.name} $formattedDate.xlsx";
-    final data = Uint8List.fromList(excel.encode()!);
-    if (Platform.isWindows) {
-      final path = await getSavePath(suggestedName: name, acceptedTypeGroups: [
-        XTypeGroup(label: 'Excel', extensions: ['xlsx'])
-      ]);
-      const mimeType = "application/vnd.ms-excel";
-      final file = XFile.fromData(data, name: name, mimeType: mimeType);
-      await file.saveTo(path!);
-    } else if (Platform.isAndroid) {
-      final params = SaveFileDialogParams(data: data, fileName: name);
-      final filePath = await FlutterFileDialog.saveFile(params: params);
-    }
-  }
-
-  void _debugDeleteAll() {
-    widget.users = <User>[];
-
-    numberOfDeletedUsers = 0;
-    setState(() {});
-    _saveState();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: TextFormField(
-          key: Key(widget.name),
-          initialValue: widget.name,
-          decoration:
-              const InputDecoration(hintText: "Введите название филиала"),
-          onChanged: (val) {
-            widget.name = val;
-          },
-          onTap: () {
-            if (Platform.isWindows) {
-              _saveState();
-            }
-          },
-        ),
-        actions: [
-          IconButton(
-              onPressed: _debugDeleteAll,
-              icon: const Icon(Icons.delete_forever_outlined)),
-          IconButton(onPressed: _pushSave, icon: const Icon(Icons.save))
-        ],
-      ),
       body: Stack(children: [
         _getBodyWidget(),
         Align(
@@ -239,6 +115,7 @@ class _UserTableState extends State<UserTable> with WidgetsBindingObserver {
                 width: MediaQuery.of(context).size.width - 100,
                 height: 104,
                 child: FlutterSlider(
+                  key: Key('$affiliateId slider'),
                   trackBar: const FlutterSliderTrackBar(
                     inactiveTrackBar: BoxDecoration(
                       color: Colors.transparent,
@@ -298,13 +175,12 @@ class _UserTableState extends State<UserTable> with WidgetsBindingObserver {
           rightHandSideColumnWidth: 1620,
           isFixedHeader: true,
           headerWidgets: _buildColumns(),
-          leftSideChildren: widget.users
-              .map((user) => _generateFirstColumnRow(user))
-              .toList(),
-          rightSideChildren: widget.users
+          leftSideChildren:
+              users.map((user) => _generateFirstColumnRow(user)).toList(),
+          rightSideChildren: users
               .map((user) => _generateRightHandSideColumnRow(user))
               .toList(),
-          itemCount: widget.users.length,
+          itemCount: users.length,
           horizontalScrollbarStyle: const ScrollbarStyle(
             isAlwaysShown: true,
             thickness: 5.0,
@@ -335,7 +211,7 @@ class _UserTableState extends State<UserTable> with WidgetsBindingObserver {
         alignment: Alignment.center));
     for (var i = 0; i < months.length; i++) {
       num _sum = 0;
-      for (var user in widget.users) {
+      for (var user in users) {
         if (user.status == UserStatus.toEdit) break;
         _sum += user.paid[i] ?? 0;
       }
