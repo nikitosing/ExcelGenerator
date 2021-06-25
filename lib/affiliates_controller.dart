@@ -221,10 +221,10 @@ class _AffiliateControllerState extends State<AffiliatesController> {
                     });
                   },
                   icon: const Icon(Icons.add)),
-              IconButton(onPressed: xlsxSave, icon: Icon(Icons.save)),
+              IconButton(onPressed: xlsxSave, icon: const Icon(Icons.save)),
               IconButton(
                   onPressed: debugDeleteAll,
-                  icon: Icon(Icons.highlight_remove_outlined))
+                  icon: const Icon(Icons.highlight_remove_outlined))
             ],
             flexibleSpace: Align(
                 alignment: Alignment.centerLeft,
