@@ -7,6 +7,7 @@ import 'package:excel_generator/user_table.dart';
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/painting.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_file_dialog/flutter_file_dialog.dart';
 import 'package:intl/intl.dart';
@@ -117,12 +118,13 @@ class _AffiliateControllerState extends State<AffiliatesController> {
         }
         var _cellStyle = CellStyle(
             backgroundColorHex:
-            user.status == UserStatus.normal ? '#ffffff' : '#FFFF00');
+                user.status == UserStatus.normal ? '#ffffff' : '#FFFF00');
         sheet.updateCell(
             CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: row), row,
             cellStyle: _cellStyle);
         sheet.updateCell(
-            CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: row), user.name,
+            CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: row),
+            user.name,
             cellStyle: _cellStyle);
         sheet.updateCell(
             CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: row),
@@ -149,7 +151,8 @@ class _AffiliateControllerState extends State<AffiliatesController> {
           value += user.paid[i] ?? 0;
         }
         sheet.updateCell(
-            CellIndex.indexByColumnRow(columnIndex: i + 3, rowIndex: row), value,
+            CellIndex.indexByColumnRow(columnIndex: i + 3, rowIndex: row),
+            value,
             cellStyle: CellStyle(backgroundColorHex: '#3792cb'));
       }
       row += 2;
@@ -187,7 +190,7 @@ class _AffiliateControllerState extends State<AffiliatesController> {
     final data = Uint8List.fromList(excel.encode()!);
     if (Platform.isWindows) {
       final path =
-      await getSavePath(suggestedName: fileName, acceptedTypeGroups: [
+          await getSavePath(suggestedName: fileName, acceptedTypeGroups: [
         XTypeGroup(label: 'Excel', extensions: ['xlsx'])
       ]);
       const mimeType = "application/vnd.ms-excel";
@@ -219,13 +222,29 @@ class _AffiliateControllerState extends State<AffiliatesController> {
                   },
                   icon: const Icon(Icons.add)),
               IconButton(onPressed: xlsxSave, icon: Icon(Icons.save)),
-              IconButton(onPressed: debugDeleteAll, icon: Icon(Icons.highlight_remove_outlined))
+              IconButton(
+                  onPressed: debugDeleteAll,
+                  icon: Icon(Icons.highlight_remove_outlined))
             ],
-            flexibleSpace: SafeArea(
-                child: TabBar(
-              isScrollable: true,
-              tabs: affiliates.keys.map((id) => tabCreator(id)).toList(),
-            ))),
+            flexibleSpace: Align(
+                alignment: Alignment.centerLeft,
+                child: SizedBox(
+                    width: MediaQuery.of(context).size.width - 130,
+                    child: Scrollbar(
+                        thickness: Platform.isWindows ? 5 : 0,
+                        interactive: true,
+                        isAlwaysShown: true,
+                        child: SingleChildScrollView(
+                            scrollDirection: Axis.horizontal,
+                            primary: true,
+                            child: SizedBox(
+                                width: 152.0 * affiliates.length,
+                                height: 100,
+                                child: TabBar(
+                                  tabs: affiliates.keys
+                                      .map((id) => tabCreator(id))
+                                      .toList(),
+                                ))))))),
         body: TabBarView(
             children: affiliates.entries
                 .map((entry) => UserTable(
