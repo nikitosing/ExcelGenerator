@@ -27,7 +27,7 @@ class AffiliatesController extends StatefulWidget {
   State<AffiliatesController> createState() => _AffiliateControllerState();
 }
 
-class _AffiliateControllerState extends State<AffiliatesController> {
+class _AffiliateControllerState extends State<AffiliatesController> with WidgetsBindingObserver {
   @override
   AffiliatesController get widget => super.widget;
 
@@ -37,18 +37,33 @@ class _AffiliateControllerState extends State<AffiliatesController> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance!.addObserver(this);
     affiliates = widget.affiliates;
     affiliateCnt = widget.affiliatesCnt;
   }
 
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    super.didChangeAppLifecycleState(state);
+    if (state == AppLifecycleState.paused) {
+      saveState();
+    }
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance!.removeObserver(this);
+    super.dispose();
+  }
+
   void addAffiliate() {
     affiliates['${++affiliateCnt}'] = {'name': '', 'users': []};
-    saveState();
+    if (Platform.isWindows) saveState();
   }
 
   void removeAffiliate(var id) {
     affiliates.remove(id);
-    saveState();
+    if (Platform.isWindows) saveState();
   }
 
   Future<void> saveState() async {
@@ -59,7 +74,7 @@ class _AffiliateControllerState extends State<AffiliatesController> {
 
   Widget tabCreator(var id) {
     return SizedBox(
-        height: 70,
+        height: 100,
         width: 152,
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -74,9 +89,7 @@ class _AffiliateControllerState extends State<AffiliatesController> {
                     affiliates[id]['name'] = val;
                   },
                   onTap: () {
-                    if (Platform.isWindows) {
-                      saveState();
-                    }
+                    if (Platform.isWindows) saveState();
                   },
                 )),
             GestureDetector(
@@ -89,7 +102,7 @@ class _AffiliateControllerState extends State<AffiliatesController> {
                 child: SizedBox(
                   width: 18,
                   height: 18,
-                  child: Icon(Icons.highlight_remove, size: 18),
+                  child: Icon(Icons.close, size: 18),
                 ),
               ),
             ),
@@ -98,7 +111,7 @@ class _AffiliateControllerState extends State<AffiliatesController> {
   }
 
   Future<void> xlsxSave() async {
-    saveState();
+    if (Platform.isWindows) saveState();
     var excel = Excel.createExcel();
     for (var value in affiliates.values) {
       var name = value['name'];
@@ -185,7 +198,6 @@ class _AffiliateControllerState extends State<AffiliatesController> {
     excel.delete('Sheet1');
     DateTime now = DateTime.now();
     String formattedDate = DateFormat('yyyy-MM-dd').format(now);
-    //saveExcel(excel, 'D:\\excelGenerator\\Отчет ' + formattedDate + '.xlsx');
     final fileName = "Отчет $formattedDate.xlsx";
     final data = Uint8List.fromList(excel.encode()!);
     if (Platform.isWindows) {
@@ -209,6 +221,10 @@ class _AffiliateControllerState extends State<AffiliatesController> {
 
   @override
   Widget build(BuildContext context) {
+    var _tabBar = TabBar(
+      isScrollable: Platform.isAndroid,
+      tabs: affiliates.keys.map((id) => tabCreator(id)).toList(),
+    );
     return DefaultTabController(
       length: affiliates.length,
       child: Scaffold(
@@ -227,24 +243,23 @@ class _AffiliateControllerState extends State<AffiliatesController> {
                   icon: const Icon(Icons.highlight_remove_outlined))
             ],
             flexibleSpace: Align(
-                alignment: Alignment.centerLeft,
+                alignment: Alignment.bottomLeft,
                 child: SizedBox(
+                  height: Platform.isAndroid ? 50 : null,
                     width: MediaQuery.of(context).size.width - 130,
-                    child: Scrollbar(
-                        thickness: Platform.isWindows ? 5 : 0,
-                        interactive: true,
-                        isAlwaysShown: true,
-                        child: SingleChildScrollView(
-                            scrollDirection: Axis.horizontal,
-                            primary: true,
-                            child: SizedBox(
-                                width: 152.0 * affiliates.length,
-                                height: 100,
-                                child: TabBar(
-                                  tabs: affiliates.keys
-                                      .map((id) => tabCreator(id))
-                                      .toList(),
-                                ))))))),
+                    child: Platform.isWindows
+                        ? Scrollbar(
+                            thickness: 5,
+                            interactive: true,
+                            isAlwaysShown: true,
+                            child: SingleChildScrollView(
+                                scrollDirection: Axis.horizontal,
+                                primary: true,
+                                child: SizedBox(
+                                    width: 200.0 * affiliates.length,
+                                    height: 100,
+                                    child: _tabBar)))
+                        : _tabBar))),
         body: TabBarView(
             children: affiliates.entries
                 .map((entry) => UserTable(

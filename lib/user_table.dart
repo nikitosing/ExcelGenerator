@@ -43,7 +43,6 @@ class _UserTableState extends State<UserTable> with WidgetsBindingObserver {
   @override
   initState() {
     super.initState();
-    WidgetsBinding.instance!.addObserver(this);
     users = widget.users;
     name = widget.name;
     entryName = widget.name;
@@ -56,16 +55,7 @@ class _UserTableState extends State<UserTable> with WidgetsBindingObserver {
   }
 
   @override
-  void didChangeAppLifecycleState(AppLifecycleState state) {
-    super.didChangeAppLifecycleState(state);
-    if (state == AppLifecycleState.paused) {
-      _saveState();
-    }
-  }
-
-  @override
   void dispose() {
-    WidgetsBinding.instance!.removeObserver(this);
     super.dispose();
   }
 

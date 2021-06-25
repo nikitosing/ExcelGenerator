@@ -68,6 +68,8 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+      showSemanticsDebugger: false,
+        debugShowCheckedModeBanner: true,
         title: _title,
         theme: ThemeData(
           primarySwatch: Colors.grey,
