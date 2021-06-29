@@ -336,23 +336,6 @@ class _UserTableState extends State<UserTable> with WidgetsBindingObserver {
       padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
       alignment: Alignment.centerLeft,
     );
-    _cells['edit'] = Container(
-      child: IconButton(
-          onPressed: () {
-            if (user.status == UserStatus.normal) {
-              user.status = UserStatus.toEdit;
-              ++numberOfDeletedUsers;
-              _sortUsers();
-              setState(() {});
-              if (Platform.isWindows) _saveState();
-            }
-          },
-          icon: const Icon(Icons.edit, size: 20)),
-      width: 50,
-      height: 52,
-      padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
-      alignment: Alignment.centerLeft,
-    );
     _cells['remove'] = Container(
       child: IconButton(
           onPressed: () {
@@ -365,6 +348,23 @@ class _UserTableState extends State<UserTable> with WidgetsBindingObserver {
             }
           },
           icon: const Icon(Icons.delete, size: 20)),
+      width: 50,
+      height: 52,
+      padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
+      alignment: Alignment.centerLeft,
+    );
+    _cells['edit'] = Container(
+      child: IconButton(
+          onPressed: () {
+            if (user.status == UserStatus.normal) {
+              user.status = UserStatus.toEdit;
+              ++numberOfDeletedUsers;
+              _sortUsers();
+              setState(() {});
+              if (Platform.isWindows) _saveState();
+            }
+          },
+          icon: const Icon(Icons.edit, size: 20)),
       width: 50,
       height: 52,
       padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
