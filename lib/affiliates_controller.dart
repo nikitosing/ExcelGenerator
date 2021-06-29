@@ -18,21 +18,24 @@ import 'common.dart';
 class AffiliatesController extends StatefulWidget {
   final affiliates;
   final affiliatesCnt;
+  final cityName;
 
   const AffiliatesController(
-      {Key? key, this.affiliates, required this.affiliatesCnt})
+      {Key? key, this.affiliates, required this.affiliatesCnt, this.cityName})
       : super(key: key);
 
   @override
   State<AffiliatesController> createState() => _AffiliateControllerState();
 }
 
-class _AffiliateControllerState extends State<AffiliatesController> with WidgetsBindingObserver {
+class _AffiliateControllerState extends State<AffiliatesController>
+    with WidgetsBindingObserver {
   @override
   AffiliatesController get widget => super.widget;
 
   var affiliates = {};
   int affiliateCnt = 0;
+  var cityName = '';
 
   @override
   void initState() {
@@ -40,6 +43,7 @@ class _AffiliateControllerState extends State<AffiliatesController> with Widgets
     WidgetsBinding.instance!.addObserver(this);
     affiliates = widget.affiliates;
     affiliateCnt = widget.affiliatesCnt;
+    cityName = widget.cityName;
   }
 
   @override
@@ -68,13 +72,13 @@ class _AffiliateControllerState extends State<AffiliatesController> with Widgets
 
   Future<void> saveState() async {
     Directory tempDir = await getApplicationSupportDirectory();
-    var file = File('${tempDir.path}\\excel_generator_state3.json');
-    file.writeAsStringSync(jsonEncode(affiliates));
+    var file = File('${tempDir.path}\\excel_generator_state4.json');
+    file.writeAsStringSync(jsonEncode({'cityName': cityName, 'affiliates': affiliates}));
   }
 
   Widget tabCreator(var id) {
     return SizedBox(
-        height: 100,
+      height: 60,
         width: 152,
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -197,8 +201,8 @@ class _AffiliateControllerState extends State<AffiliatesController> with Widgets
     }
     excel.delete('Sheet1');
     DateTime now = DateTime.now();
-    String formattedDate = DateFormat('yyyy-MM-dd').format(now);
-    final fileName = "Отчет $formattedDate.xlsx";
+    String formattedDate = DateFormat('yyyy-MM-dd-HH-mm').format(now);
+    final fileName = "Отчет $cityName $formattedDate.xlsx";
     final data = Uint8List.fromList(excel.encode()!);
     if (Platform.isWindows) {
       final path =
@@ -229,6 +233,16 @@ class _AffiliateControllerState extends State<AffiliatesController> with Widgets
       length: affiliates.length,
       child: Scaffold(
         appBar: AppBar(
+          title: SafeArea(child: TextFormField(
+            key: Key(cityName),
+            initialValue: cityName,
+            onChanged: (val) {
+              cityName = val;
+            },
+            onTap: () {
+              if (Platform.isWindows) saveState();
+            },
+          )),
             actions: [
               IconButton(
                   onPressed: () {
@@ -242,24 +256,24 @@ class _AffiliateControllerState extends State<AffiliatesController> with Widgets
                   onPressed: debugDeleteAll,
                   icon: const Icon(Icons.highlight_remove_outlined))
             ],
-            flexibleSpace: Align(
-                alignment: Alignment.bottomLeft,
-                child: SizedBox(
-                  height: Platform.isAndroid ? 50 : null,
-                    width: MediaQuery.of(context).size.width - 130,
-                    child: Platform.isWindows
-                        ? Scrollbar(
-                            thickness: 5,
-                            interactive: true,
-                            isAlwaysShown: true,
-                            child: SingleChildScrollView(
-                                scrollDirection: Axis.horizontal,
-                                primary: true,
-                                child: SizedBox(
-                                    width: 200.0 * affiliates.length,
-                                    height: 100,
-                                    child: _tabBar)))
-                        : _tabBar))),
+            bottom: PreferredSize(
+                preferredSize: const Size.fromHeight(60.0),
+                child: Align(
+                    alignment: Alignment.bottomLeft,
+                    child: SizedBox(
+                        width: MediaQuery.of(context).size.width - 130,
+                        child: Platform.isWindows
+                            ? Scrollbar(
+                                thickness: 5,
+                                interactive: true,
+                                isAlwaysShown: true,
+                                child: SingleChildScrollView(
+                                    scrollDirection: Axis.horizontal,
+                                    primary: true,
+                                    child: SizedBox(
+                                        width: 200.0 * affiliates.length,
+                                        child: _tabBar)))
+                            : _tabBar)))),
         body: TabBarView(
             children: affiliates.entries
                 .map((entry) => UserTable(

@@ -61,14 +61,13 @@ class _UserTableState extends State<UserTable> with WidgetsBindingObserver {
 
   Future<void> _saveState() async {
     Directory tempDir = await getApplicationSupportDirectory();
-    var file = File('${tempDir.path}\\excel_generator_state3.json');
+    var file = File('${tempDir.path}\\excel_generator_state4.json');
     var json = jsonDecode('{}');
     if (file.existsSync()) {
       json = jsonDecode(file.readAsStringSync());
     }
-    json[affiliateId]['users'] = users;
-    json[affiliateId]['name'] = name;
-
+    json['affiliates'][affiliateId]['users'] = users;
+    json['affiliates'][affiliateId]['name'] = name;
     file.writeAsString(jsonEncode(json));
   }
 

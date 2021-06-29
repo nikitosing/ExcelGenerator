@@ -12,6 +12,7 @@ var affiliateCnt = 1;
 var affiliates = {
   '0': {'name': '', 'users': []}
 };
+var cityName = '';
 
 const _title = 'ExcelGenerator';
 
@@ -23,11 +24,12 @@ Future<void> main() async {
 
 Future<void> getState() async {
   Directory tempDir = await getApplicationSupportDirectory();
-  var file = File('${tempDir.path}\\excel_generator_state3.json');
+  var file = File('${tempDir.path}\\excel_generator_state4.json');
   if (file.existsSync()) {
     var json = jsonDecode(file.readAsStringSync());
     affiliates = {};
-    for (var entry in json.entries) {
+    cityName = json.containsKey('cityName') ? json['cityName'] : '';
+    for (var entry in json['affiliates'].entries) {
       affiliateCnt = 0;
       affiliates[entry.key] = {
         'name': entry.value['name'],
@@ -75,7 +77,7 @@ class MyApp extends StatelessWidget {
           primarySwatch: Colors.grey,
         ),
         home: AffiliatesController(
-            affiliates: affiliates, affiliatesCnt: affiliateCnt));
+            affiliates: affiliates, affiliatesCnt: affiliateCnt, cityName: cityName));
   }
 }
 
