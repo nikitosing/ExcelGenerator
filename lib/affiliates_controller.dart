@@ -73,12 +73,13 @@ class _AffiliateControllerState extends State<AffiliatesController>
   Future<void> saveState() async {
     Directory tempDir = await getApplicationSupportDirectory();
     var file = File('${tempDir.path}\\excel_generator_state4.json');
-    file.writeAsStringSync(jsonEncode({'cityName': cityName, 'affiliates': affiliates}));
+    file.writeAsStringSync(
+        jsonEncode({'cityName': cityName, 'affiliates': affiliates}));
   }
 
   Widget tabCreator(var id) {
     return SizedBox(
-      height: 60,
+        height: 60,
         width: 152,
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -211,7 +212,8 @@ class _AffiliateControllerState extends State<AffiliatesController>
       ]);
       const mimeType = "application/vnd.ms-excel";
       final file = XFile.fromData(data, name: fileName, mimeType: mimeType);
-      if (!(path!.contains('.xls') || path.contains('.xlsx'))) {
+      if (!(path!.substring(path.runes.length - 4) == '.xls' ||
+          path.substring(path.runes.length - 5) == '.xlsx')) {
         path += '.xls';
       }
       await file.saveTo(path);
@@ -236,16 +238,17 @@ class _AffiliateControllerState extends State<AffiliatesController>
       length: affiliates.length,
       child: Scaffold(
         appBar: AppBar(
-          title: SafeArea(child: TextFormField(
-            key: Key(cityName),
-            initialValue: cityName,
-            onChanged: (val) {
-              cityName = val;
-            },
-            onTap: () {
-              if (Platform.isWindows) saveState();
-            },
-          )),
+            title: SafeArea(
+                child: TextFormField(
+              key: Key(cityName),
+              initialValue: cityName,
+              onChanged: (val) {
+                cityName = val;
+              },
+              onTap: () {
+                if (Platform.isWindows) saveState();
+              },
+            )),
             actions: [
               IconButton(
                   onPressed: () {
