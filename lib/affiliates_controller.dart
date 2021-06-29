@@ -202,16 +202,19 @@ class _AffiliateControllerState extends State<AffiliatesController>
     excel.delete('Sheet1');
     DateTime now = DateTime.now();
     String formattedDate = DateFormat('yyyy-MM-dd-HH-mm').format(now);
-    final fileName = "Отчет $cityName $formattedDate.xlsx";
+    final fileName = "Отчет $cityName $formattedDate.xls";
     final data = Uint8List.fromList(excel.encode()!);
     if (Platform.isWindows) {
-      final path =
+      var path =
           await getSavePath(suggestedName: fileName, acceptedTypeGroups: [
-        XTypeGroup(label: 'Excel', extensions: ['xlsx'])
+        XTypeGroup(label: 'Excel', extensions: ['xlsx', 'xls'])
       ]);
       const mimeType = "application/vnd.ms-excel";
       final file = XFile.fromData(data, name: fileName, mimeType: mimeType);
-      await file.saveTo(path!);
+      if (!(path!.contains('.xls') || path.contains('.xlsx'))) {
+        path += '.xls';
+      }
+      await file.saveTo(path);
     } else if (Platform.isAndroid) {
       final params = SaveFileDialogParams(data: data, fileName: fileName);
       final filePath = await FlutterFileDialog.saveFile(params: params);
