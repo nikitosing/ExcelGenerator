@@ -49,7 +49,8 @@ class LoadingScreen extends StatelessWidget {
     return MaterialApp(
         title: _title,
         theme: ThemeData(
-          primarySwatch: Colors.grey,
+          primarySwatch: Colors.teal,
+          primaryColor: Colors.grey,
         ),
         home: Scaffold(
             appBar: AppBar(
@@ -70,14 +71,17 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      showSemanticsDebugger: false,
+        showSemanticsDebugger: false,
         debugShowCheckedModeBanner: true,
         title: _title,
         theme: ThemeData(
-          primarySwatch: Colors.grey,
+          primarySwatch: Colors.teal,
+          primaryColor: Colors.grey,
         ),
         home: AffiliatesController(
-            affiliates: affiliates, affiliatesCnt: affiliateCnt, cityName: cityName));
+            affiliates: affiliates,
+            affiliatesCnt: affiliateCnt,
+            cityName: cityName));
   }
 }
 

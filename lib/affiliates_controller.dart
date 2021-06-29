@@ -238,17 +238,18 @@ class _AffiliateControllerState extends State<AffiliatesController>
       length: affiliates.length,
       child: Scaffold(
         appBar: AppBar(
-            title: SafeArea(
+            title: SizedBox(
+                height: 35,
                 child: TextFormField(
-              key: Key(cityName),
-              initialValue: cityName,
-              onChanged: (val) {
-                cityName = val;
-              },
-              onTap: () {
-                if (Platform.isWindows) saveState();
-              },
-            )),
+                  key: Key(cityName),
+                  initialValue: cityName,
+                  onChanged: (val) {
+                    cityName = val;
+                  },
+                  onTap: () {
+                    if (Platform.isWindows) saveState();
+                  },
+                )),
             actions: [
               IconButton(
                   onPressed: () {
@@ -266,20 +267,18 @@ class _AffiliateControllerState extends State<AffiliatesController>
                 preferredSize: const Size.fromHeight(60.0),
                 child: Align(
                     alignment: Alignment.bottomLeft,
-                    child: SizedBox(
-                        width: MediaQuery.of(context).size.width - 130,
-                        child: Platform.isWindows
-                            ? Scrollbar(
-                                thickness: 5,
-                                interactive: true,
-                                isAlwaysShown: true,
-                                child: SingleChildScrollView(
-                                    scrollDirection: Axis.horizontal,
-                                    primary: true,
-                                    child: SizedBox(
-                                        width: 200.0 * affiliates.length,
-                                        child: _tabBar)))
-                            : _tabBar)))),
+                    child: Platform.isWindows
+                        ? Scrollbar(
+                            thickness: 5,
+                            interactive: true,
+                            isAlwaysShown: true,
+                            child: SingleChildScrollView(
+                                scrollDirection: Axis.horizontal,
+                                primary: true,
+                                child: SizedBox(
+                                    width: 152.0 * affiliates.length,
+                                    child: _tabBar)))
+                        : _tabBar))),
         body: TabBarView(
             children: affiliates.entries
                 .map((entry) => UserTable(
