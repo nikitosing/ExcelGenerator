@@ -70,7 +70,7 @@ class _AffiliateControllerState extends State<AffiliatesController>
     if (Platform.isWindows) saveState();
   }
 
-  Future<void> saveState() async {
+  void saveState() async {
     Directory tempDir = await getApplicationSupportDirectory();
     var file = File('${tempDir.path}\\excel_generator_state4.json');
     file.writeAsStringSync(
@@ -87,16 +87,21 @@ class _AffiliateControllerState extends State<AffiliatesController>
             SizedBox(
                 width: 100,
                 height: 35,
-                child: TextFormField(
-                  key: Key(id),
-                  initialValue: affiliates[id]['name'],
-                  onChanged: (val) {
-                    affiliates[id]['name'] = val;
-                  },
-                  onTap: () {
-                    if (Platform.isWindows) saveState();
-                  },
-                )),
+                child: Focus(
+                    skipTraversal: true,
+                    onFocusChange: (isFocus) {
+                      if (!isFocus && Platform.isWindows) saveState();
+                    },
+                    child: TextFormField(
+                      key: Key(id),
+                      initialValue: affiliates[id]['name'],
+                      onChanged: (val) {
+                        affiliates[id]['name'] = val;
+                      },
+                      onTap: () {
+                        if (Platform.isWindows) saveState();
+                      },
+                    ))),
             GestureDetector(
               onTap: () {
                 setState(() {
@@ -240,16 +245,18 @@ class _AffiliateControllerState extends State<AffiliatesController>
         appBar: AppBar(
             title: SizedBox(
                 height: 35,
-                child: TextFormField(
-                  key: Key(cityName),
-                  initialValue: cityName,
-                  onChanged: (val) {
-                    cityName = val;
-                  },
-                  onTap: () {
-                    if (Platform.isWindows) saveState();
-                  },
-                )),
+                child: Focus(
+                    skipTraversal: true,
+                    onFocusChange: (isFocus) {
+                      if (!isFocus && Platform.isWindows) saveState();
+                    },
+                    child: TextFormField(
+                      key: Key(cityName),
+                      initialValue: cityName,
+                      onChanged: (val) {
+                        cityName = val;
+                      },
+                    ))),
             actions: [
               IconButton(
                   onPressed: () {

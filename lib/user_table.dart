@@ -68,7 +68,7 @@ class _UserTableState extends State<UserTable> with WidgetsBindingObserver {
     }
     json['affiliates'][affiliateId]['users'] = users;
     json['affiliates'][affiliateId]['name'] = name;
-    file.writeAsString(jsonEncode(json));
+    file.writeAsStringSync(jsonEncode(json));
   }
 
   void _sortUsers() {
@@ -86,6 +86,82 @@ class _UserTableState extends State<UserTable> with WidgetsBindingObserver {
       users.add(User());
       _sortUsers();
     }
+  }
+
+  Future<void> _editDialog(user) async {
+    return showDialog<void>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Подтвердите'),
+          content: SingleChildScrollView(
+            child: Column(
+              children: const [
+                Text(
+                    'Вы точно хотите пометить человека как неверную информацию?'),
+                Text('После этого вы никак не сможете редактировать его.'),
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Да'),
+              onPressed: () {
+                user.status = UserStatus.toEdit;
+                ++numberOfDeletedUsers;
+                _sortUsers();
+                setState(() {});
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: const Text('Нет'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  Future<void> _removeDialog(user) async {
+    return showDialog<void>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Подтвердите'),
+          content: SingleChildScrollView(
+            child: Column(
+              children: const [
+                Text('Вы точно хотите пометить человека как выбывшего?'),
+                Text(
+                    'После этого вы никак не сможете редактировать информацию о нем.'),
+              ],
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Да'),
+              onPressed: () {
+                user.status = UserStatus.toRemove;
+                ++numberOfDeletedUsers;
+                _sortUsers();
+                setState(() {});
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: const Text('Нет'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -272,17 +348,11 @@ class _UserTableState extends State<UserTable> with WidgetsBindingObserver {
     var _key = Key(user.name + user.dateStartOfEducation.toString());
     var _cells = LinkedHashMap<String, Widget>();
     _cells['date'] = Container(
-      child: TextFormField(
-          key: _key,
-          readOnly: true,
-          initialValue: user.dateStartOfEducation == DateTime(1337) ||
-                  user.dateStartOfEducation == null
-              ? ''
-              : '${user.dateStartOfEducation.day}/${user.dateStartOfEducation.month}/${user.dateStartOfEducation.year}',
-          decoration: const InputDecoration(hintText: "Выберите дату"),
-          keyboardType: TextInputType.datetime,
-          onTap: () {
-            if (user.status == UserStatus.normal) {
+      child: Focus(
+          skipTraversal: true,
+          autofocus: false,
+          onFocusChange: (isFocused) {
+            if (isFocused && user.status == UserStatus.normal) {
               showDatePicker(
                       context: context,
                       initialDate: DateTime.now(),
@@ -292,10 +362,21 @@ class _UserTableState extends State<UserTable> with WidgetsBindingObserver {
                         user.dateStartOfEducation = date;
                       }));
             }
-            if (Platform.isWindows) {
+            if (!isFocused && Platform.isWindows) {
               _saveState();
             }
-          }),
+          },
+          child: TextFormField(
+            autofocus: false,
+            key: _key,
+            readOnly: true,
+            initialValue: user.dateStartOfEducation == DateTime(1337) ||
+                    user.dateStartOfEducation == null
+                ? ''
+                : '${user.dateStartOfEducation.day}/${user.dateStartOfEducation.month}/${user.dateStartOfEducation.year}',
+            decoration: const InputDecoration(hintText: "Выберите дату"),
+            keyboardType: TextInputType.datetime,
+          )),
       width: 200,
       height: 52,
       padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
@@ -339,10 +420,8 @@ class _UserTableState extends State<UserTable> with WidgetsBindingObserver {
       child: IconButton(
           onPressed: () {
             if (user.status == UserStatus.normal) {
-              user.status = UserStatus.toRemove;
-              ++numberOfDeletedUsers;
-              _sortUsers();
-              setState(() {});
+              _removeDialog(user);
+              //setState(() {}); done in function above
               if (Platform.isWindows) _saveState();
             }
           },
@@ -356,10 +435,8 @@ class _UserTableState extends State<UserTable> with WidgetsBindingObserver {
       child: IconButton(
           onPressed: () {
             if (user.status == UserStatus.normal) {
-              user.status = UserStatus.toEdit;
-              ++numberOfDeletedUsers;
-              _sortUsers();
-              setState(() {});
+              _editDialog(user);
+              //setState(() {}); done in function above
               if (Platform.isWindows) _saveState();
             }
           },
