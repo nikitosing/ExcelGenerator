@@ -314,6 +314,8 @@ class _UserTableState extends State<UserTable> with WidgetsBindingObserver {
         readOnly: user.status == UserStatus.toRemove,
         initialValue: user.name,
         inputFormatters: [FilteringTextInputFormatter.deny(RegExp("[0-9]+"))],
+        // ^(\d*\.)?\d+$
+
         maxLength: 60,
         decoration:
             const InputDecoration(hintText: "Введите Ф.И", counterText: ""),
@@ -390,7 +392,10 @@ class _UserTableState extends State<UserTable> with WidgetsBindingObserver {
             keyboardType: TextInputType.number,
             initialValue:
                 user.paid[i] == null ? '' : user.paid[i].toStringAsFixed(2),
-            inputFormatters: [DecimalTextInputFormatter(decimalRange: 2)],
+            inputFormatters: [
+              FilteringTextInputFormatter.allow(RegExp("^\\d*\\.?\\d*")),
+              DecimalTextInputFormatter(decimalRange: 2)
+            ],
             onChanged: (val) {
               user.paid[i] = val == '' ? 0 : num.parse(val);
               user.calculateResult();

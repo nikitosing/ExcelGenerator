@@ -208,7 +208,7 @@ class _AffiliateControllerState extends State<AffiliatesController>
     excel.delete('Sheet1');
     DateTime now = DateTime.now();
     String formattedDate = DateFormat('yyyy-MM-dd-HH-mm').format(now);
-    final fileName = "Отчет $cityName $formattedDate.xls";
+    final fileName = "Отчет $cityName $formattedDate.xlsx";
     final data = Uint8List.fromList(excel.encode()!);
     if (Platform.isWindows) {
       var path =
@@ -217,9 +217,8 @@ class _AffiliateControllerState extends State<AffiliatesController>
       ]);
       const mimeType = "application/vnd.ms-excel";
       final file = XFile.fromData(data, name: fileName, mimeType: mimeType);
-      if (!(path!.substring(path.runes.length - 4) == '.xls' ||
-          path.substring(path.runes.length - 5) == '.xlsx')) {
-        path += '.xls';
+      if (path!.substring(path.runes.length - 5) != '.xlsx') {
+        path += '.xlsx';
       }
       await file.saveTo(path);
     } else if (Platform.isAndroid) {
