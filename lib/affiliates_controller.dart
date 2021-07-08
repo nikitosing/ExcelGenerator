@@ -29,13 +29,14 @@ class AffiliatesController extends StatefulWidget {
 }
 
 class _AffiliateControllerState extends State<AffiliatesController>
-    with WidgetsBindingObserver {
+    with WidgetsBindingObserver, TickerProviderStateMixin {
   @override
   AffiliatesController get widget => super.widget;
 
   var affiliates = {};
   int affiliateCnt = 0;
   var cityName = '';
+  late TabController _tabController;
 
   @override
   void initState() {
@@ -44,6 +45,12 @@ class _AffiliateControllerState extends State<AffiliatesController>
     affiliates = widget.affiliates;
     affiliateCnt = widget.affiliatesCnt;
     cityName = widget.cityName;
+    _tabController = TabController(length: affiliates.length, vsync: this);
+    _tabController.addListener(() {
+      if (_tabController.indexIsChanging) {
+        setState(() {});
+      }
+    });
   }
 
   @override
@@ -57,16 +64,29 @@ class _AffiliateControllerState extends State<AffiliatesController>
   @override
   void dispose() {
     WidgetsBinding.instance!.removeObserver(this);
+    _tabController.dispose();
     super.dispose();
+  }
+
+
+  void recreateTabController() {
+    var oldIndex = _tabController.index;
+    _tabController.dispose();
+    _tabController = TabController(length: affiliates.length, vsync: this, initialIndex: oldIndex);
+    _tabController.addListener(() {setState(() { });});
   }
 
   void addAffiliate() {
     affiliates['${++affiliateCnt}'] = {'name': '', 'users': []};
+    recreateTabController();
+    setState(() { });
     if (Platform.isWindows) saveState();
   }
 
   void removeAffiliate(var id) {
     affiliates.remove(id);
+    recreateTabController();
+    setState(() { });
     if (Platform.isWindows) saveState();
   }
 
@@ -77,7 +97,7 @@ class _AffiliateControllerState extends State<AffiliatesController>
         jsonEncode({'cityName': cityName, 'affiliates': affiliates}));
   }
 
-  Widget tabCreator(var id) {
+  Widget tabCreator(var id, var index, var activeTabId) {
     return SizedBox(
         height: 60,
         width: 152,
@@ -94,6 +114,7 @@ class _AffiliateControllerState extends State<AffiliatesController>
                     },
                     child: TextFormField(
                       key: Key(id),
+                      enabled: index == activeTabId,
                       initialValue: affiliates[id]['name'],
                       onChanged: (val) {
                         affiliates[id]['name'] = val;
@@ -235,62 +256,68 @@ class _AffiliateControllerState extends State<AffiliatesController>
   @override
   Widget build(BuildContext context) {
     var _tabBar = TabBar(
+      controller: _tabController,
       isScrollable: Platform.isAndroid,
-      tabs: affiliates.keys.map((id) => tabCreator(id)).toList(),
+      tabs: () {
+        var activeTabId = _tabController.index;
+        var tabs = <Widget>[];
+        for (int i = 0; i < affiliates.length; ++i) {
+          tabs.add(tabCreator(affiliates.keys.toList()[i], i, activeTabId));
+        }
+        return tabs;
+      }(),
     );
-    return DefaultTabController(
-      length: affiliates.length,
-      child: Scaffold(
-        appBar: AppBar(
-            title: SizedBox(
-                height: 35,
-                child: Focus(
-                    skipTraversal: true,
-                    onFocusChange: (isFocus) {
-                      if (!isFocus && Platform.isWindows) saveState();
-                    },
-                    child: TextFormField(
-                      key: Key(cityName),
-                      initialValue: cityName,
-                      onChanged: (val) {
-                        cityName = val;
-                      },
-                    ))),
-            actions: [
-              IconButton(
-                  onPressed: () {
-                    setState(() {
-                      addAffiliate();
-                    });
+    return Scaffold(
+      appBar: AppBar(
+          title: SizedBox(
+              height: 35,
+              child: Focus(
+                  skipTraversal: true,
+                  onFocusChange: (isFocus) {
+                    if (!isFocus && Platform.isWindows) saveState();
                   },
-                  icon: const Icon(Icons.add)),
-              IconButton(onPressed: xlsxSave, icon: const Icon(Icons.save)),
-              IconButton(
-                  onPressed: debugDeleteAll,
-                  icon: const Icon(Icons.highlight_remove_outlined))
-            ],
-            bottom: PreferredSize(
-                preferredSize: const Size.fromHeight(60.0),
-                child: Align(
-                    alignment: Alignment.bottomLeft,
-                    child: Platform.isWindows
-                        ? Scrollbar(
-                            thickness: 5,
-                            interactive: true,
-                            isAlwaysShown: true,
-                            child: SingleChildScrollView(
-                                scrollDirection: Axis.horizontal,
-                                primary: true,
-                                child: SizedBox(
-                                    width: 152.0 * affiliates.length,
-                                    child: _tabBar)))
-                        : _tabBar))),
-        body: TabBarView(
-            children: affiliates.entries
-                .map((entry) => UserTable(
-                    users: entry.value['users'], affiliateId: entry.key))
-                .toList()),
-      ),
+                  child: TextFormField(
+                    key: Key(cityName),
+                    initialValue: cityName,
+                    onChanged: (val) {
+                      cityName = val;
+                    },
+                  ))),
+          actions: [
+            IconButton(
+                onPressed: () {
+                  setState(() {
+                    addAffiliate();
+                  });
+                },
+                icon: const Icon(Icons.add)),
+            IconButton(onPressed: xlsxSave, icon: const Icon(Icons.save)),
+            IconButton(
+                onPressed: debugDeleteAll,
+                icon: const Icon(Icons.highlight_remove_outlined))
+          ],
+          bottom: PreferredSize(
+              preferredSize: const Size.fromHeight(60.0),
+              child: Align(
+                  alignment: Alignment.bottomLeft,
+                  child: Platform.isWindows
+                      ? Scrollbar(
+                          thickness: 5,
+                          interactive: true,
+                          isAlwaysShown: true,
+                          child: SingleChildScrollView(
+                              scrollDirection: Axis.horizontal,
+                              primary: true,
+                              child: SizedBox(
+                                  width: 152.0 * affiliates.length,
+                                  child: _tabBar)))
+                      : _tabBar))),
+      body: TabBarView(
+          controller: _tabController,
+          children: affiliates.entries
+              .map((entry) => UserTable(
+                  users: entry.value['users'], affiliateId: entry.key))
+              .toList()),
     );
   }
 }
