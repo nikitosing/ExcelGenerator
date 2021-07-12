@@ -68,25 +68,29 @@ class _AffiliateControllerState extends State<AffiliatesController>
     super.dispose();
   }
 
-
   void recreateTabController() {
     var oldIndex = _tabController.index;
     _tabController.dispose();
-    _tabController = TabController(length: affiliates.length, vsync: this, initialIndex: oldIndex);
-    _tabController.addListener(() {setState(() { });});
+    _tabController = TabController(
+        length: affiliates.length,
+        vsync: this,
+        initialIndex: affiliates.length == oldIndex ? --oldIndex : oldIndex);
+    _tabController.addListener(() {
+      setState(() {});
+    });
   }
 
   void addAffiliate() {
     affiliates['${++affiliateCnt}'] = {'name': '', 'users': []};
     recreateTabController();
-    setState(() { });
+    setState(() {});
     if (Platform.isWindows) saveState();
   }
 
   void removeAffiliate(var id) {
     affiliates.remove(id);
     recreateTabController();
-    setState(() { });
+    setState(() {});
     if (Platform.isWindows) saveState();
   }
 
@@ -250,6 +254,7 @@ class _AffiliateControllerState extends State<AffiliatesController>
 
   void debugDeleteAll() {
     affiliates = {};
+    recreateTabController();
     setState(() {});
   }
 
