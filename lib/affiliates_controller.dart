@@ -57,7 +57,7 @@ class _AffiliateControllerState extends State<AffiliatesController>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
     if (state == AppLifecycleState.paused) {
-      saveState();
+      _saveState();
     }
   }
 
@@ -68,40 +68,44 @@ class _AffiliateControllerState extends State<AffiliatesController>
     super.dispose();
   }
 
-  void recreateTabController() {
+  void _recreateTabController() {
     var oldIndex = _tabController.index;
     _tabController.dispose();
     _tabController = TabController(
         length: affiliates.length,
         vsync: this,
-        initialIndex: affiliates.length == oldIndex ? --oldIndex : oldIndex);
+        initialIndex: () {
+          if (affiliates.isEmpty) return 0;
+          if (affiliates.length == oldIndex) return --oldIndex;
+          return oldIndex;
+        }());
     _tabController.addListener(() {
       setState(() {});
     });
   }
 
-  void addAffiliate() {
+  void _addAffiliate() {
     affiliates['${++affiliateCnt}'] = {'name': '', 'users': []};
-    recreateTabController();
+    _recreateTabController();
     setState(() {});
-    if (Platform.isWindows) saveState();
+    if (Platform.isWindows) _saveState();
   }
 
-  void removeAffiliate(var id) {
+  void _removeAffiliate(var id) {
     affiliates.remove(id);
-    recreateTabController();
+    _recreateTabController();
     setState(() {});
-    if (Platform.isWindows) saveState();
+    if (Platform.isWindows) _saveState();
   }
 
-  void saveState() async {
+  void _saveState() async {
     Directory tempDir = await getApplicationSupportDirectory();
     var file = File('${tempDir.path}\\excel_generator_state4.json');
     file.writeAsStringSync(
         jsonEncode({'cityName': cityName, 'affiliates': affiliates}));
   }
 
-  Widget tabCreator(var id, var index, var activeTabId) {
+  Widget _tabCreator(var id, var index, var activeTabId) {
     return SizedBox(
         height: 60,
         width: 152,
@@ -114,7 +118,7 @@ class _AffiliateControllerState extends State<AffiliatesController>
                 child: Focus(
                     skipTraversal: true,
                     onFocusChange: (isFocus) {
-                      if (!isFocus && Platform.isWindows) saveState();
+                      if (!isFocus && Platform.isWindows) _saveState();
                     },
                     child: TextFormField(
                       key: Key(id),
@@ -124,13 +128,13 @@ class _AffiliateControllerState extends State<AffiliatesController>
                         affiliates[id]['name'] = val;
                       },
                       onTap: () {
-                        if (Platform.isWindows) saveState();
+                        if (Platform.isWindows) _saveState();
                       },
                     ))),
             GestureDetector(
               onTap: () {
                 setState(() {
-                  removeAffiliate(id);
+                  _removeAffiliate(id);
                 });
               },
               child: const ClipOval(
@@ -145,8 +149,142 @@ class _AffiliateControllerState extends State<AffiliatesController>
         ));
   }
 
-  Future<void> xlsxSave() async {
-    if (Platform.isWindows) saveState();
+  Future<void> _usersFromXlsx() async {
+    var typeGroup = XTypeGroup(label: 'excel', extensions: ['xlsx']);
+    var file = await openFile(acceptedTypeGroups: [typeGroup]);
+    var bytes = File(file!.path).readAsBytesSync();
+    var excel = Excel.decodeBytes(bytes);
+
+    affiliates = {};
+
+    //if (Platform.isWindows) _saveState();
+    int id = 0;
+    for (var affiliate in excel.tables.keys) {
+      affiliates['$id'] = {'name': affiliate, 'users': <User>[]};
+      var table = excel.tables[affiliate];
+      int row = 1;
+      while (table!
+              .cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: row))
+              .value !=
+          null) {
+        var user = User();
+        user.name = table
+            .cell(CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: row))
+            .value;
+        List<String> date = table
+                    .cell(CellIndex.indexByColumnRow(
+                        columnIndex: 2, rowIndex: row))
+                    .value ==
+                ''
+            ? ['0', '0', '1337']
+            : table
+                .cell(CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: row))
+                .value
+                .split('/');
+        user.dateStartOfEducation = DateTime(
+            int.parse(date[2]), int.parse(date[1]), int.parse(date[0]));
+        for (int column = 3; column < months.length + 3; ++column) {
+          user.paid[column - 3] = table
+                      .cell(CellIndex.indexByColumnRow(
+                          columnIndex: column, rowIndex: row))
+                      .value ==
+                  ''
+              ? 0
+              : table
+                  .cell(CellIndex.indexByColumnRow(
+                      columnIndex: column, rowIndex: row))
+                  .value;
+        }
+        affiliates['$id']['users'].add(user);
+        ++row;
+      }
+
+      ++row;
+
+      while (table
+              .cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: row))
+              .value !=
+          null) {
+        var user = User();
+        user.name = table
+            .cell(CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: row))
+            .value;
+        List<String> date = table
+                    .cell(CellIndex.indexByColumnRow(
+                        columnIndex: 2, rowIndex: row))
+                    .value ==
+                ''
+            ? ['0', '0', '1337']
+            : table
+                .cell(CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: row))
+                .value
+                .split('/');
+        user.dateStartOfEducation = DateTime(
+            int.parse(date[2]), int.parse(date[1]), int.parse(date[0]));
+        for (int column = 3; column < months.length + 3; ++column) {
+          user.paid[column - 3] = table
+                      .cell(CellIndex.indexByColumnRow(
+                          columnIndex: column, rowIndex: row))
+                      .value ==
+                  ''
+              ? 0
+              : table
+                  .cell(CellIndex.indexByColumnRow(
+                      columnIndex: column, rowIndex: row))
+                  .value;
+        }
+        user.status = UserStatus.toRemove;
+        affiliates['$id']['users'].add(user);
+        ++row;
+      }
+
+      row += 2;
+      while (table
+              .cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: row))
+              .value !=
+          null) {
+        var user = User();
+        user.name = table
+            .cell(CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: row))
+            .value;
+        List<String> date = table
+                    .cell(CellIndex.indexByColumnRow(
+                        columnIndex: 2, rowIndex: row))
+                    .value ==
+                ''
+            ? ['0', '0', '1337']
+            : table
+                .cell(CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: row))
+                .value
+                .split('/');
+        user.dateStartOfEducation = DateTime(
+            int.parse(date[2]), int.parse(date[1]), int.parse(date[0]));
+        for (int column = 3; column < months.length + 3; ++column) {
+          user.paid[column - 3] = table
+                      .cell(CellIndex.indexByColumnRow(
+                          columnIndex: column, rowIndex: row))
+                      .value ==
+                  ''
+              ? 0
+              : table
+                  .cell(CellIndex.indexByColumnRow(
+                      columnIndex: column, rowIndex: row))
+                  .value;
+        }
+        user.status = UserStatus.toEdit;
+        affiliates['$id']['users'].add(user);
+        ++row;
+      }
+      ++id;
+    }
+    _recreateTabController();
+    affiliateCnt = ++id;
+    _saveState();
+    setState(() {});
+  }
+
+  Future<void> _xlsxSave() async {
+    if (Platform.isWindows) _saveState();
     var excel = Excel.createExcel();
     for (var value in affiliates.values) {
       var name = value['name'];
@@ -160,7 +298,13 @@ class _AffiliateControllerState extends State<AffiliatesController>
             cellStyle: cellStyle);
       }
       int row = 1;
+      var spacer = false;
       for (User user in users) {
+        if (user.status == UserStatus.toRemove && !spacer) {
+          row++;
+          spacer = true;
+          //does spacer between normal users and removed users
+        }
         if (user.status == UserStatus.toEdit) {
           break;
         }
@@ -168,7 +312,8 @@ class _AffiliateControllerState extends State<AffiliatesController>
             backgroundColorHex:
                 user.status == UserStatus.normal ? '#ffffff' : '#FFFF00');
         sheet.updateCell(
-            CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: row), row,
+            CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: row),
+            row - (spacer ? 1 : 0),
             cellStyle: _cellStyle);
         sheet.updateCell(
             CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: row),
@@ -207,7 +352,8 @@ class _AffiliateControllerState extends State<AffiliatesController>
       for (var i = row - 3; i < users.length; ++i) {
         var _cellStyle = CellStyle(backgroundColorHex: '#FF5722');
         sheet.updateCell(
-            CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: row), row - 2,
+            CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: row),
+            row - 2 - (spacer ? 1 : 0),
             cellStyle: _cellStyle);
         sheet.updateCell(
             CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: row),
@@ -252,9 +398,9 @@ class _AffiliateControllerState extends State<AffiliatesController>
     }
   }
 
-  void debugDeleteAll() {
+  void _debugDeleteAll() {
     affiliates = {};
-    recreateTabController();
+    _recreateTabController();
     setState(() {});
   }
 
@@ -267,7 +413,7 @@ class _AffiliateControllerState extends State<AffiliatesController>
         var activeTabId = _tabController.index;
         var tabs = <Widget>[];
         for (int i = 0; i < affiliates.length; ++i) {
-          tabs.add(tabCreator(affiliates.keys.toList()[i], i, activeTabId));
+          tabs.add(_tabCreator(affiliates.keys.toList()[i], i, activeTabId));
         }
         return tabs;
       }(),
@@ -279,7 +425,7 @@ class _AffiliateControllerState extends State<AffiliatesController>
               child: Focus(
                   skipTraversal: true,
                   onFocusChange: (isFocus) {
-                    if (!isFocus && Platform.isWindows) saveState();
+                    if (!isFocus && Platform.isWindows) _saveState();
                   },
                   child: TextFormField(
                     key: Key(cityName),
@@ -290,15 +436,21 @@ class _AffiliateControllerState extends State<AffiliatesController>
                   ))),
           actions: [
             IconButton(
+              onPressed: () {
+                _usersFromXlsx();
+              }, //setState inside
+              icon: const Icon(Icons.upload_rounded),
+            ),
+            IconButton(
                 onPressed: () {
                   setState(() {
-                    addAffiliate();
+                    _addAffiliate();
                   });
                 },
                 icon: const Icon(Icons.add)),
-            IconButton(onPressed: xlsxSave, icon: const Icon(Icons.save)),
+            IconButton(onPressed: _xlsxSave, icon: const Icon(Icons.save)),
             IconButton(
-                onPressed: debugDeleteAll,
+                onPressed: _debugDeleteAll,
                 icon: const Icon(Icons.highlight_remove_outlined))
           ],
           bottom: PreferredSize(

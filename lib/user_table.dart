@@ -282,7 +282,7 @@ class _UserTableState extends State<UserTable> with WidgetsBindingObserver {
                   child: Text(months[i],
                       style: _columnTextStyle, textAlign: TextAlign.center)),
               Expanded(
-                  child: Text(_sum.toString(),
+                  child: Text(_sum.toStringAsFixed(2),
                       textAlign: TextAlign.center, style: _columnTextStyle))
             ],
           ),
@@ -481,10 +481,6 @@ class User {
       result += el ?? 0;
     }
     paid[paid.length - 2] = result;
-  }
-
-  void setRemove() {
-    status = UserStatus.toRemove;
   }
 
   Map toJson() => {
