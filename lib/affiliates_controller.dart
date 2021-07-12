@@ -150,14 +150,22 @@ class _AffiliateControllerState extends State<AffiliatesController>
   }
 
   Future<void> _usersFromXlsx() async {
-    var typeGroup = XTypeGroup(label: 'excel', extensions: ['xlsx']);
-    var file = await openFile(acceptedTypeGroups: [typeGroup]);
-    var bytes = File(file!.path).readAsBytesSync();
+    late var bytes;
+    if (Platform.isWindows) {
+      var typeGroup = XTypeGroup(label: 'excel', extensions: ['xlsx']);
+      var file = await openFile(acceptedTypeGroups: [typeGroup]);
+      bytes = File(file!.path).readAsBytesSync();
+    } else if (Platform.isAndroid) {
+      const params = OpenFileDialogParams(
+        dialogType: OpenFileDialogType.document
+      );
+      final filePath = await FlutterFileDialog.pickFile(params: params);
+      bytes = File(filePath!).readAsBytesSync();
+    }
     var excel = Excel.decodeBytes(bytes);
 
     affiliates = {};
 
-    //if (Platform.isWindows) _saveState();
     int id = 0;
     for (var affiliate in excel.tables.keys) {
       affiliates['$id'] = {'name': affiliate, 'users': <User>[]};
@@ -237,7 +245,6 @@ class _AffiliateControllerState extends State<AffiliatesController>
         affiliates['$id']['users'].add(user);
         ++row;
       }
-
       row += 2;
       while (table
               .cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: row))
