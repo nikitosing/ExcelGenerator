@@ -175,7 +175,7 @@ class _UserTableState extends State<UserTable> with WidgetsBindingObserver {
                 width: MediaQuery.of(context).size.width - 100,
                 height: 104,
                 child: FlutterSlider(
-                  key: Key('$affiliateId slider'),
+                  key: UniqueKey(),
                   trackBar: const FlutterSliderTrackBar(
                     inactiveTrackBar: BoxDecoration(
                       color: Colors.transparent,
@@ -307,10 +307,9 @@ class _UserTableState extends State<UserTable> with WidgetsBindingObserver {
   }
 
   Widget _generateFirstColumnRow(user) {
-    var _key = Key(user.dateStartOfEducation.toString() + user.name);
     return Container(
       child: TextFormField(
-        key: _key,
+        key: UniqueKey(),
         readOnly: user.status == UserStatus.toRemove,
         initialValue: user.name,
         inputFormatters: [FilteringTextInputFormatter.deny(RegExp("[0-9]+"))],
@@ -347,7 +346,6 @@ class _UserTableState extends State<UserTable> with WidgetsBindingObserver {
   }
 
   Widget _generateRightHandSideColumnRow(user) {
-    var _key = Key(user.name + user.dateStartOfEducation.toString());
     var _cells = LinkedHashMap<String, Widget>();
     _cells['date'] = Container(
       child: Focus(
@@ -370,7 +368,7 @@ class _UserTableState extends State<UserTable> with WidgetsBindingObserver {
           },
           child: TextFormField(
             autofocus: false,
-            key: _key,
+            key: UniqueKey(),
             readOnly: true,
             initialValue: user.dateStartOfEducation == DateTime(1337) ||
                     user.dateStartOfEducation == null
@@ -387,7 +385,7 @@ class _UserTableState extends State<UserTable> with WidgetsBindingObserver {
     for (var i = 0; i < months.length; ++i) {
       _cells[months[i]] = Container(
         child: TextFormField(
-            key: _key,
+            key: UniqueKey(),
             readOnly: user.status != UserStatus.normal,
             keyboardType: TextInputType.number,
             initialValue:

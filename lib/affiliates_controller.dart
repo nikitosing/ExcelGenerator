@@ -121,7 +121,7 @@ class _AffiliateControllerState extends State<AffiliatesController>
                       if (!isFocus && Platform.isWindows) _saveState();
                     },
                     child: TextFormField(
-                      key: Key(id),
+                      key: UniqueKey(),
                       enabled: index == activeTabId,
                       initialValue: affiliates[id]['name'],
                       onChanged: (val) {
@@ -435,7 +435,7 @@ class _AffiliateControllerState extends State<AffiliatesController>
                     if (!isFocus && Platform.isWindows) _saveState();
                   },
                   child: TextFormField(
-                    key: Key(cityName),
+                    key: UniqueKey(),
                     initialValue: cityName,
                     onChanged: (val) {
                       cityName = val;
@@ -479,7 +479,7 @@ class _AffiliateControllerState extends State<AffiliatesController>
       body: TabBarView(
           controller: _tabController,
           children: affiliates.entries
-              .map((entry) => UserTable(
+              .map((entry) => UserTable(key: UniqueKey(),
                   users: entry.value['users'], affiliateId: entry.key))
               .toList()),
     );
