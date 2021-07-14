@@ -37,7 +37,7 @@ Future<void> getState() async {
             entry.value['users'].map((user) => User.fromJson(user)).toList()
       };
     }
-    affiliateCnt = int.parse(affiliates.keys.last);
+    affiliateCnt = affiliates.isEmpty ? 0 : int.parse(affiliates.keys.last);
   }
 }
 

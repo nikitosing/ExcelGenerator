@@ -314,7 +314,7 @@ class _UserTableState extends State<UserTable> with WidgetsBindingObserver {
         initialValue: user.name,
         inputFormatters: [FilteringTextInputFormatter.deny(RegExp("[0-9]+"))],
         // ^(\d*\.)?\d+$
-
+        autofocus: true,
         maxLength: 60,
         decoration:
             const InputDecoration(hintText: "Введите Ф.И", counterText: ""),
@@ -385,7 +385,8 @@ class _UserTableState extends State<UserTable> with WidgetsBindingObserver {
     for (var i = 0; i < months.length; ++i) {
       _cells[months[i]] = Container(
         child: TextFormField(
-            key: UniqueKey(),
+            key: Key('${user.hashCode}Month$i'),
+            autofocus: true,
             readOnly: user.status != UserStatus.normal,
             keyboardType: TextInputType.number,
             initialValue:

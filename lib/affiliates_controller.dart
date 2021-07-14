@@ -12,6 +12,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_file_dialog/flutter_file_dialog.dart';
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:path/path.dart';
 
 import 'common.dart';
 
@@ -151,24 +152,32 @@ class _AffiliateControllerState extends State<AffiliatesController>
 
   Future<void> _usersFromXlsx() async {
     late var bytes;
+    late var name;
     if (Platform.isWindows) {
       var typeGroup = XTypeGroup(label: 'excel', extensions: ['xlsx']);
       var file = await openFile(acceptedTypeGroups: [typeGroup]);
       bytes = File(file!.path).readAsBytesSync();
+      name = file.name.split(' ')[1];
+
     } else if (Platform.isAndroid) {
       const params = OpenFileDialogParams(
         dialogType: OpenFileDialogType.document
       );
       final filePath = await FlutterFileDialog.pickFile(params: params);
       bytes = File(filePath!).readAsBytesSync();
+      name = basename(filePath);
     }
     var excel = Excel.decodeBytes(bytes);
 
-    affiliates = {};
+    if (name == cityName) {
+      affiliates = {};
+      affiliateCnt = 0;
+    } else {
+      cityName += ' ' + name;
+    }
 
-    int id = 0;
     for (var affiliate in excel.tables.keys) {
-      affiliates['$id'] = {'name': affiliate, 'users': <User>[]};
+      affiliates['${++affiliateCnt}'] = {'name': affiliate, 'users': <User>[]};
       var table = excel.tables[affiliate];
       int row = 1;
       while (table!
@@ -203,7 +212,7 @@ class _AffiliateControllerState extends State<AffiliatesController>
                       columnIndex: column, rowIndex: row))
                   .value;
         }
-        affiliates['$id']['users'].add(user);
+        affiliates['$affiliateCnt']['users'].add(user);
         ++row;
       }
 
@@ -242,7 +251,7 @@ class _AffiliateControllerState extends State<AffiliatesController>
                   .value;
         }
         user.status = UserStatus.toRemove;
-        affiliates['$id']['users'].add(user);
+        affiliates['$affiliateCnt']['users'].add(user);
         ++row;
       }
       row += 2;
@@ -279,13 +288,11 @@ class _AffiliateControllerState extends State<AffiliatesController>
                   .value;
         }
         user.status = UserStatus.toEdit;
-        affiliates['$id']['users'].add(user);
+        affiliates['$affiliateCnt']['users'].add(user);
         ++row;
       }
-      ++id;
     }
     _recreateTabController();
-    affiliateCnt = ++id;
     _saveState();
     setState(() {});
   }
@@ -408,6 +415,7 @@ class _AffiliateControllerState extends State<AffiliatesController>
   void _debugDeleteAll() {
     affiliates = {};
     _recreateTabController();
+    _saveState();
     setState(() {});
   }
 
