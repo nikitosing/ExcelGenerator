@@ -175,7 +175,7 @@ class _UserTableState extends State<UserTable> with WidgetsBindingObserver {
                 width: MediaQuery.of(context).size.width - 100,
                 height: 104,
                 child: FlutterSlider(
-                  key: UniqueKey(),
+                  key: Key('Slider $affiliateId'),
                   trackBar: const FlutterSliderTrackBar(
                     inactiveTrackBar: BoxDecoration(
                       color: Colors.transparent,
