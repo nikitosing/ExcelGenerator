@@ -165,7 +165,9 @@ class _AffiliateControllerState extends State<AffiliatesController>
       bytes = File(filePath!).readAsBytesSync();
       fileName = basename(filePath).split(' ');
     }
+
     var excel = Excel.decodeBytes(bytes);
+    final DateFormat formatter = DateFormat('dd.MM.yyyy');
 
     fileName.removeLast();
     fileName.removeAt(0);
@@ -188,118 +190,37 @@ class _AffiliateControllerState extends State<AffiliatesController>
       affiliates['$id'] = {'name': affiliate, 'users': <User>[]};
       var table = excel.tables[affiliate];
       int row = 1;
-      while (table!
-              .cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: row))
-              .value !=
-          null) {
-        var user = User();
-        user.name = table
-            .cell(CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: row))
-            .value;
-        List<String> date = ['', null].contains(table
-                .cell(CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: row))
-                .value)
-            ? ['0', '0', '1337']
-            : table
-                .cell(CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: row))
-                .value
-                .split('/');
-        print(date);
-        user.dateStartOfEducation = DateTime(
-            int.parse(date[2]), int.parse(date[1]), int.parse(date[0]));
-        for (int column = 3; column < months.length + 3; ++column) {
-          user.paid[column - 3] = table
-                      .cell(CellIndex.indexByColumnRow(
-                          columnIndex: column, rowIndex: row))
-                      .value ==
-                  ''
-              ? 0
-              : table
-                  .cell(CellIndex.indexByColumnRow(
-                      columnIndex: column, rowIndex: row))
-                  .value;
-        }
-        user.calculateResult();
-        affiliates['$id']['users'].add(user);
-        ++row;
-      }
 
-      ++row;
+      for (int i = 1; i < 4; ++i) {
+        while (table!
+                .cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: row))
+                .value !=
+            null) {
+          var user = User();
+          user.name = table
+              .cell(CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: row))
+              .value;
+          var date = table
+              .cell(CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: row))
+              .value;
+          user.dateStartOfEducation = int.tryParse(date.toString()) == null
+              ? formatter.parse(date)
+              : DateTime.fromMicrosecondsSinceEpoch(
+                  int.tryParse(date.toString())! * 1000);
+          for (int column = 3; column < months.length + 3; ++column) {
+            var paid = table
+                .cell(CellIndex.indexByColumnRow(
+                    columnIndex: column, rowIndex: row))
+                .value;
+            user.paid[column - 3] = paid == '' ? 0 : paid;
+          }
+          user.calculateResult();
+          user.status = UserStatus.values[i - 1];
+          affiliates['$id']['users'].add(user);
+          ++row;
+        }
 
-      while (table
-              .cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: row))
-              .value !=
-          null) {
-        var user = User();
-        user.name = table
-            .cell(CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: row))
-            .value;
-        List<String> date = table
-                    .cell(CellIndex.indexByColumnRow(
-                        columnIndex: 2, rowIndex: row))
-                    .value ==
-                ''
-            ? ['0', '0', '1337']
-            : table
-                .cell(CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: row))
-                .value
-                .split('/');
-        user.dateStartOfEducation = DateTime(
-            int.parse(date[2]), int.parse(date[1]), int.parse(date[0]));
-        for (int column = 3; column < months.length + 3; ++column) {
-          user.paid[column - 3] = table
-                      .cell(CellIndex.indexByColumnRow(
-                          columnIndex: column, rowIndex: row))
-                      .value ==
-                  ''
-              ? 0
-              : table
-                  .cell(CellIndex.indexByColumnRow(
-                      columnIndex: column, rowIndex: row))
-                  .value;
-        }
-        user.calculateResult();
-        user.status = UserStatus.toRemove;
-        affiliates['$id']['users'].add(user);
-        ++row;
-      }
-      row += 2;
-      while (table
-              .cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: row))
-              .value !=
-          null) {
-        var user = User();
-        user.name = table
-            .cell(CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: row))
-            .value;
-        List<String> date = table
-                    .cell(CellIndex.indexByColumnRow(
-                        columnIndex: 2, rowIndex: row))
-                    .value ==
-                ''
-            ? ['0', '0', '1337']
-            : table
-                .cell(CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: row))
-                .value
-                .split('/');
-        user.dateStartOfEducation = DateTime(
-            int.parse(date[2]), int.parse(date[1]), int.parse(date[0]));
-        for (int column = 3; column < months.length + 3; ++column) {
-          user.paid[column - 3] = table
-                      .cell(CellIndex.indexByColumnRow(
-                          columnIndex: column, rowIndex: row))
-                      .value ==
-                  ''
-              ? 0
-              : table
-                  .cell(CellIndex.indexByColumnRow(
-                      columnIndex: column, rowIndex: row))
-                  .value;
-        }
-        user.calculateResult();
-        user.status = UserStatus.toEdit;
-        affiliates['$id']['users'].add(user);
-        ++row;
+        row += i;
       }
     }
     _recreateTabController();
@@ -310,6 +231,7 @@ class _AffiliateControllerState extends State<AffiliatesController>
   Future<void> _xlsxSave() async {
     if (Platform.isWindows) _saveState();
     var excel = Excel.createExcel();
+    final DateFormat formatter = DateFormat('dd.MM.yyyy');
     for (var value in affiliates.values) {
       var name = value['name'];
       var users = value['users'];
@@ -347,7 +269,7 @@ class _AffiliateControllerState extends State<AffiliatesController>
             CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: row),
             user.dateStartOfEducation == DateTime(1337)
                 ? ''
-                : '${user.dateStartOfEducation.day}/${user.dateStartOfEducation.month}/${user.dateStartOfEducation.year}',
+                : formatter.format(user.dateStartOfEducation),
             cellStyle: _cellStyle);
         int column = 3;
         for (var paid in user.paid) {
@@ -387,7 +309,7 @@ class _AffiliateControllerState extends State<AffiliatesController>
             CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: row),
             users[i].dateStartOfEducation == DateTime(1337)
                 ? ''
-                : '${users[i].dateStartOfEducation.day}/${users[i].dateStartOfEducation.month}/${users[i].dateStartOfEducation.year}',
+                : formatter.format(users[i].dateStartOfEducation),
             cellStyle: _cellStyle);
         int column = 3;
         for (var paid in users[i].paid) {
