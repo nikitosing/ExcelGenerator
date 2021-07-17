@@ -150,6 +150,17 @@ class _AffiliateControllerState extends State<AffiliatesController>
         ));
   }
 
+  DateTime _getTime(String date) {
+    final DateFormat formatter = DateFormat('dd.MM.yyyy');
+    late DateTime rightDate;
+    try {
+      rightDate = formatter.parse(date);
+    } on Exception {
+      rightDate = DateTime.parse(date);
+    }
+    return rightDate;
+  }
+
   Future<void> _usersFromXlsx() async {
     late Uint8List bytes;
     late List fileName;
@@ -167,7 +178,6 @@ class _AffiliateControllerState extends State<AffiliatesController>
     }
 
     var excel = Excel.decodeBytes(bytes);
-    final DateFormat formatter = DateFormat('dd.MM.yyyy');
 
     fileName.removeLast();
     fileName.removeAt(0);
@@ -204,7 +214,7 @@ class _AffiliateControllerState extends State<AffiliatesController>
               .cell(CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: row))
               .value;
           user.dateStartOfEducation = int.tryParse(date.toString()) == null
-              ? formatter.parse(date)
+              ? _getTime(date)
               : DateTime.fromMicrosecondsSinceEpoch(
                   int.tryParse(date.toString())! * 1000);
           for (int column = 3; column < months.length + 3; ++column) {
@@ -334,7 +344,7 @@ class _AffiliateControllerState extends State<AffiliatesController>
       ]);
       const mimeType = "application/vnd.ms-excel";
       final file = XFile.fromData(data, name: fileName, mimeType: mimeType);
-      if (path!.substring(path.runes.length - 4) != '.xls') {
+      if (path!.substring(path.indexOf('.'), path.indexOf('.') + 4) != '.xls') {
         path += '.xlsx';
       }
       await file.saveTo(path);
