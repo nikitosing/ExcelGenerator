@@ -151,33 +151,41 @@ class _AffiliateControllerState extends State<AffiliatesController>
   }
 
   Future<void> _usersFromXlsx() async {
-    late var bytes;
-    late var name;
+    late Uint8List bytes;
+    late List fileName;
     if (Platform.isWindows) {
-      var typeGroup = XTypeGroup(label: 'excel', extensions: ['xlsx']);
+      var typeGroup = XTypeGroup(label: 'Excel', extensions: ['xlsx', 'xls']);
       var file = await openFile(acceptedTypeGroups: [typeGroup]);
       bytes = File(file!.path).readAsBytesSync();
-      name = file.name.split(' ')[1];
-
+      fileName = file.name.split(' ');
     } else if (Platform.isAndroid) {
-      const params = OpenFileDialogParams(
-        dialogType: OpenFileDialogType.document
-      );
+      const params =
+          OpenFileDialogParams(dialogType: OpenFileDialogType.document);
       final filePath = await FlutterFileDialog.pickFile(params: params);
       bytes = File(filePath!).readAsBytesSync();
-      name = basename(filePath);
+      fileName = basename(filePath).split(' ');
     }
     var excel = Excel.decodeBytes(bytes);
 
-    if (name == cityName) {
-      affiliates = {};
-      affiliateCnt = 0;
-    } else {
-      cityName += ' ' + name;
+    fileName.removeLast();
+    fileName.removeAt(0);
+    var name = fileName.join(' ');
+    name = name.trim();
+    cityName = cityName.trim();
+    if (!cityName.split(' ').contains(name)) {
+      cityName += (cityName.isEmpty ? '' : ' ') + name;
+    }
+
+    var affiliatesNames = {};
+    for (var entry in affiliates.entries) {
+      affiliatesNames[entry.value['name'].trim()] = entry.key;
     }
 
     for (var affiliate in excel.tables.keys) {
-      affiliates['${++affiliateCnt}'] = {'name': affiliate, 'users': <User>[]};
+      late var id = affiliatesNames.containsKey(affiliate)
+          ? affiliatesNames[affiliate]
+          : ++affiliateCnt;
+      affiliates['$id'] = {'name': affiliate, 'users': <User>[]};
       var table = excel.tables[affiliate];
       int row = 1;
       while (table!
@@ -188,16 +196,15 @@ class _AffiliateControllerState extends State<AffiliatesController>
         user.name = table
             .cell(CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: row))
             .value;
-        List<String> date = table
-                    .cell(CellIndex.indexByColumnRow(
-                        columnIndex: 2, rowIndex: row))
-                    .value ==
-                ''
+        List<String> date = ['', null].contains(table
+                .cell(CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: row))
+                .value)
             ? ['0', '0', '1337']
             : table
                 .cell(CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: row))
                 .value
                 .split('/');
+        print(date);
         user.dateStartOfEducation = DateTime(
             int.parse(date[2]), int.parse(date[1]), int.parse(date[0]));
         for (int column = 3; column < months.length + 3; ++column) {
@@ -212,7 +219,8 @@ class _AffiliateControllerState extends State<AffiliatesController>
                       columnIndex: column, rowIndex: row))
                   .value;
         }
-        affiliates['$affiliateCnt']['users'].add(user);
+        user.calculateResult();
+        affiliates['$id']['users'].add(user);
         ++row;
       }
 
@@ -250,8 +258,9 @@ class _AffiliateControllerState extends State<AffiliatesController>
                       columnIndex: column, rowIndex: row))
                   .value;
         }
+        user.calculateResult();
         user.status = UserStatus.toRemove;
-        affiliates['$affiliateCnt']['users'].add(user);
+        affiliates['$id']['users'].add(user);
         ++row;
       }
       row += 2;
@@ -287,8 +296,9 @@ class _AffiliateControllerState extends State<AffiliatesController>
                       columnIndex: column, rowIndex: row))
                   .value;
         }
+        user.calculateResult();
         user.status = UserStatus.toEdit;
-        affiliates['$affiliateCnt']['users'].add(user);
+        affiliates['$id']['users'].add(user);
         ++row;
       }
     }
@@ -363,7 +373,7 @@ class _AffiliateControllerState extends State<AffiliatesController>
             cellStyle: CellStyle(backgroundColorHex: '#3792cb'));
       }
       row += 2;
-      for (var i = row - 3; i < users.length; ++i) {
+      for (var i = row - 4; i < users.length; ++i) {
         var _cellStyle = CellStyle(backgroundColorHex: '#FF5722');
         sheet.updateCell(
             CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: row),
@@ -402,7 +412,7 @@ class _AffiliateControllerState extends State<AffiliatesController>
       ]);
       const mimeType = "application/vnd.ms-excel";
       final file = XFile.fromData(data, name: fileName, mimeType: mimeType);
-      if (path!.substring(path.runes.length - 5) != '.xlsx') {
+      if (path!.substring(path.runes.length - 4) != '.xls') {
         path += '.xlsx';
       }
       await file.saveTo(path);
@@ -413,6 +423,7 @@ class _AffiliateControllerState extends State<AffiliatesController>
   }
 
   void _debugDeleteAll() {
+    cityName = '';
     affiliates = {};
     _recreateTabController();
     _saveState();
@@ -487,8 +498,10 @@ class _AffiliateControllerState extends State<AffiliatesController>
       body: TabBarView(
           controller: _tabController,
           children: affiliates.entries
-              .map((entry) => UserTable(key: UniqueKey(),
-                  users: entry.value['users'], affiliateId: entry.key))
+              .map((entry) => UserTable(
+                  key: UniqueKey(),
+                  users: entry.value['users'],
+                  affiliateId: entry.key))
               .toList()),
     );
   }
