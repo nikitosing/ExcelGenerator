@@ -256,7 +256,7 @@ class _AffiliateControllerState extends State<AffiliatesController>
       int row = 1;
       var spacer = false;
       for (User user in users) {
-        if (user.status == UserStatus.toRemove && !spacer) {
+        if (user.status != UserStatus.normal && !spacer) {
           row++;
           spacer = true;
           //does spacer between normal users and removed users
@@ -289,23 +289,32 @@ class _AffiliateControllerState extends State<AffiliatesController>
               cellStyle: _cellStyle);
           column++;
         }
+        var rowForSum = row + 1;
+        Formula formula = Formula.custom(
+            '=D$rowForSum+E$rowForSum+F$rowForSum+G$rowForSum+H$rowForSum+I$rowForSum+J$rowForSum+K$rowForSum+L$rowForSum+M$rowForSum+O$rowForSum');
+        sheet.updateCell(
+            CellIndex.indexByColumnRow(columnIndex: 13, rowIndex: row), formula,
+            cellStyle: _cellStyle);
         row++;
       }
+      const String columnsForSum = 'DEFGHIJKLMNO';
       for (int i = 0; i < months.length; ++i) {
-        num value = 0;
-        for (var user in users) {
-          if (user.status == UserStatus.toEdit) {
-            break;
+        String formulaString = '=';
+        for (int j = 2; j <= row; ++j) {
+          formulaString += columnsForSum[i];
+          formulaString += j.toString();
+          if (j != row) {
+            formulaString += '+';
           }
-          value += user.paid[i] ?? 0;
         }
+        Formula sumRowsFormula = Formula.custom(formulaString);
         sheet.updateCell(
             CellIndex.indexByColumnRow(columnIndex: i + 3, rowIndex: row),
-            value,
+            sumRowsFormula,
             cellStyle: CellStyle(backgroundColorHex: '#3792cb'));
       }
       row += 2;
-      for (var i = row - 4; i < users.length; ++i) {
+      for (int i = row - 3 - (spacer ? 1 : 0); i < users.length; ++i) {
         var _cellStyle = CellStyle(backgroundColorHex: '#FF5722');
         sheet.updateCell(
             CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: row),
@@ -329,8 +338,15 @@ class _AffiliateControllerState extends State<AffiliatesController>
               cellStyle: _cellStyle);
           column++;
         }
-        row++;
+        var rowForSum = row + 1;
+        Formula formula = Formula.custom(
+            '=D$rowForSum+E$rowForSum+F$rowForSum+G$rowForSum+H$rowForSum+I$rowForSum+J$rowForSum+K$rowForSum+L$rowForSum+M$rowForSum+O$rowForSum');
+        sheet.updateCell(
+            CellIndex.indexByColumnRow(columnIndex: 13, rowIndex: row),
+            formula);
+        ++row;
       }
+      //sheet.setColAutoFit(0);
     }
     excel.delete('Sheet1');
     DateTime now = DateTime.now();
