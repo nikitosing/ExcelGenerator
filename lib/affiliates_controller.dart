@@ -12,7 +12,7 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_file_dialog/flutter_file_dialog.dart';
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:path/path.dart';
+import 'package:path/path.dart' as path;
 
 import 'common.dart';
 
@@ -92,6 +92,37 @@ class _AffiliateControllerState extends State<AffiliatesController>
     if (Platform.isWindows) _saveState();
   }
 
+  Future<void> _removeDialog(id) async {
+    return showDialog<void>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Подтвердите'),
+          content: SingleChildScrollView(
+            child: Column(
+              children: const [Text('Вы точно хотите удалить филиал?')],
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Да'),
+              onPressed: () {
+                _removeAffiliate(id);
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: const Text('Нет'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   void _removeAffiliate(var id) {
     affiliates.remove(id);
     _recreateTabController();
@@ -135,7 +166,7 @@ class _AffiliateControllerState extends State<AffiliatesController>
             GestureDetector(
               onTap: () {
                 setState(() {
-                  _removeAffiliate(id);
+                  _removeDialog(id);
                 });
               },
               child: const ClipOval(
@@ -174,7 +205,7 @@ class _AffiliateControllerState extends State<AffiliatesController>
           OpenFileDialogParams(dialogType: OpenFileDialogType.document);
       final filePath = await FlutterFileDialog.pickFile(params: params);
       bytes = File(filePath!).readAsBytesSync();
-      fileName = basename(filePath).split(' ');
+      fileName = path.basename(filePath).split(' ');
     }
 
     var excel = Excel.decodeBytes(bytes);
