@@ -316,7 +316,7 @@ class _AffiliateControllerState extends State<AffiliatesController>
         for (var paid in user.paid) {
           sheet.updateCell(
               CellIndex.indexByColumnRow(columnIndex: column, rowIndex: row),
-              paid ?? '',
+              paid ?? 0,
               cellStyle: _cellStyle);
           column++;
         }
@@ -365,7 +365,7 @@ class _AffiliateControllerState extends State<AffiliatesController>
         for (var paid in users[i].paid) {
           sheet.updateCell(
               CellIndex.indexByColumnRow(columnIndex: column, rowIndex: row),
-              paid ?? '',
+              paid ?? 0,
               cellStyle: _cellStyle);
           column++;
         }
