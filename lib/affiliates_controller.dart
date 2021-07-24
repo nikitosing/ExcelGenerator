@@ -148,6 +148,9 @@ class _AffiliateControllerState extends State<AffiliatesController>
                 width: 100,
                 height: 35,
                 child: Focus(
+                    focusNode: FocusNode(
+                      onKey: (_, __) => KeyEventResult.skipRemainingHandlers,
+                    ),
                     skipTraversal: true,
                     onFocusChange: (isFocus) {
                       if (!isFocus && Platform.isWindows) _saveState();
