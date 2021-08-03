@@ -324,8 +324,7 @@ class _AffiliateControllerState extends State<AffiliatesController>
           column++;
         }
         var rowForSum = row + 1;
-        Formula formula = Formula.custom(
-            '=D$rowForSum+E$rowForSum+F$rowForSum+G$rowForSum+H$rowForSum+I$rowForSum+J$rowForSum+K$rowForSum+L$rowForSum+M$rowForSum+O$rowForSum');
+        Formula formula = Formula.custom('=SUM(D$rowForSum:M$rowForSum)+O$rowForSum');
         sheet.updateCell(
             CellIndex.indexByColumnRow(columnIndex: 13, rowIndex: row), formula,
             cellStyle: _cellStyle);
@@ -341,7 +340,8 @@ class _AffiliateControllerState extends State<AffiliatesController>
             formulaString += '+';
           }
         }
-        Formula sumRowsFormula = Formula.custom(formulaString);
+        Formula sumRowsFormula = Formula.custom(
+            '=SUM(${columnsForSum[i]}2:${columnsForSum[i]}$row)');
         sheet.updateCell(
             CellIndex.indexByColumnRow(columnIndex: i + 3, rowIndex: row),
             sumRowsFormula,
@@ -374,7 +374,7 @@ class _AffiliateControllerState extends State<AffiliatesController>
         }
         var rowForSum = row + 1;
         Formula formula = Formula.custom(
-            '=D$rowForSum+E$rowForSum+F$rowForSum+G$rowForSum+H$rowForSum+I$rowForSum+J$rowForSum+K$rowForSum+L$rowForSum+M$rowForSum+O$rowForSum');
+            '=SUM(D$rowForSum:M$rowForSum)+O$rowForSum');
         sheet.updateCell(
             CellIndex.indexByColumnRow(columnIndex: 13, rowIndex: row),
             formula);
