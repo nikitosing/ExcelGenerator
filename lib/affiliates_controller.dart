@@ -380,7 +380,8 @@ class _AffiliateControllerState extends State<AffiliatesController>
             formula);
         ++row;
       }
-      //sheet.setColAutoFit(0);
+      sheet.setColAutoFit(1);
+      sheet.setColAutoFit(2);
     }
     excel.delete('Sheet1');
     DateTime now = DateTime.now();
