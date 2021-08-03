@@ -308,26 +308,33 @@ class _UserTableState extends State<UserTable> with WidgetsBindingObserver {
 
   Widget _generateFirstColumnRow(user) {
     return Container(
-      child: TextFormField(
-        key: UniqueKey(),
-        readOnly: user.status == UserStatus.toRemove,
-        initialValue: user.name,
-        inputFormatters: [FilteringTextInputFormatter.deny(RegExp("[0-9]+"))],
-        // ^(\d*\.)?\d+$
-        autofocus: true,
-        maxLength: 60,
-        decoration:
-            const InputDecoration(hintText: "Введите Ф.И", counterText: ""),
-        keyboardType: TextInputType.text,
-        onChanged: (val) {
-          user.name = val;
-        },
-        onTap: () {
-          if (Platform.isWindows) {
-            _saveState();
-          }
-        },
-      ),
+      child: Focus(
+        skipTraversal: true,
+          onFocusChange: (isFocus) {
+            if (!isFocus && Platform.isWindows) _saveState();
+          },
+          child: TextFormField(
+            key: UniqueKey(),
+            readOnly: user.status == UserStatus.toRemove,
+            initialValue: user.name,
+            inputFormatters: [
+              FilteringTextInputFormatter.deny(RegExp("[0-9]+"))
+            ],
+            // ^(\d*\.)?\d+$
+            autofocus: true,
+            maxLength: 60,
+            decoration:
+                const InputDecoration(hintText: "Введите Ф.И", counterText: ""),
+            keyboardType: TextInputType.text,
+            onChanged: (val) {
+              user.name = val;
+            },
+            onTap: () {
+              if (Platform.isWindows) {
+                _saveState();
+              }
+            },
+          )),
       width: _nameColumnWidth,
       height: 52,
       padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
@@ -384,29 +391,34 @@ class _UserTableState extends State<UserTable> with WidgetsBindingObserver {
     );
     for (var i = 0; i < months.length; ++i) {
       _cells[months[i]] = Container(
-        child: TextFormField(
-            key: Key('${user.hashCode}Month$i'),
-            autofocus: true,
-            readOnly: user.status != UserStatus.normal,
-            keyboardType: TextInputType.number,
-            initialValue:
-                user.paid[i] == null ? '' : user.paid[i].toStringAsFixed(2),
-            inputFormatters: [
-              FilteringTextInputFormatter.allow(RegExp("^\\d*\\.?\\d*")),
-              DecimalTextInputFormatter(decimalRange: 2)
-            ],
-            onChanged: (val) {
-              user.paid[i] = val == '' ? 0 : num.parse(val);
-              user.calculateResult();
-              setState(() {});
+        child: Focus(
+            skipTraversal: true,
+            onFocusChange: (isFocus) {
+              if (!isFocus && Platform.isWindows) _saveState();
             },
-            decoration: const InputDecoration(counterText: ""),
-            maxLength: 12,
-            onTap: () {
-              if (Platform.isWindows) {
-                _saveState();
-              }
-            }),
+            child: TextFormField(
+                key: Key('${user.hashCode}Month$i'),
+                autofocus: true,
+                readOnly: user.status != UserStatus.normal,
+                keyboardType: TextInputType.number,
+                initialValue:
+                    user.paid[i] == null ? '' : user.paid[i].toStringAsFixed(2),
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(RegExp("^\\d*\\.?\\d*")),
+                  DecimalTextInputFormatter(decimalRange: 2)
+                ],
+                onChanged: (val) {
+                  user.paid[i] = val == '' ? 0 : num.parse(val);
+                  user.calculateResult();
+                  setState(() {});
+                },
+                decoration: const InputDecoration(counterText: ""),
+                maxLength: 12,
+                onTap: () {
+                  if (Platform.isWindows) {
+                    _saveState();
+                  }
+                })),
         width: i == months.length - 3 ? 220 : 100,
         height: 52,
         padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
