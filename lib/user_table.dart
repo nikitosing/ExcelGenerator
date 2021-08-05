@@ -33,7 +33,7 @@ class _UserTableState extends State<UserTable> with WidgetsBindingObserver {
   @override
   UserTable get widget => super.widget;
 
-  double _nameColumnWidth = 100;
+  double _nameColumnWidth = 250;
   int numberOfDeletedUsers = 0;
   var entryName = '';
   var name = '';

@@ -381,7 +381,8 @@ class _AffiliateControllerState extends State<AffiliatesController>
         ++row;
       }
       sheet.setColAutoFit(1);
-      sheet.setColAutoFit(2);
+      sheet.setColWidth(2, 15);
+      //sheet.setColAutoFit(2);
     }
     excel.delete('Sheet1');
     DateTime now = DateTime.now();
