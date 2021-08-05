@@ -332,14 +332,6 @@ class _AffiliateControllerState extends State<AffiliatesController>
       }
       const String columnsForSum = 'DEFGHIJKLMNO';
       for (int i = 0; i < months.length; ++i) {
-        String formulaString = '=';
-        for (int j = 2; j <= row; ++j) {
-          formulaString += columnsForSum[i];
-          formulaString += j.toString();
-          if (j != row) {
-            formulaString += '+';
-          }
-        }
         Formula sumRowsFormula = Formula.custom(
             '=SUM(${columnsForSum[i]}2:${columnsForSum[i]}$row)');
         sheet.updateCell(
