@@ -21,6 +21,7 @@ dependencies:
   horizontal_data_table: ^3.4.1
   flutter_xlider: ^3.4.0
   overlay_container: ^0.0.5+1
+  flutter_email_sender: ^5.0.2
 
 
 dev_dependencies:
