@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:excel_generator/cities_controller.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
@@ -8,12 +9,14 @@ import 'package:path_provider/path_provider.dart';
 import 'affiliates_controller.dart';
 import 'user_table.dart';
 
-var affiliateCnt = 1;
-var affiliates = {
-  '0': {'name': '', 'users': []}
-};
-var cityName = '';
+// var affiliateCnt = 1;
+// var affiliates = {
+//   '0': {'name': '', 'users': []}
+// };
+// var cityName = '';
 
+
+List<City> cities = [];
 const _title = 'ExcelGenerator';
 
 Future<void> main() async {
@@ -24,20 +27,21 @@ Future<void> main() async {
 
 Future<void> getState() async {
   Directory tempDir = await getApplicationSupportDirectory();
-  var file = File('${tempDir.path}\\excel_generator_state4.json');
+  var file = File('${tempDir.path}\\excel_generator_state5.json');
   if (file.existsSync()) {
     var json = jsonDecode(file.readAsStringSync());
-    affiliates = {};
-    cityName = json.containsKey('cityName') ? json['cityName'] : '';
-    for (var entry in json['affiliates'].entries) {
-      affiliateCnt = 0;
-      affiliates[entry.key] = {
-        'name': entry.value['name'],
-        'users':
-            entry.value['users'].map((user) => User.fromJson(user)).toList()
-      };
-    }
-    affiliateCnt = affiliates.isEmpty ? 0 : int.parse(affiliates.keys.last);
+    cities = json.map((e) => City.fromJson(e)).toList().cast<City>();
+    // affiliates = {};
+    // cityName = json.containsKey('cityName') ? json['cityName'] : '';
+    // for (var entry in json['affiliates'].entries) {
+    //   affiliateCnt = 0;
+    //   affiliates[entry.key] = {
+    //     'name': entry.value['name'],
+    //     'users':
+    //         entry.value['users'].map((user) => User.fromJson(user)).toList()
+    //   };
+    // }
+    // affiliateCnt = affiliates.isEmpty ? 0 : int.parse(affiliates.keys.last);
   }
 }
 
@@ -78,10 +82,7 @@ class MyApp extends StatelessWidget {
           primarySwatch: Colors.teal,
           primaryColor: Colors.grey,
         ),
-        home: AffiliatesController(
-            affiliates: affiliates,
-            affiliatesCnt: affiliateCnt,
-            cityName: cityName));
+        home: CitiesController(cities: cities));
   }
 }
 

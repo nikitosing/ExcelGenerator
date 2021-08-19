@@ -2,6 +2,7 @@ import 'dart:collection';
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:excel_generator/affiliates_controller.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/painting.dart';
@@ -12,17 +13,50 @@ import 'package:path_provider/path_provider.dart';
 
 import 'common.dart';
 import 'decimal_text_input_formatter.dart';
+import 'cities_controller.dart';
+
+var months = [
+  'Сентябрь',
+  'Октябрь',
+  'Ноябрь',
+  'Декабрь',
+  'Январь',
+  'Февраль',
+  'Март',
+  'Апрель',
+  'Май',
+  'Сентябрь следующего года',
+  'Итого',
+  'Доп. оплаты'
+];
+
+var columns = ['Кол. Чел', 'Ф. И.', 'Дата начала занятий'] + months;
+
+List<bool> toSum = [
+  true,
+  true,
+  true,
+  true,
+  true,
+  true,
+  true,
+  true,
+  true,
+  true,
+  true,
+  false,
+  true
+];
 
 class UserTable extends StatefulWidget {
-  final users;
-  final name;
-  final affiliateId;
+  final cities;
+  final affiliate;
+
 
   const UserTable(
       {Key? key,
-      this.users = const [],
-      this.name = '',
-      required this.affiliateId})
+      this.cities,
+      this.affiliate})
       : super(key: key);
 
   @override
@@ -35,18 +69,18 @@ class _UserTableState extends State<UserTable> with WidgetsBindingObserver {
 
   double _nameColumnWidth = 250;
   int numberOfDeletedUsers = 0;
-  var entryName = '';
-  var name = '';
   var users = [];
-  var affiliateId = '';
+  late List<City> cities;
+  late Affiliate affiliate;
 
   @override
   initState() {
     super.initState();
-    users = widget.users;
-    name = widget.name;
-    entryName = widget.name;
-    affiliateId = widget.affiliateId;
+
+    cities = widget.cities;
+    affiliate = widget.affiliate;
+    users = affiliate.users;
+
     for (var user in users) {
       if (user.status == UserStatus.toEdit) {
         ++numberOfDeletedUsers;
@@ -61,14 +95,8 @@ class _UserTableState extends State<UserTable> with WidgetsBindingObserver {
 
   Future<void> _saveState() async {
     Directory tempDir = await getApplicationSupportDirectory();
-    var file = File('${tempDir.path}\\excel_generator_state4.json');
-    var json = jsonDecode('{}');
-    if (file.existsSync()) {
-      json = jsonDecode(file.readAsStringSync());
-    }
-    json['affiliates'][affiliateId]['users'] = users;
-    json['affiliates'][affiliateId]['name'] = name;
-    file.writeAsStringSync(jsonEncode(json));
+    var file = File('${tempDir.path}\\excel_generator_state5.json');
+    file.writeAsStringSync(jsonEncode(cities));
   }
 
   void _sortUsers() {
@@ -175,7 +203,7 @@ class _UserTableState extends State<UserTable> with WidgetsBindingObserver {
                 width: MediaQuery.of(context).size.width - 100,
                 height: 104,
                 child: FlutterSlider(
-                  key: Key('Slider $affiliateId'),
+                  key: Key('Slider ${affiliate.id}'),
                   trackBar: const FlutterSliderTrackBar(
                     inactiveTrackBar: BoxDecoration(
                       color: Colors.transparent,
@@ -273,7 +301,7 @@ class _UserTableState extends State<UserTable> with WidgetsBindingObserver {
       num _sum = 0;
       for (var user in users) {
         if (user.status == UserStatus.toEdit) break;
-        _sum += user.paid[i] ?? 0;
+        _sum += user.properties[i] ?? 0;
       }
       _columns.add(Container(
           child: Column(
@@ -309,7 +337,7 @@ class _UserTableState extends State<UserTable> with WidgetsBindingObserver {
   Widget _generateFirstColumnRow(user) {
     return Container(
       child: Focus(
-        skipTraversal: true,
+          skipTraversal: true,
           onFocusChange: (isFocus) {
             if (!isFocus && Platform.isWindows) _saveState();
           },
@@ -401,14 +429,15 @@ class _UserTableState extends State<UserTable> with WidgetsBindingObserver {
                 autofocus: true,
                 readOnly: user.status != UserStatus.normal,
                 keyboardType: TextInputType.number,
-                initialValue:
-                    user.paid[i] == null ? '' : user.paid[i].toStringAsFixed(2),
+                initialValue: user.properties[i] == null
+                    ? ''
+                    : user.properties[i].toStringAsFixed(2),
                 inputFormatters: [
                   FilteringTextInputFormatter.allow(RegExp("^\\d*\\.?\\d*")),
                   DecimalTextInputFormatter(decimalRange: 2)
                 ],
                 onChanged: (val) {
-                  user.paid[i] = val == '' ? 0 : num.parse(val);
+                  user.properties[i] = val == '' ? 0 : num.parse(val);
                   user.calculateResult();
                   setState(() {});
                 },
@@ -480,24 +509,25 @@ class _UserTableState extends State<UserTable> with WidgetsBindingObserver {
 
 class User {
   late String name;
-  late DateTime dateStartOfEducation;
-  late List<dynamic> paid;
+  late DateTime? dateStartOfEducation;
+  late List<dynamic> properties;
   late num result;
   UserStatus status = UserStatus.normal;
+  late List<bool> toSum;
 
   void calculateResult() {
-    paid[paid.length - 2] = 0;
+    properties[properties.length - 2] = 0;
     result = 0;
-    for (var el in paid) {
+    for (var el in properties) {
       result += el ?? 0;
     }
-    paid[paid.length - 2] = result;
+    properties[properties.length - 2] = result;
   }
 
   Map toJson() => {
         'name': name,
         'dateStartOfEducation': dateStartOfEducation.toString(),
-        'paid': paid,
+        'properties': properties,
         'result': result,
         'status': status.index,
       };
@@ -506,9 +536,9 @@ class User {
     return User.allData(
         json['name'] as String,
         json['dateStartOfEducation'] == "null"
-            ? DateTime(1337)
+            ? null
             : DateTime.parse(json['dateStartOfEducation']),
-        json['paid'].cast<num>(),
+        json['properties'].cast<num>(),
         json['result'] as num,
         UserStatus.values[json['status']]);
   }
@@ -517,14 +547,14 @@ class User {
     result = 0;
     name = '';
     dateStartOfEducation = DateTime(1337);
-    paid = List.filled(months.length, null, growable: false);
+    properties = List.filled(columns.length - 3, null);
   }
 
   User.byName(String name) {
     this.name = name;
-    paid = List.filled(months.length, null, growable: false);
+    properties = List.filled(months.length, null);
   }
 
-  User.allData(this.name, this.dateStartOfEducation, this.paid, this.result,
-      this.status);
+  User.allData(this.name, this.dateStartOfEducation, this.properties,
+      this.result, this.status);
 }
