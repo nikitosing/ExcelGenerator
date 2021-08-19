@@ -157,9 +157,6 @@ class _AffiliateControllerState extends State<AffiliatesController>
                       onChanged: (val) {
                         affiliate.name = val;
                       },
-                      onTap: () {
-                        if (Platform.isWindows) _saveState();
-                      },
                     ))),
             GestureDetector(
               onTap: () {

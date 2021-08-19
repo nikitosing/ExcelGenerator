@@ -26,7 +26,7 @@ Future<void> getState() async {
   var file = File('${tempDir.path}\\excel_generator_state5.json');
   if (file.existsSync()) {
     var json = jsonDecode(file.readAsStringSync());
-    cities = json.map((e) => City.fromJson(e)).toList().cast<City>();
+    cities = json == null ? [] : json.map((e) => City.fromJson(e)).toList().cast<City>();
     // affiliates = {};
     // cityName = json.containsKey('cityName') ? json['cityName'] : '';
     // for (var entry in json['affiliates'].entries) {

@@ -158,9 +158,6 @@ class _CitiesControllerState extends State<CitiesController>
                       onChanged: (val) {
                         city.name = val;
                       },
-                      onTap: () {
-                        if (Platform.isWindows) _saveState();
-                      },
                     ))),
             GestureDetector(
               onTap: () {
@@ -284,6 +281,10 @@ class _CitiesControllerState extends State<CitiesController>
     setState(() {});
   }
 
+  // List<City> _getCitiesToSave() {
+  //
+  // }
+
   Future<void> _xlsxSave() async {
     if (Platform.isWindows) _saveState();
     var excel = Excel.createExcel();
@@ -393,7 +394,7 @@ class _CitiesControllerState extends State<CitiesController>
     excel.delete('Sheet1');
     DateTime now = DateTime.now();
     String formattedDate = DateFormat('yyyy-MM-dd-HH-mm').format(now);
-    final fileName = "Отчет хы $formattedDate.xlsx";
+    final fileName = "Отчет ${cities.length > 0 ? cities[0].name : " "} $formattedDate.xlsx";
     final data = Uint8List.fromList(excel.encode()!);
     if (Platform.isWindows) {
       var path =
@@ -449,7 +450,7 @@ class _CitiesControllerState extends State<CitiesController>
                     });
                   },
                   icon: const Icon(Icons.add)),
-              //IconButton(onPressed: _xlsxSave, icon: const Icon(Icons.save)),
+              IconButton(onPressed: _xlsxSave, icon: const Icon(Icons.save)),
               IconButton(
                   onPressed: _debugDeleteAll,
                   icon: const Icon(Icons.highlight_remove_outlined))
