@@ -6,15 +6,11 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 
-import 'affiliates_controller.dart';
-import 'user_table.dart';
-
 // var affiliateCnt = 1;
 // var affiliates = {
 //   '0': {'name': '', 'users': []}
 // };
 // var cityName = '';
-
 
 List<City> cities = [];
 const _title = 'ExcelGenerator';

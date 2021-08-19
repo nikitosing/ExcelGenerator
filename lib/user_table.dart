@@ -11,9 +11,9 @@ import 'package:flutter_xlider/flutter_xlider.dart';
 import 'package:horizontal_data_table/horizontal_data_table.dart';
 import 'package:path_provider/path_provider.dart';
 
+import 'cities_controller.dart';
 import 'common.dart';
 import 'decimal_text_input_formatter.dart';
-import 'cities_controller.dart';
 
 var months = [
   'Сентябрь',
@@ -52,12 +52,7 @@ class UserTable extends StatefulWidget {
   final cities;
   final affiliate;
 
-
-  const UserTable(
-      {Key? key,
-      this.cities,
-      this.affiliate})
-      : super(key: key);
+  const UserTable({Key? key, this.cities, this.affiliate}) : super(key: key);
 
   @override
   State<UserTable> createState() => _UserTableState();

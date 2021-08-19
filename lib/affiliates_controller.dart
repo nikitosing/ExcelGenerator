@@ -1,20 +1,14 @@
 import 'dart:convert';
 import 'dart:io';
-import 'dart:typed_data';
 
-import 'package:excel/excel.dart';
 import 'package:excel_generator/user_table.dart';
-import 'package:file_selector/file_selector.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/painting.dart';
 import 'package:flutter/widgets.dart';
-import 'package:flutter_file_dialog/flutter_file_dialog.dart';
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:path/path.dart' as path;
 
-import 'common.dart';
 import 'cities_controller.dart';
 
 class AffiliatesController extends StatefulWidget {
