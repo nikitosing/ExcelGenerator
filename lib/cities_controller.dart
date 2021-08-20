@@ -281,120 +281,170 @@ class _CitiesControllerState extends State<CitiesController>
     setState(() {});
   }
 
-  // List<City> _getCitiesToSave() {
-  //
-  // }
+  Future<void> _saveDialog() {
+    cities.forEach((element) {
+      element.toSave = false;
+    });
+    return showDialog<void>(
+        context: context,
+        builder: (BuildContext context) {
+          return StatefulBuilder(
+            builder: (context, setState) {
+              return AlertDialog(
+                title: const Text('Выберите города для сохранения'),
+                content: Scrollbar(
+                  isAlwaysShown: true,
+                  child: SingleChildScrollView(
+                    child: Column(
+                      children: cities
+                          .map((e) => CheckboxListTile(
+                              title: Text(e.name),
+                              value: e.toSave,
+                              onChanged: (bool? newVal) {
+                                setState(() {
+                                  e.toSave = newVal!;
+                                });
+                              },
+                              controlAffinity: ListTileControlAffinity.leading))
+                          .toList(),
+                    ),
+                  ),
+                ),
+                actions: <Widget>[
+                  TextButton(
+                    child: const Text('Сохранить'),
+                    onPressed: () {
+                      _xlsxSave();
+                      Navigator.of(context).pop();
+                    },
+                  ),
+                ],
+              );
+            },
+          );
+        });
+  }
 
   Future<void> _xlsxSave() async {
     if (Platform.isWindows) _saveState();
     var excel = Excel.createExcel();
     final DateFormat formatter = DateFormat('dd.MM.yyyy');
-    for (var affiliate
-        in cities.expand((element) => element.affiliates.toList())) {
-      var name = affiliate.name;
-      var users = affiliate.users;
-      var sheet = excel[name == '' ? ' ' : name];
-      for (int i = 0; i < columns.length; ++i) {
-        var cellStyle = CellStyle(
-            bold: true, fontSize: 10, textWrapping: TextWrapping.WrapText);
-        sheet.updateCell(
-            CellIndex.indexByColumnRow(columnIndex: i, rowIndex: 0), columns[i],
-            cellStyle: cellStyle);
-      }
-      int row = 1;
-      var spacer = false;
-      for (User user in users) {
-        if (user.status != UserStatus.normal && !spacer) {
+    List<City> citiesToSave =
+        cities.where((element) => element.toSave).toList();
+    for (var city in citiesToSave) {
+      for (var affiliate in city.affiliates) {
+        var name = affiliate.name;
+        var users = affiliate.users;
+        var sheet = excel[citiesToSave.length > 1
+            ? '${city.name}_$name'
+            : name == ''
+                ? ' '
+                : name];
+        for (int i = 0; i < columns.length; ++i) {
+          var cellStyle = CellStyle(
+              bold: true, fontSize: 10, textWrapping: TextWrapping.WrapText);
+          sheet.updateCell(
+              CellIndex.indexByColumnRow(columnIndex: i, rowIndex: 0),
+              columns[i],
+              cellStyle: cellStyle);
+        }
+        int row = 1;
+        var spacer = false;
+        for (User user in users) {
+          if (user.status != UserStatus.normal && !spacer) {
+            row++;
+            spacer = true;
+            //does spacer between normal users and removed users
+          }
+          if (user.status == UserStatus.toEdit) {
+            break;
+          }
+          var _cellStyle = CellStyle(
+              backgroundColorHex:
+                  user.status == UserStatus.normal ? '#ffffff' : '#FFFF00');
+          sheet.updateCell(
+              CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: row),
+              row - (spacer ? 1 : 0),
+              cellStyle: _cellStyle);
+          sheet.updateCell(
+              CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: row),
+              user.name,
+              cellStyle: _cellStyle);
+          sheet.updateCell(
+              CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: row),
+              user.dateStartOfEducation == null
+                  ? ''
+                  : formatter.format(user.dateStartOfEducation!),
+              cellStyle: _cellStyle);
+          int column = 3;
+          for (var paid in user.properties) {
+            sheet.updateCell(
+                CellIndex.indexByColumnRow(columnIndex: column, rowIndex: row),
+                paid ?? 0,
+                cellStyle: _cellStyle);
+            column++;
+          }
+          var rowForSum = row + 1;
+          Formula formula =
+              Formula.custom('=SUM(D$rowForSum:M$rowForSum)+O$rowForSum');
+          sheet.updateCell(
+              CellIndex.indexByColumnRow(columnIndex: 13, rowIndex: row),
+              formula,
+              cellStyle: _cellStyle);
           row++;
-          spacer = true;
-          //does spacer between normal users and removed users
         }
-        if (user.status == UserStatus.toEdit) {
-          break;
-        }
-        var _cellStyle = CellStyle(
-            backgroundColorHex:
-                user.status == UserStatus.normal ? '#ffffff' : '#FFFF00');
-        sheet.updateCell(
-            CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: row),
-            row - (spacer ? 1 : 0),
-            cellStyle: _cellStyle);
-        sheet.updateCell(
-            CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: row),
-            user.name,
-            cellStyle: _cellStyle);
-        sheet.updateCell(
-            CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: row),
-            user.dateStartOfEducation == null
-                ? ''
-                : formatter.format(user.dateStartOfEducation!),
-            cellStyle: _cellStyle);
-        int column = 3;
-        for (var paid in user.properties) {
+        const String columnsForSum = 'DEFGHIJKLMNO';
+        for (int i = 0; i < months.length; ++i) {
+          Formula sumRowsFormula = Formula.custom(
+              '=SUM(${columnsForSum[i]}2:${columnsForSum[i]}$row)');
           sheet.updateCell(
-              CellIndex.indexByColumnRow(columnIndex: column, rowIndex: row),
-              paid ?? 0,
-              cellStyle: _cellStyle);
-          column++;
+              CellIndex.indexByColumnRow(columnIndex: i + 3, rowIndex: row),
+              sumRowsFormula,
+              cellStyle: CellStyle(backgroundColorHex: '#3792cb'));
         }
-        var rowForSum = row + 1;
-        Formula formula =
-            Formula.custom('=SUM(D$rowForSum:M$rowForSum)+O$rowForSum');
-        sheet.updateCell(
-            CellIndex.indexByColumnRow(columnIndex: 13, rowIndex: row), formula,
-            cellStyle: _cellStyle);
-        row++;
-      }
-      const String columnsForSum = 'DEFGHIJKLMNO';
-      for (int i = 0; i < months.length; ++i) {
-        Formula sumRowsFormula = Formula.custom(
-            '=SUM(${columnsForSum[i]}2:${columnsForSum[i]}$row)');
-        sheet.updateCell(
-            CellIndex.indexByColumnRow(columnIndex: i + 3, rowIndex: row),
-            sumRowsFormula,
-            cellStyle: CellStyle(backgroundColorHex: '#3792cb'));
-      }
-      row += 2;
-      for (int i = row - 3 - (spacer ? 1 : 0); i < users.length; ++i) {
-        var _cellStyle = CellStyle(backgroundColorHex: '#FF5722');
-        sheet.updateCell(
-            CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: row),
-            row - 2 - (spacer ? 1 : 0),
-            cellStyle: _cellStyle);
-        sheet.updateCell(
-            CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: row),
-            users[i].name,
-            cellStyle: _cellStyle);
-        sheet.updateCell(
-            CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: row),
-            users[i].dateStartOfEducation == null
-                ? ''
-                : formatter.format(users[i].dateStartOfEducation!),
-            cellStyle: _cellStyle);
-        int column = 3;
-        for (var paid in users[i].properties) {
+        row += 2;
+        for (int i = row - 3 - (spacer ? 1 : 0); i < users.length; ++i) {
+          var _cellStyle = CellStyle(backgroundColorHex: '#FF5722');
           sheet.updateCell(
-              CellIndex.indexByColumnRow(columnIndex: column, rowIndex: row),
-              paid ?? 0,
+              CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: row),
+              row - 2 - (spacer ? 1 : 0),
               cellStyle: _cellStyle);
-          column++;
+          sheet.updateCell(
+              CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: row),
+              users[i].name,
+              cellStyle: _cellStyle);
+          sheet.updateCell(
+              CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: row),
+              users[i].dateStartOfEducation == null
+                  ? ''
+                  : formatter.format(users[i].dateStartOfEducation!),
+              cellStyle: _cellStyle);
+          int column = 3;
+          for (var paid in users[i].properties) {
+            sheet.updateCell(
+                CellIndex.indexByColumnRow(columnIndex: column, rowIndex: row),
+                paid ?? 0,
+                cellStyle: _cellStyle);
+            column++;
+          }
+          var rowForSum = row + 1;
+          Formula formula =
+              Formula.custom('=SUM(D$rowForSum:M$rowForSum)+O$rowForSum');
+          sheet.updateCell(
+              CellIndex.indexByColumnRow(columnIndex: 13, rowIndex: row),
+              formula);
+          ++row;
         }
-        var rowForSum = row + 1;
-        Formula formula =
-            Formula.custom('=SUM(D$rowForSum:M$rowForSum)+O$rowForSum');
-        sheet.updateCell(
-            CellIndex.indexByColumnRow(columnIndex: 13, rowIndex: row),
-            formula);
-        ++row;
+        sheet.setColAutoFit(1);
+        sheet.setColWidth(2, 15);
+        //sheet.setColAutoFit(2);
       }
-      sheet.setColAutoFit(1);
-      sheet.setColWidth(2, 15);
-      //sheet.setColAutoFit(2);
     }
     excel.delete('Sheet1');
     DateTime now = DateTime.now();
     String formattedDate = DateFormat('yyyy-MM-dd-HH-mm').format(now);
-    final fileName = "Отчет ${cities.length > 0 ? cities[0].name : " "} $formattedDate.xlsx";
+    final fileName =
+        "Отчет ${cities.length > 1 ? citiesToSave.map((e) => e.name).join('_') : cities[0].name} $formattedDate.xlsx";
     final data = Uint8List.fromList(excel.encode()!);
     if (Platform.isWindows) {
       var path =
@@ -450,7 +500,7 @@ class _CitiesControllerState extends State<CitiesController>
                     });
                   },
                   icon: const Icon(Icons.add)),
-              IconButton(onPressed: _xlsxSave, icon: const Icon(Icons.save)),
+              IconButton(onPressed: _saveDialog, icon: const Icon(Icons.save)),
               IconButton(
                   onPressed: _debugDeleteAll,
                   icon: const Icon(Icons.highlight_remove_outlined))
@@ -503,6 +553,7 @@ class City {
   String id = UniqueKey().hashCode.toString();
   late String name;
   late List<Affiliate> affiliates;
+  bool toSave = false;
 
   City() {
     name = '';
