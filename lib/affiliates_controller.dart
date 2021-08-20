@@ -491,7 +491,7 @@ class Affiliate {
 
   Affiliate() {
     name = '';
-    users = [];
+    users = [User()];
   }
 
   Map toJson() => {

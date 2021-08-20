@@ -214,35 +214,44 @@ class _CitiesControllerState extends State<CitiesController>
 
     fileName.removeLast();
     fileName.removeAt(0);
-    var name = fileName.join(' ');
-    name = name.trim();
+    fileName = fileName.join(' ').split('_');
+    bool isMultipleCities = fileName.length > 1;
 
-    late City city;
+    var citiesFromFile = <String, City>{};
 
-    if (citiesNames.containsKey(name)) {
-      city = cities[citiesNames['name']];
-    } else {
-      city = City.allData(name, []);
-      cities.add(city);
+    for (var cityName in fileName) {
+      if (citiesNames.containsKey(cityName)) {
+        citiesFromFile[cityName] = cities[citiesNames[cityName]];
+      } else {
+        citiesFromFile[cityName] = City.allData(cityName, []);
+        cities.add(citiesFromFile[cityName]!);
+      }
     }
 
     var affiliatesNames = {};
 
-    city.affiliates.asMap().forEach((key, value) {
-      affiliatesNames['${value.name}'] = key;
+    cities.forEach((element) {
+      var nameToAffiliate = {};
+      element.affiliates.forEach((el) {
+        nameToAffiliate[el.name] = el;
+      });
+
+      affiliatesNames[element.name] = nameToAffiliate;
     });
 
-    for (var affiliateName in excel.tables.keys) {
+    for (var tableName in excel.tables.keys) {
       late Affiliate affiliate;
-      if (affiliatesNames.containsKey(affiliateName)) {
-        affiliate = city.affiliates[affiliatesNames[affiliateName]];
+      String cityName = tableName.split('_')[0];
+      var affiliateName = tableName.split('_')[1];
+      if (affiliatesNames[cityName].containsKey(affiliateName)) {
+        affiliate = affiliatesNames[cityName][affiliateName];
         affiliate.users = [];
       } else {
         affiliate = Affiliate.allData(affiliateName, []);
-        city.affiliates.add(affiliate);
+        citiesFromFile[cityName]!.affiliates.add(affiliate);
       }
 
-      var table = excel.tables[affiliate.name];
+      var table = excel.tables[tableName];
       int row = 1;
 
       for (int i = 1; i < 4; ++i) {
@@ -338,7 +347,7 @@ class _CitiesControllerState extends State<CitiesController>
         var sheet = excel[citiesToSave.length > 1
             ? '${city.name}_$name'
             : name == ''
-                ? ' '
+                ? '  '
                 : name];
         for (int i = 0; i < columns.length; ++i) {
           var cellStyle = CellStyle(
