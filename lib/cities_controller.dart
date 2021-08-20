@@ -235,14 +235,20 @@ class _CitiesControllerState extends State<CitiesController>
       element.affiliates.forEach((el) {
         nameToAffiliate[el.name] = el;
       });
-
       affiliatesNames[element.name] = nameToAffiliate;
     });
 
     for (var tableName in excel.tables.keys) {
       late Affiliate affiliate;
-      String cityName = tableName.split('_')[0];
-      var affiliateName = tableName.split('_')[1];
+      late String cityName;
+      late String affiliateName;
+      if (isMultipleCities) {
+        cityName = tableName.split('_')[0];
+        affiliateName = tableName.split('_')[1];
+      } else {
+        cityName = affiliatesNames.keys.first;
+        affiliateName = tableName;
+      }
       if (affiliatesNames[cityName].containsKey(affiliateName)) {
         affiliate = affiliatesNames[cityName][affiliateName];
         affiliate.users = [];
