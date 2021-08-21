@@ -14,6 +14,7 @@ import 'package:flutter_file_dialog/flutter_file_dialog.dart';
 import 'package:intl/intl.dart';
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
+import 'package:flutter_email_sender/flutter_email_sender.dart';
 
 import 'common.dart';
 
@@ -32,6 +33,7 @@ class _CitiesControllerState extends State<CitiesController>
   CitiesController get widget => super.widget;
 
   List<City> cities = [];
+  List<City> initialCities = [];
   late TabController _tabController;
   late ScrollController _scrollController;
 
@@ -40,6 +42,7 @@ class _CitiesControllerState extends State<CitiesController>
     super.initState();
     WidgetsBinding.instance!.addObserver(this);
     cities = widget.cities!;
+    initialCities = cities.toList();
     _tabController = TabController(length: cities.length, vsync: this);
     _scrollController = ScrollController();
     _tabController.addListener(() {
@@ -262,9 +265,20 @@ class _CitiesControllerState extends State<CitiesController>
 
       for (int i = 1; i < 4; ++i) {
         while (table!
-                .cell(CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: row))
-                .value !=
-            null) {
+                    .cell(CellIndex.indexByColumnRow(
+                        columnIndex: 0, rowIndex: row))
+                    .value !=
+                null ||
+            table
+                    .cell(CellIndex.indexByColumnRow(
+                        columnIndex: 1, rowIndex: row))
+                    .value !=
+                null ||
+            table
+                    .cell(CellIndex.indexByColumnRow(
+                        columnIndex: 2, rowIndex: row))
+                    .value !=
+                null) {
           var user = User();
           user.name = table
               .cell(CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: row))
@@ -284,6 +298,7 @@ class _CitiesControllerState extends State<CitiesController>
             user.properties[column - 3] = paid == '' ? 0 : paid;
           }
           user.calculateResult();
+          user.memorizeProperties();
           user.status = UserStatus.values[i - 1];
           affiliate.users.add(user);
           ++row;
@@ -365,6 +380,7 @@ class _CitiesControllerState extends State<CitiesController>
         }
         int row = 1;
         var spacer = false;
+        var _cellStyleEdited = CellStyle(backgroundColorHex: '#FFFF00');
         for (User user in users) {
           if (user.status != UserStatus.normal && !spacer) {
             row++;
@@ -384,21 +400,25 @@ class _CitiesControllerState extends State<CitiesController>
           sheet.updateCell(
               CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: row),
               user.name,
-              cellStyle: _cellStyle);
+              cellStyle: user.isMemorized ?  user.name == user.initUser.name ? _cellStyle : _cellStyleEdited : _cellStyle);
           sheet.updateCell(
               CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: row),
               user.dateStartOfEducation == null
                   ? ''
                   : formatter.format(user.dateStartOfEducation!),
-              cellStyle: _cellStyle);
+              cellStyle: user.isMemorized ?  user.dateStartOfEducation == user.initUser.dateStartOfEducation ? _cellStyle : _cellStyleEdited : _cellStyle);
           int column = 3;
-          for (var paid in user.properties) {
+          user.properties.asMap().forEach((index, value) {
+             var _style = _cellStyle;
+            if (user.isMemorized) {
+              _style = user.properties[index] == user.initUser.properties[index] ? _cellStyle : _cellStyleEdited;
+            }
             sheet.updateCell(
                 CellIndex.indexByColumnRow(columnIndex: column, rowIndex: row),
-                paid ?? 0,
-                cellStyle: _cellStyle);
+                value ?? 0,
+                cellStyle: _style);
             column++;
-          }
+          });
           var rowForSum = row + 1;
           Formula formula =
               Formula.custom('=SUM(D$rowForSum:M$rowForSum)+O$rowForSum');
@@ -417,7 +437,9 @@ class _CitiesControllerState extends State<CitiesController>
               sumRowsFormula,
               cellStyle: CellStyle(backgroundColorHex: '#3792cb'));
         }
+
         row += 2;
+
         for (int i = row - 3 - (spacer ? 1 : 0); i < users.length; ++i) {
           var _cellStyle = CellStyle(backgroundColorHex: '#FF5722');
           sheet.updateCell(
@@ -475,6 +497,7 @@ class _CitiesControllerState extends State<CitiesController>
     } else if (Platform.isAndroid) {
       final params = SaveFileDialogParams(data: data, fileName: fileName);
       final filePath = await FlutterFileDialog.saveFile(params: params);
+      // send email
     }
   }
 

@@ -70,6 +70,7 @@ class _UserTableState extends State<UserTable> with WidgetsBindingObserver {
 
   @override
   initState() {
+
     super.initState();
 
     cities = widget.cities;
@@ -506,9 +507,16 @@ class User {
   late String name;
   late DateTime? dateStartOfEducation;
   late List<dynamic> properties;
+  late User initUser;
   late num result;
   UserStatus status = UserStatus.normal;
   late List<bool> toSum;
+  bool isMemorized = false;
+
+  void memorizeProperties() {
+    initUser = User.allData(name, dateStartOfEducation, List.from(properties), result, status);
+    isMemorized = true;
+  }
 
   void calculateResult() {
     properties[properties.length - 2] = 0;
@@ -528,7 +536,7 @@ class User {
       };
 
   factory User.fromJson(dynamic json) {
-    return User.allData(
+    User temp = User.allData(
         json['name'] as String,
         json['dateStartOfEducation'] == "null"
             ? null
@@ -536,6 +544,8 @@ class User {
         json['properties'].cast<num>(),
         json['result'] as num,
         UserStatus.values[json['status']]);
+    temp.memorizeProperties();
+    return temp;
   }
 
   User() {

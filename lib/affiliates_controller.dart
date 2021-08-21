@@ -31,14 +31,14 @@ class _AffiliateControllerState extends State<AffiliatesController>
   late City city;
   late TabController _tabController;
   late ScrollController _scrollController;
-  late List<City> cities;
+  late List<City> _cities;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance!.addObserver(this);
     city = widget.city;
-    cities = widget.cities;
+    _cities = widget.cities;
     affiliates = city.affiliates;
     _scrollController = ScrollController();
     _tabController = TabController(length: affiliates.length, vsync: this);
@@ -83,6 +83,7 @@ class _AffiliateControllerState extends State<AffiliatesController>
   void _addAffiliate() {
     affiliates.add(Affiliate());
     // affiliates['${UniqueKey().hashCode}'] = {'name': '', 'users': []};
+
     _recreateTabController();
     setState(() {});
     if (Platform.isWindows) _saveState();
@@ -129,7 +130,7 @@ class _AffiliateControllerState extends State<AffiliatesController>
   void _saveState() async {
     Directory tempDir = await getApplicationSupportDirectory();
     var file = File('${tempDir.path}\\excel_generator_state5.json');
-    file.writeAsStringSync(jsonEncode(cities));
+    file.writeAsStringSync(jsonEncode(_cities));
   }
 
   Widget _tabCreator(var affiliate, var index, var activeTabId) {
@@ -414,73 +415,73 @@ class _AffiliateControllerState extends State<AffiliatesController>
       }(),
     );
     return Scaffold(
-      appBar: AppBar(
-          actions: [
-            IconButton(
-                onPressed: () {
-                  setState(() {
-                    _addAffiliate();
-                  });
-                },
-                icon: const Icon(Icons.add)),
-            //IconButton(onPressed: _xlsxSave, icon: const Icon(Icons.save)),
-          ],
-          title: SizedBox(
-              width: MediaQuery.of(context).size.width - 100,
-              height: 60,
-              child: Align(
-                  alignment: Alignment.bottomLeft,
-                  child: Platform.isWindows
-                      ? Scrollbar(
-                          controller: _scrollController,
-                          key: UniqueKey(),
-                          thickness: 5,
-                          interactive: true,
-                          isAlwaysShown: true,
-                          child: SingleChildScrollView(
-                              controller: _scrollController,
-                              scrollDirection: Axis.horizontal,
-                              child: SizedBox(
-                                  width: 152.0 * affiliates.length,
-                                  child: _tabBar)))
-                      : _tabBar))),
-      // SizedBox(
-      //     height: 35,
-      //     child: Focus(
-      //         skipTraversal: true,
-      //         onFocusChange: (isFocus) {
-      //           if (!isFocus && Platform.isWindows) _saveState();
-      //         },
-      //         child: TextFormField(
-      //           key: UniqueKey(),
-      //           initialValue: cityName,
-      //           onChanged: (val) {
-      //             cityName = val;
-      //           },
-      //         ))),
-      // bottom: PreferredSize(
-      //     preferredSize: const Size.fromHeight(60.0),
-      //     child: Align(
-      //         alignment: Alignment.bottomLeft,
-      //         child: Platform.isWindows
-      //             ? Scrollbar(
-      //                 thickness: 5,
-      //                 interactive: true,
-      //                 isAlwaysShown: true,
-      //                 child: SingleChildScrollView(
-      //                     scrollDirection: Axis.horizontal,
-      //                     primary: true,
-      //                     child: SizedBox(
-      //                         width: 152.0 * affiliates.length,
-      //                         child: _tabBar)))
-      //             : _tabBar))),
+        appBar: AppBar(
+            actions: [
+              IconButton(
+                  onPressed: () {
+                    setState(() {
+                      _addAffiliate();
+                    });
+                  },
+                  icon: const Icon(Icons.add)),
+              //IconButton(onPressed: _xlsxSave, icon: const Icon(Icons.save)),
+            ],
+            title: SizedBox(
+                width: MediaQuery.of(context).size.width - 100,
+                height: 60,
+                child: Align(
+                    alignment: Alignment.bottomLeft,
+                    child: Platform.isWindows
+                        ? Scrollbar(
+                            controller: _scrollController,
+                            key: UniqueKey(),
+                            thickness: 5,
+                            interactive: true,
+                            isAlwaysShown: true,
+                            child: SingleChildScrollView(
+                                controller: _scrollController,
+                                scrollDirection: Axis.horizontal,
+                                child: SizedBox(
+                                    width: 152.0 * affiliates.length,
+                                    child: _tabBar)))
+                        : _tabBar))),
+        // SizedBox(
+        //     height: 35,
+        //     child: Focus(
+        //         skipTraversal: true,
+        //         onFocusChange: (isFocus) {
+        //           if (!isFocus && Platform.isWindows) _saveState();
+        //         },
+        //         child: TextFormField(
+        //           key: UniqueKey(),
+        //           initialValue: cityName,
+        //           onChanged: (val) {
+        //             cityName = val;
+        //           },
+        //         ))),
+        // bottom: PreferredSize(
+        //     preferredSize: const Size.fromHeight(60.0),
+        //     child: Align(
+        //         alignment: Alignment.bottomLeft,
+        //         child: Platform.isWindows
+        //             ? Scrollbar(
+        //                 thickness: 5,
+        //                 interactive: true,
+        //                 isAlwaysShown: true,
+        //                 child: SingleChildScrollView(
+        //                     scrollDirection: Axis.horizontal,
+        //                     primary: true,
+        //                     child: SizedBox(
+        //                         width: 152.0 * affiliates.length,
+        //                         child: _tabBar)))
+        //             : _tabBar))),
 
-      body: TabBarView(
+        body: TabBarView(
           controller: _tabController,
           children: affiliates
               .map((entry) => UserTable(key: UniqueKey(), affiliate: entry))
-              .toList()),
-    );
+              .toList(),
+        ));
   }
 }
 
