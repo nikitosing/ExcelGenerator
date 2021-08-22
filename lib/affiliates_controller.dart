@@ -489,22 +489,29 @@ class Affiliate {
   String id = UniqueKey().hashCode.toString();
   late String name;
   late List<User> users;
+  List<Types> userDefinedColumnsTypes = [];
+  List<String> userDefinedColumns = [];
 
   Affiliate() {
     name = '';
-    users = [User()];
+    users = [User(userDefinedColumns.length)];
   }
 
   Map toJson() => {
         'id': id,
         'name': name,
         'users': users.map((e) => e.toJson()).toList(),
+        'userDefinedColumns': userDefinedColumns
       };
 
   Affiliate.allData(this.name, this.users);
 
+  Affiliate.allWithColumns(this.name, this.users, this.userDefinedColumns);
+
   factory Affiliate.fromJson(dynamic json) {
-    return Affiliate.allData(json['name'],
-        json['users'].map((e) => User.fromJson(e)).toList().cast<User>());
+    return Affiliate.allWithColumns(
+        json['name'],
+        json['users'].map((e) => User.fromJson(e)).toList().cast<User>(),
+        json['userDefinedColumns']);
   }
 }

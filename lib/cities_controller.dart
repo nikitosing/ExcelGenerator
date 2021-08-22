@@ -279,7 +279,7 @@ class _CitiesControllerState extends State<CitiesController>
                         columnIndex: 2, rowIndex: row))
                     .value !=
                 null) {
-          var user = User();
+          var user = User(0);
           user.name = table
               .cell(CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: row))
               .value;
@@ -467,6 +467,7 @@ class _CitiesControllerState extends State<CitiesController>
           var rowForSum = row + 1;
           Formula formula =
               Formula.custom('=SUM(D$rowForSum:M$rowForSum)+O$rowForSum');
+
           sheet.updateCell(
               CellIndex.indexByColumnRow(columnIndex: 13, rowIndex: row),
               formula);

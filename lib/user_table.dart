@@ -1,7 +1,8 @@
 import 'dart:collection';
 import 'dart:convert';
 import 'dart:io';
-
+import 'dart:math';
+import 'package:excel/excel.dart';
 import 'package:excel_generator/affiliates_controller.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -14,6 +15,8 @@ import 'package:path_provider/path_provider.dart';
 import 'cities_controller.dart';
 import 'common.dart';
 import 'decimal_text_input_formatter.dart';
+
+enum Types { number, formula, text }
 
 var months = [
   'Сентябрь',
@@ -31,22 +34,6 @@ var months = [
 ];
 
 var columns = ['Кол. Чел', 'Ф. И.', 'Дата начала занятий'] + months;
-
-List<bool> toSum = [
-  true,
-  true,
-  true,
-  true,
-  true,
-  true,
-  true,
-  true,
-  true,
-  true,
-  true,
-  false,
-  true
-];
 
 class UserTable extends StatefulWidget {
   final cities;
@@ -67,14 +54,20 @@ class _UserTableState extends State<UserTable> with WidgetsBindingObserver {
   var users = [];
   late List<City> cities;
   late Affiliate affiliate;
+  late List<String> userDefinedColumns;
+  late ValueNotifier _notifier = ValueNotifier(userDefinedColumns);
 
   @override
   initState() {
-
     super.initState();
 
     cities = widget.cities;
     affiliate = widget.affiliate;
+    userDefinedColumns = affiliate.userDefinedColumns;
+    //_notifier = ValueNotifier(userDefinedColumns);
+    _notifier.addListener(() {
+      setState(() {});
+    });
     users = affiliate.users;
 
     for (var user in users) {
@@ -86,6 +79,7 @@ class _UserTableState extends State<UserTable> with WidgetsBindingObserver {
 
   @override
   void dispose() {
+    _notifier.dispose();
     super.dispose();
   }
 
@@ -106,8 +100,8 @@ class _UserTableState extends State<UserTable> with WidgetsBindingObserver {
         (users[users.length - 1 - numberOfDeletedUsers].name != '' &&
             users[users.length - 1 - numberOfDeletedUsers]
                     .dateStartOfEducation !=
-                DateTime(1337))) {
-      users.add(User());
+                null)) {
+      users.add(User(userDefinedColumns.length));
       _sortUsers();
     }
   }
@@ -188,56 +182,157 @@ class _UserTableState extends State<UserTable> with WidgetsBindingObserver {
     );
   }
 
+  Future<void> _addColumn() {
+    var types = <Types, String>{
+      Types.text: 'Текст',
+      Types.formula: 'Формула',
+      Types.number: 'Число'
+    };
+    Types chosen = Types.number;
+    String name = '';
+    return showDialog<void>(
+        context: context,
+        builder: (BuildContext context) {
+          return StatefulBuilder(
+            builder: (context, setState) {
+              return AlertDialog(
+                title: const Text('Создание столбца'),
+                content: Scrollbar(
+                  isAlwaysShown: true,
+                  child: SingleChildScrollView(
+                    child: Column(
+                      children: [
+                            TextField(
+                              autofocus: true,
+                              onChanged: (val) {
+                                name = val;
+                              },
+                            )
+                          ].cast<Widget>() +
+                          types.keys
+                              .map((type) => RadioListTile<Types>(
+                                    title: Text(types[type]!),
+                                    value: type,
+                                    onChanged: (newVal) {
+                                      setState(() {
+                                        chosen = newVal!;
+                                      });
+                                    },
+                                    controlAffinity:
+                                        ListTileControlAffinity.leading,
+                                    groupValue: chosen,
+                                  ))
+                              .toList()
+                              .cast<Widget>(),
+                    ),
+                  ),
+                ),
+                actions: <Widget>[
+                  TextButton(
+                    child: const Text('Добавить'),
+                    onPressed: () {
+                      userDefinedColumns.add(name);
+                      affiliate.userDefinedColumnsTypes.add(chosen);
+                      users.forEach((element) {
+                        element.properties.add(null);
+                      });
+                      Navigator.of(context).pop();
+                    },
+                  ),
+                ],
+              );
+            },
+          );
+        });
+  }
+
+  Future<void> _removeColumn(var index) async {
+    return showDialog<void>(
+      context: context,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Подтвердите'),
+          content: SingleChildScrollView(
+            child: Column(
+              children: const [Text('Вы точно хотите удалить столбец?')],
+            ),
+          ),
+          actions: <Widget>[
+            TextButton(
+              child: const Text('Да'),
+              onPressed: () {
+                userDefinedColumns.removeAt(index);
+                users.forEach((element) {
+                  element.properties.removeAt(months.length + index);
+                });
+                Navigator.of(context).pop();
+              },
+            ),
+            TextButton(
+              child: const Text('Нет'),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: Stack(children: [
-        _getBodyWidget(),
-        Align(
-            alignment: Alignment.topLeft,
-            child: SizedBox(
-                width: MediaQuery.of(context).size.width - 100,
-                height: 104,
-                child: FlutterSlider(
-                  //key: Key('Slider ${affiliate.id}'),
-                  trackBar: const FlutterSliderTrackBar(
-                    inactiveTrackBar: BoxDecoration(
-                      color: Colors.transparent,
-                    ),
-                    activeTrackBar: BoxDecoration(
-                      color: Colors.transparent,
-                    ),
-                    activeDisabledTrackBarColor: Colors.transparent,
-                    inactiveDisabledTrackBarColor: Colors.transparent,
-                  ),
-                  handlerWidth: 5,
-                  handlerAnimation:
-                      const FlutterSliderHandlerAnimation(scale: 1),
-                  handler: FlutterSliderHandler(
-                      foregroundDecoration:
-                          BoxDecoration(color: Colors.grey[400]),
-                      child: const SizedBox(
-                          width: 9,
-                          height: double.infinity,
-                          child: MouseRegion(
-                              cursor: SystemMouseCursors.resizeColumn))),
-                  handlerHeight: double.infinity,
-                  touchSize: 10,
-                  visibleTouchArea: false,
-                  selectByTap: false,
-                  jump: false,
-                  values: [_nameColumnWidth],
-                  tooltip: FlutterSliderTooltip(
-                    disabled: true,
-                  ),
-                  max: MediaQuery.of(context).size.width - 100,
-                  min: 0,
-                  onDragging: (handlerIndex, lowerValue, upperValue) {
-                    _nameColumnWidth = lowerValue < 45 ? 45 : lowerValue;
-                    setState(() {});
-                  },
-                )))
-      ]),
+      //key: UniqueKey(),
+      body: Stack(
+          //key: UniqueKey(),
+          children: [
+            _getBodyWidget(),
+            Align(
+                alignment: Alignment.topLeft,
+                child: SizedBox(
+                    width: min(MediaQuery.of(context).size.width - 150, 500),
+                    height: 104,
+                    child: FlutterSlider(
+                      //key: Key('Slider ${affiliate.id}'),
+                      trackBar: const FlutterSliderTrackBar(
+                        inactiveTrackBar: BoxDecoration(
+                          color: Colors.transparent,
+                        ),
+                        activeTrackBar: BoxDecoration(
+                          color: Colors.transparent,
+                        ),
+                        activeDisabledTrackBarColor: Colors.transparent,
+                        inactiveDisabledTrackBarColor: Colors.transparent,
+                      ),
+                      handlerWidth: 5,
+                      handlerAnimation:
+                          const FlutterSliderHandlerAnimation(scale: 1),
+                      handler: FlutterSliderHandler(
+                          foregroundDecoration:
+                              BoxDecoration(color: Colors.grey[400]),
+                          child: const SizedBox(
+                              width: 9,
+                              height: double.infinity,
+                              child: MouseRegion(
+                                  cursor: SystemMouseCursors.resizeColumn))),
+                      handlerHeight: double.infinity,
+                      touchSize: 10,
+                      visibleTouchArea: false,
+                      selectByTap: false,
+                      jump: false,
+                      values: [_nameColumnWidth],
+                      tooltip: FlutterSliderTooltip(
+                        disabled: true,
+                      ),
+                      max: min(MediaQuery.of(context).size.width - 150, 500),
+                      min: 0,
+                      onDragging: (handlerIndex, lowerValue, upperValue) {
+                        _nameColumnWidth = lowerValue < 45 ? 45 : lowerValue;
+                        setState(() {});
+                      },
+                    )))
+          ]),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           setState(() {
@@ -252,11 +347,13 @@ class _UserTableState extends State<UserTable> with WidgetsBindingObserver {
 
   Widget _getBodyWidget() {
     return SizedBox(
+      //key: UniqueKey(),
       child: HorizontalDataTable(
           leftHandSideColBackgroundColor: const Color(0xFAFAFA),
           rightHandSideColBackgroundColor: const Color(0xFAFAFA),
           leftHandSideColumnWidth: _nameColumnWidth,
-          rightHandSideColumnWidth: 1620,
+          rightHandSideColumnWidth:
+              1670 + affiliate.userDefinedColumns.length * 200,
           isFixedHeader: true,
           headerWidgets: _buildColumns(),
           leftSideChildren:
@@ -274,6 +371,67 @@ class _UserTableState extends State<UserTable> with WidgetsBindingObserver {
     );
   }
 
+  Container _getNumCell(User user, int index) {
+    return Container(
+      child: Focus(
+          skipTraversal: true,
+          onFocusChange: (isFocus) {
+            if (!isFocus && Platform.isWindows) _saveState();
+          },
+          child: TextFormField(
+            key: Key('${user.hashCode}Month$index'),
+            autofocus: true,
+            readOnly: user.status != UserStatus.normal,
+            keyboardType: TextInputType.number,
+            initialValue: user.properties[index + months.length] == null
+                ? ''
+                : user.properties[index + months.length].toStringAsFixed(2),
+            inputFormatters: [
+              FilteringTextInputFormatter.allow(RegExp("^\\d*\\.?\\d*")),
+              DecimalTextInputFormatter(decimalRange: 2)
+            ],
+            onChanged: (val) {
+              user.properties[index + months.length] =
+                  val == '' ? 0 : num.parse(val);
+            },
+            decoration: const InputDecoration(counterText: ""),
+            maxLength: 12,
+          )),
+      width: 200,
+      height: 52,
+      padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
+      alignment: Alignment.centerLeft,
+    );
+  }
+
+  Container _getStringCell(User user, int index) {
+    return Container(
+      child: Focus(
+          skipTraversal: true,
+          onFocusChange: (isFocus) {
+            if (!isFocus && Platform.isWindows) _saveState();
+          },
+          child: TextFormField(
+            key: Key('${user.hashCode}Month$index'),
+            autofocus: true,
+            readOnly: user.status != UserStatus.normal,
+            initialValue: user.properties[index + months.length] == null
+                ? ''
+                : user.properties[index + months.length],
+            onChanged: (val) {
+              user.properties[index + months.length] = val;
+              setState(() {});
+            },
+            decoration: const InputDecoration(counterText: ""),
+            maxLength: 60,
+          )),
+      width: 200,
+      height: 52,
+      padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
+      alignment: Alignment.centerLeft,
+    );
+  }
+
   List<Widget> _buildColumns() {
     const _columnTextStyle =
         TextStyle(fontSize: 18, fontWeight: FontWeight.bold);
@@ -286,6 +444,7 @@ class _UserTableState extends State<UserTable> with WidgetsBindingObserver {
         height: 104,
         padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
         alignment: Alignment.center));
+
     _columns.add(Container(
         child: const Text('Дата начала занятий',
             style: _columnTextStyle, textAlign: TextAlign.center),
@@ -303,7 +462,7 @@ class _UserTableState extends State<UserTable> with WidgetsBindingObserver {
           child: Column(
             children: [
               Expanded(
-                  child: Text(months[i],
+                  child: Text(columns[i + 3],
                       style: _columnTextStyle, textAlign: TextAlign.center)),
               Expanded(
                   child: Text(_sum.toStringAsFixed(2),
@@ -322,11 +481,39 @@ class _UserTableState extends State<UserTable> with WidgetsBindingObserver {
         padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
         alignment: Alignment.centerLeft));
     _columns.add(Container(
-        child: const Text(''),
+        child: Text(''),
         width: 50,
         height: 104,
         padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
         alignment: Alignment.centerLeft));
+    _columns.add(Container(
+        child: IconButton(
+            icon: Icon(Icons.add),
+            onPressed: () async {
+              await _addColumn();
+              setState(() {});
+            }),
+        width: 50,
+        height: 104,
+        padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
+        alignment: Alignment.centerLeft));
+    for (var i = 0; i < userDefinedColumns.length; ++i) {
+      _columns.add(Container(
+          child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween,children: [
+            Text(userDefinedColumns[i],
+                style: _columnTextStyle, textAlign: TextAlign.center),
+            IconButton(
+                onPressed: () async {
+                  await _removeColumn(i);
+                  setState(() {});
+                },
+                icon: Icon(Icons.highlight_remove_outlined))
+          ]),
+          width: 200,
+          height: 104,
+          padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
+          alignment: Alignment.center));
+    }
     return _columns;
   }
 
@@ -353,11 +540,11 @@ class _UserTableState extends State<UserTable> with WidgetsBindingObserver {
             onChanged: (val) {
               user.name = val;
             },
-            onTap: () {
-              if (Platform.isWindows) {
-                _saveState();
-              }
-            },
+            // onTap: () {
+            //   if (Platform.isWindows) {
+            //     _saveState();
+            //   }
+            //},
           )),
       width: _nameColumnWidth,
       height: 52,
@@ -401,8 +588,7 @@ class _UserTableState extends State<UserTable> with WidgetsBindingObserver {
             autofocus: false,
             key: UniqueKey(),
             readOnly: true,
-            initialValue: user.dateStartOfEducation == DateTime(1337) ||
-                    user.dateStartOfEducation == null
+            initialValue: user.dateStartOfEducation == null
                 ? ''
                 : '${user.dateStartOfEducation.day}/${user.dateStartOfEducation.month}/${user.dateStartOfEducation.year}',
             decoration: const InputDecoration(hintText: "Выберите дату"),
@@ -421,29 +607,30 @@ class _UserTableState extends State<UserTable> with WidgetsBindingObserver {
               if (!isFocus && Platform.isWindows) _saveState();
             },
             child: TextFormField(
-                key: Key('${user.hashCode}Month$i'),
-                autofocus: true,
-                readOnly: user.status != UserStatus.normal,
-                keyboardType: TextInputType.number,
-                initialValue: user.properties[i] == null
-                    ? ''
-                    : user.properties[i].toStringAsFixed(2),
-                inputFormatters: [
-                  FilteringTextInputFormatter.allow(RegExp("^\\d*\\.?\\d*")),
-                  DecimalTextInputFormatter(decimalRange: 2)
-                ],
-                onChanged: (val) {
-                  user.properties[i] = val == '' ? 0 : num.parse(val);
-                  user.calculateResult();
-                  setState(() {});
-                },
-                decoration: const InputDecoration(counterText: ""),
-                maxLength: 12,
-                onTap: () {
-                  if (Platform.isWindows) {
-                    _saveState();
-                  }
-                })),
+              key: Key('${user.hashCode}Month$i'),
+              autofocus: true,
+              readOnly: user.status != UserStatus.normal,
+              keyboardType: TextInputType.number,
+              initialValue: user.properties[i] == null
+                  ? ''
+                  : user.properties[i].toStringAsFixed(2),
+              inputFormatters: [
+                FilteringTextInputFormatter.allow(RegExp("^\\d*\\.?\\d*")),
+                DecimalTextInputFormatter(decimalRange: 2)
+              ],
+              onChanged: (val) {
+                user.properties[i] = val == '' ? 0 : num.parse(val);
+                user.calculateResult();
+                setState(() {});
+              },
+              decoration: const InputDecoration(counterText: ""),
+              maxLength: 12,
+              // onTap: () {
+              //   if (Platform.isWindows) {
+              //     _saveState();
+              //   }
+              // }
+            )),
         width: i == months.length - 3 ? 220 : 100,
         height: 52,
         padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
@@ -487,6 +674,25 @@ class _UserTableState extends State<UserTable> with WidgetsBindingObserver {
       padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
       alignment: Alignment.centerLeft,
     );
+    _cells['spacer'] = Container(
+      child: Text(''),
+      width: 50,
+      height: 52,
+      padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
+      alignment: Alignment.centerLeft,
+    );
+    for (var i = 0; i < userDefinedColumns.length; ++i) {
+      switch (affiliate.userDefinedColumnsTypes[i]) {
+        case Types.number:
+          _cells[userDefinedColumns[i]] = _getNumCell(user, i);
+          break;
+        case Types.text:
+        case Types.formula:
+          _cells[userDefinedColumns[i]] = _getStringCell(user, i);
+          break;
+      }
+    }
+    ;
     return Container(
       child: Row(children: _cells.values.toList()),
       color: () {
@@ -514,7 +720,8 @@ class User {
   bool isMemorized = false;
 
   void memorizeProperties() {
-    initUser = User.allData(name, dateStartOfEducation, List.from(properties), result, status);
+    initUser = User.allData(
+        name, dateStartOfEducation, List.from(properties), result, status);
     isMemorized = true;
   }
 
@@ -548,16 +755,17 @@ class User {
     return temp;
   }
 
-  User() {
+  User(int numberOfUDColumns) {
     result = 0;
     name = '';
-    dateStartOfEducation = DateTime(1337);
-    properties = List.filled(columns.length - 3, null);
+    dateStartOfEducation = null;
+    properties = List.filled(columns.length - 3 + numberOfUDColumns, null,
+        growable: true);
   }
 
   User.byName(String name) {
     this.name = name;
-    properties = List.filled(months.length, null);
+    properties = List.filled(months.length, null, growable: true);
   }
 
   User.allData(this.name, this.dateStartOfEducation, this.properties,

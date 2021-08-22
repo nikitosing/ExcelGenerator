@@ -17,7 +17,7 @@ const _title = 'ExcelGenerator';
 
 Future<void> main() async {
   runApp(const LoadingScreen());
-  await getState();
+  //await getState();
   runApp(const MyApp());
 }
 
