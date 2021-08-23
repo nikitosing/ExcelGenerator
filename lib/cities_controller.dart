@@ -12,9 +12,10 @@ import 'package:flutter/painting.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_file_dialog/flutter_file_dialog.dart';
 import 'package:intl/intl.dart';
+import 'package:mailer/smtp_server.dart';
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
-import 'package:flutter_email_sender/flutter_email_sender.dart';
+import 'package:mailer/mailer.dart';
 
 import 'common.dart';
 
@@ -132,7 +133,7 @@ class _CitiesControllerState extends State<CitiesController>
 
   void _saveState() async {
     Directory tempDir = await getApplicationSupportDirectory();
-    var file = File('${tempDir.path}\\excel_generator_state5.json');
+    var file = File('${tempDir.path}\\excel_generator_state6.json');
     file.writeAsStringSync(jsonEncode(cities));
   }
 
@@ -262,9 +263,21 @@ class _CitiesControllerState extends State<CitiesController>
 
       var table = excel.tables[tableName];
       int row = 1;
+      int column = 15;
+      while (table!
+              .cell(
+                  CellIndex.indexByColumnRow(columnIndex: column, rowIndex: 0))
+              .value !=
+          null) {
+        affiliate.userDefinedColumns.add(table
+            .cell(CellIndex.indexByColumnRow(columnIndex: column, rowIndex: 0))
+            .value);
+        affiliate.userDefinedColumnsTypes.add(Types.text);
+        column++;
+      }
 
       for (int i = 1; i < 4; ++i) {
-        while (table!
+        while (table
                     .cell(CellIndex.indexByColumnRow(
                         columnIndex: 0, rowIndex: row))
                     .value !=
@@ -279,7 +292,7 @@ class _CitiesControllerState extends State<CitiesController>
                         columnIndex: 2, rowIndex: row))
                     .value !=
                 null) {
-          var user = User(0);
+          var user = User(affiliate.userDefinedColumns.length);
           user.name = table
               .cell(CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: row))
               .value;
@@ -290,12 +303,34 @@ class _CitiesControllerState extends State<CitiesController>
               ? _getTime(date)
               : DateTime.fromMicrosecondsSinceEpoch(
                   int.tryParse(date.toString())! * 1000);
-          for (int column = 3; column < months.length + 3; ++column) {
-            var paid = table
+          for (int column = 3;
+              column < columns.length + affiliate.userDefinedColumns.length;
+              ++column) {
+            var property = table
                 .cell(CellIndex.indexByColumnRow(
                     columnIndex: column, rowIndex: row))
                 .value;
-            user.properties[column - 3] = paid == '' ? 0 : paid;
+
+            if (column >= columns.length) {
+              switch (table
+                  .cell(CellIndex.indexByColumnRow(
+                      columnIndex: column, rowIndex: row))
+                  .cellType) {
+                case CellType.Formula:
+                  affiliate.userDefinedColumnsTypes[column - columns.length] =
+                      Types.formula;
+                  break;
+                case CellType.String:
+                  affiliate.userDefinedColumnsTypes[column - columns.length] =
+                      Types.text;
+                  break;
+                default:
+                  affiliate.userDefinedColumnsTypes[column - columns.length] =
+                      Types.number;
+                  break;
+              }
+            }
+            user.properties[column - 3] = property == '' ? null : property;
           }
           user.calculateResult();
           user.memorizeProperties();
@@ -365,19 +400,23 @@ class _CitiesControllerState extends State<CitiesController>
       for (var affiliate in city.affiliates) {
         var name = affiliate.name;
         var users = affiliate.users;
+        var userDefinedColumns = affiliate.userDefinedColumns;
+        var columnsForAffiliate = columns + userDefinedColumns;
         var sheet = excel[citiesToSave.length > 1
             ? '${city.name}_$name'
             : name == ''
                 ? '  '
                 : name];
-        for (int i = 0; i < columns.length; ++i) {
+
+        for (int i = 0; i < columnsForAffiliate.length; ++i) {
           var cellStyle = CellStyle(
               bold: true, fontSize: 10, textWrapping: TextWrapping.WrapText);
           sheet.updateCell(
               CellIndex.indexByColumnRow(columnIndex: i, rowIndex: 0),
-              columns[i],
+              columnsForAffiliate[i],
               cellStyle: cellStyle);
         }
+
         int row = 1;
         var spacer = false;
         var _cellStyleEdited = CellStyle(backgroundColorHex: '#FFFF00');
@@ -387,38 +426,74 @@ class _CitiesControllerState extends State<CitiesController>
             spacer = true;
             //does spacer between normal users and removed users
           }
+
           if (user.status == UserStatus.toEdit) {
             break;
           }
+
           var _cellStyle = CellStyle(
               backgroundColorHex:
                   user.status == UserStatus.normal ? '#ffffff' : '#FFFF00');
+
           sheet.updateCell(
               CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: row),
               row - (spacer ? 1 : 0),
               cellStyle: _cellStyle);
+
           sheet.updateCell(
               CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: row),
               user.name,
-              cellStyle: user.isMemorized ?  user.name == user.initUser.name ? _cellStyle : _cellStyleEdited : _cellStyle);
+              cellStyle: user.isMemorized
+                  ? user.name == user.initUser.name
+                      ? _cellStyle
+                      : _cellStyleEdited
+                  : _cellStyle);
+
           sheet.updateCell(
               CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: row),
               user.dateStartOfEducation == null
                   ? ''
                   : formatter.format(user.dateStartOfEducation!),
-              cellStyle: user.isMemorized ?  user.dateStartOfEducation == user.initUser.dateStartOfEducation ? _cellStyle : _cellStyleEdited : _cellStyle);
+              cellStyle: user.isMemorized
+                  ? user.dateStartOfEducation ==
+                          user.initUser.dateStartOfEducation
+                      ? _cellStyle
+                      : _cellStyleEdited
+                  : _cellStyle);
+
           int column = 3;
-          user.properties.asMap().forEach((index, value) {
-             var _style = _cellStyle;
+          for (var i = 0; i < user.properties.length; ++i) {
+            if (column == 13) {
+              column++;
+              continue;
+            }
+            var _style = _cellStyle;
             if (user.isMemorized) {
-              _style = user.properties[index] == user.initUser.properties[index] ? _cellStyle : _cellStyleEdited;
+              if (i >= columns.length) {
+                if (i < user.initUser.properties.length) {
+                  _style = user.properties[i] == user.initUser.properties[i]
+                      ? _cellStyle
+                      : _cellStyleEdited;
+                }
+              } else {
+                _style = i < user.initUser.properties.length
+                    ? user.properties[i] == user.initUser.properties[i]
+                        ? _cellStyle
+                        : _cellStyleEdited
+                    : _cellStyle;
+              }
             }
             sheet.updateCell(
                 CellIndex.indexByColumnRow(columnIndex: column, rowIndex: row),
-                value ?? 0,
+                i >= months.length
+                    ? affiliate.userDefinedColumnsTypes[i - months.length] ==
+                            Types.formula
+                        ? Formula.custom(user.properties[i])
+                        : user.properties[i] ?? null
+                    : user.properties[i] ?? null,
                 cellStyle: _style);
             column++;
-          });
+          }
           var rowForSum = row + 1;
           Formula formula =
               Formula.custom('=SUM(D$rowForSum:M$rowForSum)+O$rowForSum');
@@ -457,10 +532,11 @@ class _CitiesControllerState extends State<CitiesController>
                   : formatter.format(users[i].dateStartOfEducation!),
               cellStyle: _cellStyle);
           int column = 3;
-          for (var paid in users[i].properties) {
+          for (var property in users[i].properties) {
+            if (column == 13) column++;
             sheet.updateCell(
                 CellIndex.indexByColumnRow(columnIndex: column, rowIndex: row),
-                paid ?? 0,
+                property ?? null,
                 cellStyle: _cellStyle);
             column++;
           }
@@ -483,6 +559,8 @@ class _CitiesControllerState extends State<CitiesController>
     String formattedDate = DateFormat('yyyy-MM-dd-HH-mm').format(now);
     final fileName =
         "Отчет ${cities.length > 1 ? citiesToSave.map((e) => e.name).join('_') : cities[0].name} $formattedDate.xlsx";
+    final emailFileName =
+        "Отчет ${cities.length > 1 ? citiesToSave.map((e) => e.name).join('_') : cities[0].name} $formattedDate";
     final data = Uint8List.fromList(excel.encode()!);
     if (Platform.isWindows) {
       var path =
@@ -495,10 +573,41 @@ class _CitiesControllerState extends State<CitiesController>
         path += '.xlsx';
       }
       await file.saveTo(path);
+      //_sendEmail(path, emailFileName);
     } else if (Platform.isAndroid) {
       final params = SaveFileDialogParams(data: data, fileName: fileName);
       final filePath = await FlutterFileDialog.saveFile(params: params);
-      // send email
+      //_sendEmail(filePath, emailFileName);
+    }
+  }
+
+  void _sendEmail(var path, var fileName) async {
+    String username = 'excelgenerator@mail.ru';
+    String password = 'JtoYYc4wzODLxUaSb5SM';
+
+    final smtpServer = SmtpServer('smtp.mail.ru',
+        username: username,
+        password: password,
+        port: 465,
+        ignoreBadCertificate: true,
+        ssl: true);
+
+    final message = Message()
+      ..from = Address(username)
+      ..recipients.add('chudoreportsbackup@mail.ru')
+      ..recipients.add('chudoreports@mail.ru')
+      ..subject = fileName
+      ..attachments.add(FileAttachment(File(path))..location = Location.inline);
+
+    try {
+      final sendReport = await send(message, smtpServer);
+      print('Message sent: ' + sendReport.toString());
+    } on MailerException catch (e) {
+      print('Message not sent.');
+      print(e);
+      for (var p in e.problems) {
+        print('Problem: ${p.code}: ${p.msg}');
+      }
     }
   }
 

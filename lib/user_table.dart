@@ -16,8 +16,6 @@ import 'cities_controller.dart';
 import 'common.dart';
 import 'decimal_text_input_formatter.dart';
 
-enum Types { number, formula, text }
-
 var months = [
   'Сентябрь',
   'Октябрь',
@@ -55,7 +53,6 @@ class _UserTableState extends State<UserTable> with WidgetsBindingObserver {
   late List<City> cities;
   late Affiliate affiliate;
   late List<String> userDefinedColumns;
-  late ValueNotifier _notifier = ValueNotifier(userDefinedColumns);
 
   @override
   initState() {
@@ -64,10 +61,6 @@ class _UserTableState extends State<UserTable> with WidgetsBindingObserver {
     cities = widget.cities;
     affiliate = widget.affiliate;
     userDefinedColumns = affiliate.userDefinedColumns;
-    //_notifier = ValueNotifier(userDefinedColumns);
-    _notifier.addListener(() {
-      setState(() {});
-    });
     users = affiliate.users;
 
     for (var user in users) {
@@ -79,13 +72,12 @@ class _UserTableState extends State<UserTable> with WidgetsBindingObserver {
 
   @override
   void dispose() {
-    _notifier.dispose();
     super.dispose();
   }
 
   Future<void> _saveState() async {
     Directory tempDir = await getApplicationSupportDirectory();
-    var file = File('${tempDir.path}\\excel_generator_state5.json');
+    var file = File('${tempDir.path}\\excel_generator_state6.json');
     file.writeAsStringSync(jsonEncode(cities));
   }
 
@@ -237,6 +229,7 @@ class _UserTableState extends State<UserTable> with WidgetsBindingObserver {
                         element.properties.add(null);
                       });
                       Navigator.of(context).pop();
+                      if (Platform.isWindows) _saveState();
                     },
                   ),
                 ],
@@ -507,7 +500,7 @@ class _UserTableState extends State<UserTable> with WidgetsBindingObserver {
                   await _removeColumn(i);
                   setState(() {});
                 },
-                icon: Icon(Icons.highlight_remove_outlined))
+                icon: Icon(Icons.close))
           ]),
           width: 200,
           height: 104,
@@ -726,12 +719,12 @@ class User {
   }
 
   void calculateResult() {
-    properties[properties.length - 2] = 0;
+    properties[10] = 0;
     result = 0;
-    for (var el in properties) {
+    for (var el in properties.sublist(0, months.length)) {
       result += el ?? 0;
     }
-    properties[properties.length - 2] = result;
+    properties[10] = result;
   }
 
   Map toJson() => {
@@ -759,7 +752,7 @@ class User {
     result = 0;
     name = '';
     dateStartOfEducation = null;
-    properties = List.filled(columns.length - 3 + numberOfUDColumns, null,
+    properties = List.filled(months.length + numberOfUDColumns, null,
         growable: true);
   }
 

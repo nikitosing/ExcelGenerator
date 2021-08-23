@@ -17,13 +17,13 @@ const _title = 'ExcelGenerator';
 
 Future<void> main() async {
   runApp(const LoadingScreen());
-  //await getState();
+  await getState();
   runApp(const MyApp());
 }
 
 Future<void> getState() async {
   Directory tempDir = await getApplicationSupportDirectory();
-  var file = File('${tempDir.path}\\excel_generator_state5.json');
+  var file = File('${tempDir.path}\\excel_generator_state6.json');
   if (file.existsSync()) {
     var json = jsonDecode(file.readAsStringSync());
     cities = json == null ? [] : json.map((e) => City.fromJson(e)).toList().cast<City>();

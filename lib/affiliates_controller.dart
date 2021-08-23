@@ -10,6 +10,7 @@ import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 
 import 'cities_controller.dart';
+import 'common.dart';
 
 class AffiliatesController extends StatefulWidget {
   final cities;
@@ -129,7 +130,7 @@ class _AffiliateControllerState extends State<AffiliatesController>
 
   void _saveState() async {
     Directory tempDir = await getApplicationSupportDirectory();
-    var file = File('${tempDir.path}\\excel_generator_state5.json');
+    var file = File('${tempDir.path}\\excel_generator_state6.json');
     file.writeAsStringSync(jsonEncode(_cities));
   }
 
@@ -479,7 +480,7 @@ class _AffiliateControllerState extends State<AffiliatesController>
         body: TabBarView(
           controller: _tabController,
           children: affiliates
-              .map((entry) => UserTable(key: UniqueKey(), affiliate: entry))
+              .map((entry) => UserTable(key: UniqueKey(), cities: _cities, affiliate: entry))
               .toList(),
         ));
   }
@@ -501,17 +502,19 @@ class Affiliate {
         'id': id,
         'name': name,
         'users': users.map((e) => e.toJson()).toList(),
-        'userDefinedColumns': userDefinedColumns
+        'userDefinedColumns': userDefinedColumns,
+        'userDefinedColumnsTypes': userDefinedColumnsTypes.map((e) => e.index).toList()
       };
 
   Affiliate.allData(this.name, this.users);
 
-  Affiliate.allWithColumns(this.name, this.users, this.userDefinedColumns);
+  Affiliate.allWithColumns(this.name, this.users, this.userDefinedColumns, this.userDefinedColumnsTypes);
 
   factory Affiliate.fromJson(dynamic json) {
     return Affiliate.allWithColumns(
         json['name'],
         json['users'].map((e) => User.fromJson(e)).toList().cast<User>(),
-        json['userDefinedColumns']);
+        json['userDefinedColumns'].cast<String>(),
+        json['userDefinedColumnsTypes'].map((e) => Types.values[e]).toList().cast<Types>());
   }
 }
