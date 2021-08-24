@@ -18,6 +18,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:mailer/mailer.dart';
 
 import 'common.dart';
+import 'smtp_pass.dart';
 
 class CitiesController extends StatefulWidget {
   final List<City>? cities;
@@ -586,7 +587,7 @@ class _CitiesControllerState extends State<CitiesController>
 
   void _sendEmail(var path, var fileName) async {
     String username = 'excelgenerator@mail.ru';
-    String password = 'JtoYYc4wzODLxUaSb5SM';
+    String password = SMTPpass;
 
     final smtpServer = SmtpServer('smtp.mail.ru',
         username: username,
