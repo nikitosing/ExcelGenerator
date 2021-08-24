@@ -16,6 +16,7 @@ import 'package:mailer/smtp_server.dart';
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
 import 'package:mailer/mailer.dart';
+import 'package:translit/translit.dart';
 
 import 'common.dart';
 import 'smtp_pass.dart';
@@ -571,8 +572,8 @@ class _CitiesControllerState extends State<CitiesController>
           await getSavePath(suggestedName: fileName, acceptedTypeGroups: [
         XTypeGroup(label: 'Excel', extensions: ['xlsx', 'xls'])
       ]);
-      const mimeType = "application/vnd.ms-excel";
-      final file = XFile.fromData(data, name: fileName, mimeType: mimeType);
+      const mimeType = 'application/vnd.ms-excel';
+      final file = XFile.fromData(data, name: fileName);
       if (path!.substring(path.indexOf('.'), path.indexOf('.') + 4) != '.xls') {
         path += '.xlsx';
       }
@@ -589,19 +590,26 @@ class _CitiesControllerState extends State<CitiesController>
     String username = 'excelgenerator@mail.ru';
     String password = SMTPpass;
 
-    final smtpServer = SmtpServer('smtp.mail.ru',
-        username: username,
-        password: password,
-        port: 465,
-        ignoreBadCertificate: true,
-        ssl: true);
+    final smtpServer = SmtpServer(
+      'smtp.mail.ru',
+      username: username,
+      password: password,
+      port: 465,
+      ignoreBadCertificate: true,
+      ssl: true
+    );
 
     final message = Message()
       ..from = Address(username)
       ..recipients.add('chudoreportsbackup@mail.ru')
       ..recipients.add('chudoreports@mail.ru')
       ..subject = fileName
-      ..attachments.add(FileAttachment(File(path))..location = Location.inline);
+      ..attachments = [
+        FileAttachment(File(path),
+            contentType: 'application/vnd.ms-excel',
+            fileName: Translit().toTranslit(source: path.split(Platform.pathSeparator).last))
+          ..location = Location.attachment
+      ];
 
     try {
       final sendReport = await send(message, smtpServer);

@@ -22,6 +22,7 @@ dependencies:
   flutter_xlider: ^3.4.0
   overlay_container: ^0.0.5+1
   mailer: ^5.0.2
+  translit: ^2.0.0
 
 
 dev_dependencies:
