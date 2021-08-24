@@ -741,7 +741,7 @@ class User {
         json['dateStartOfEducation'] == "null"
             ? null
             : DateTime.parse(json['dateStartOfEducation']),
-        json['properties'].cast<num>(),
+        json['properties'],
         json['result'] as num,
         UserStatus.values[json['status']]);
     temp.memorizeProperties();

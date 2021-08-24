@@ -156,6 +156,7 @@ class _CitiesControllerState extends State<CitiesController>
                       if (!isFocus && Platform.isWindows) _saveState();
                     },
                     child: TextFormField(
+                      autofocus: true,
                       key: UniqueKey(),
                       enabled: index == activeTabId,
                       initialValue: city.name,
@@ -573,11 +574,11 @@ class _CitiesControllerState extends State<CitiesController>
         path += '.xlsx';
       }
       await file.saveTo(path);
-      //_sendEmail(path, emailFileName);
+      _sendEmail(path, emailFileName);
     } else if (Platform.isAndroid) {
       final params = SaveFileDialogParams(data: data, fileName: fileName);
       final filePath = await FlutterFileDialog.saveFile(params: params);
-      //_sendEmail(filePath, emailFileName);
+      _sendEmail(filePath, emailFileName);
     }
   }
 
