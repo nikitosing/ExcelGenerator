@@ -251,7 +251,7 @@ class _CitiesControllerState extends State<CitiesController>
         cityName = tableName.split('_')[0];
         affiliateName = tableName.split('_')[1];
       } else {
-        cityName = affiliatesNames.keys.first;
+        cityName = citiesFromFile.keys.first;
         affiliateName = tableName;
       }
       if (affiliatesNames[cityName].containsKey(affiliateName)) {
@@ -307,16 +307,11 @@ class _CitiesControllerState extends State<CitiesController>
           for (int column = 3;
               column < columns.length + affiliate.userDefinedColumns.length;
               ++column) {
-            var property = table
-                .cell(CellIndex.indexByColumnRow(
-                    columnIndex: column, rowIndex: row))
-                .value;
+            var propertyCell = table.cell(
+                CellIndex.indexByColumnRow(columnIndex: column, rowIndex: row));
 
             if (column >= columns.length) {
-              switch (table
-                  .cell(CellIndex.indexByColumnRow(
-                      columnIndex: column, rowIndex: row))
-                  .cellType) {
+              switch (propertyCell.cellType) {
                 case CellType.Formula:
                   affiliate.userDefinedColumnsTypes[column - columns.length] =
                       Types.formula;
@@ -331,7 +326,11 @@ class _CitiesControllerState extends State<CitiesController>
                   break;
               }
             }
-            user.properties[column - 3] = property == '' ? null : property;
+            user.properties[column - 3] = propertyCell.value == ''
+                ? null
+                : propertyCell.cellType == CellType.Formula
+                    ? propertyCell.value.formula
+                    : propertyCell.value;
           }
           user.calculateResult();
           user.memorizeProperties();
@@ -534,7 +533,10 @@ class _CitiesControllerState extends State<CitiesController>
               cellStyle: _cellStyle);
           int column = 3;
           for (var property in users[i].properties) {
-            if (column == 13) column++;
+            if (column == 13) {
+              column++;
+              continue;
+            }
             sheet.updateCell(
                 CellIndex.indexByColumnRow(columnIndex: column, rowIndex: row),
                 property ?? null,
@@ -544,10 +546,10 @@ class _CitiesControllerState extends State<CitiesController>
           var rowForSum = row + 1;
           Formula formula =
               Formula.custom('=SUM(D$rowForSum:M$rowForSum)+O$rowForSum');
-
           sheet.updateCell(
               CellIndex.indexByColumnRow(columnIndex: 13, rowIndex: row),
-              formula);
+              formula,
+              cellStyle: _cellStyle);
           ++row;
         }
         sheet.setColAutoFit(1);

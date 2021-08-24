@@ -730,7 +730,7 @@ class User {
   Map toJson() => {
         'name': name,
         'dateStartOfEducation': dateStartOfEducation.toString(),
-        'properties': properties,
+        'properties': properties.map((e) => e is Formula ? e.formula : e).toList(),
         'result': result,
         'status': status.index,
       };
