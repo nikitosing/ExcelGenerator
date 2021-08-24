@@ -1,1 +1,0 @@
-String SMTPpass =  'JtoYYc4wzODLxUaSb5SM';
