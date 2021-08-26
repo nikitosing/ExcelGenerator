@@ -495,10 +495,14 @@ class _UserTableState extends State<UserTable> with WidgetsBindingObserver {
         alignment: Alignment.centerLeft));
     for (var i = 0; i < userDefinedColumns.length; ++i) {
       _columns.add(Container(
-          child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween,children: [
-            Text(userDefinedColumns[i],
-                style: _columnTextStyle, textAlign: TextAlign.center),
+          child:
+              Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
+            SizedBox(
+                child: Text(userDefinedColumns[i],
+                    style: _columnTextStyle, textAlign: TextAlign.center),
+                width: 147),
             IconButton(
+              iconSize: 20,
                 onPressed: () async {
                   await _removeColumn(i);
                   setState(() {});
@@ -588,7 +592,7 @@ class _UserTableState extends State<UserTable> with WidgetsBindingObserver {
                 ? ''
                 : '${user.dateStartOfEducation.day}/${user.dateStartOfEducation.month}/${user.dateStartOfEducation.year}',
             decoration: const InputDecoration(hintText: "Выберите дату"),
-            keyboardType: TextInputType.datetime,
+            keyboardType: null,
           )),
       width: 200,
       height: 52,
@@ -733,7 +737,8 @@ class User {
   Map toJson() => {
         'name': name,
         'dateStartOfEducation': dateStartOfEducation.toString(),
-        'properties': properties.map((e) => e is Formula ? e.formula : e).toList(),
+        'properties':
+            properties.map((e) => e is Formula ? e.formula : e).toList(),
         'result': result,
         'status': status.index,
       };
@@ -755,8 +760,8 @@ class User {
     result = 0;
     name = '';
     dateStartOfEducation = null;
-    properties = List.filled(months.length + numberOfUDColumns, null,
-        growable: true);
+    properties =
+        List.filled(months.length + numberOfUDColumns, null, growable: true);
   }
 
   User.byName(String name) {

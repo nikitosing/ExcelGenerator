@@ -510,7 +510,7 @@ class _CitiesControllerState extends State<CitiesController>
                     : i >= months.length
                         ? userDefinedColumnsTypes[i - months.length] ==
                                 Types.formula
-                            ? Formula.custom(user.properties[i])
+                            ? Formula.custom(user.properties[i].replaceFirst('=', ''))
                             : user.properties[i]
                         : user.properties[i],
                 cellStyle: _style);
@@ -518,7 +518,7 @@ class _CitiesControllerState extends State<CitiesController>
           }
           var rowForSum = row + 1;
           Formula formula =
-              Formula.custom('=SUM(D$rowForSum:M$rowForSum)+O$rowForSum');
+              Formula.custom('SUM(D$rowForSum:M$rowForSum)+O$rowForSum');
           sheet.updateCell(
               CellIndex.indexByColumnRow(columnIndex: 13, rowIndex: row),
               formula,
@@ -528,7 +528,7 @@ class _CitiesControllerState extends State<CitiesController>
         const String columnsForSum = 'DEFGHIJKLMNO';
         for (int i = 0; i < months.length; ++i) {
           Formula sumRowsFormula = Formula.custom(
-              '=SUM(${columnsForSum[i]}2:${columnsForSum[i]}$row)');
+              'SUM(${columnsForSum[i]}2:${columnsForSum[i]}$row)');
           sheet.updateCell(
               CellIndex.indexByColumnRow(columnIndex: i + 3, rowIndex: row),
               sumRowsFormula,
@@ -585,7 +585,7 @@ class _CitiesControllerState extends State<CitiesController>
           }
           var rowForSum = row + 1;
           Formula formula =
-              Formula.custom('=SUM(D$rowForSum:M$rowForSum)+O$rowForSum');
+              Formula.custom('SUM(D$rowForSum:M$rowForSum)+O$rowForSum');
           sheet.updateCell(
               CellIndex.indexByColumnRow(columnIndex: 13, rowIndex: row),
               formula,
@@ -619,11 +619,12 @@ class _CitiesControllerState extends State<CitiesController>
         path += '.xlsx';
       }
       await file.saveTo(path);
-      //_sendEmail(path, emailFileName);
+      _sendEmail(path, emailFileName);
     } else if (Platform.isAndroid) {
-      final params = SaveFileDialogParams(data: data, fileName: fileName);
+      final params = SaveFileDialogParams(data: data, fileName: fileName, mimeTypesFilter: ['application/vnd.ms-excel']);
       final filePath = await FlutterFileDialog.saveFile(params: params);
-      //_sendEmail(filePath, emailFileName);
+      print('aaaaaaaaaaaaaa $filePath');
+      _sendEmail(filePath, emailFileName);
     }
   }
 
