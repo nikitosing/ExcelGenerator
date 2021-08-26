@@ -17,6 +17,8 @@ import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
 import 'package:mailer/mailer.dart';
 import 'package:translit/translit.dart';
+import 'package:flutter_absolute_path/flutter_absolute_path.dart';
+import 'package:file_picker_cross/file_picker_cross.dart';
 
 import 'common.dart';
 import 'smtp_pass.dart';
@@ -135,7 +137,7 @@ class _CitiesControllerState extends State<CitiesController>
 
   void _saveState() async {
     Directory tempDir = await getApplicationSupportDirectory();
-    var file = File('${tempDir.path}\\excel_generator_state6.json');
+    var file = File('${tempDir.path}${Platform.pathSeparator}excel_generator_state6.json');
     file.writeAsStringSync(jsonEncode(cities));
   }
 
@@ -510,7 +512,8 @@ class _CitiesControllerState extends State<CitiesController>
                     : i >= months.length
                         ? userDefinedColumnsTypes[i - months.length] ==
                                 Types.formula
-                            ? Formula.custom(user.properties[i].replaceFirst('=', ''))
+                            ? Formula.custom(
+                                user.properties[i].replaceFirst('=', ''))
                             : user.properties[i]
                         : user.properties[i],
                 cellStyle: _style);
@@ -619,16 +622,21 @@ class _CitiesControllerState extends State<CitiesController>
         path += '.xlsx';
       }
       await file.saveTo(path);
-      _sendEmail(path, emailFileName);
+      _sendEmail(path, emailFileName, 0);
     } else if (Platform.isAndroid) {
-      final params = SaveFileDialogParams(data: data, fileName: fileName, mimeTypesFilter: ['application/vnd.ms-excel']);
-      final filePath = await FlutterFileDialog.saveFile(params: params);
+      final params = SaveFileDialogParams(
+          localOnly: true,
+          data: data,
+          fileName: fileName,
+          mimeTypesFilter: ['application/vnd.ms-excel']);
+      final filePath = await FlutterAbsolutePath.getAbsolutePath(
+          await FlutterFileDialog.saveFile(params: params));
       print('aaaaaaaaaaaaaa $filePath');
-      _sendEmail(filePath, emailFileName);
+      _sendEmail(filePath, emailFileName, data);
     }
   }
 
-  void _sendEmail(var path, var fileName) async {
+  void _sendEmail(var path, var fileName, var bytes) async {
     String username = 'excelgenerator@mail.ru';
     String password = SMTPpass;
 
@@ -645,7 +653,12 @@ class _CitiesControllerState extends State<CitiesController>
       ..recipients.add('chudoreports@mail.ru')
       ..subject = fileName
       ..attachments = [
-        FileAttachment(File(path),
+        FileAttachment(
+            Platform.isWindows
+                ? File(path)
+                : File(
+                    '${(await getApplicationSupportDirectory()).path}${Platform.pathSeparator}$fileName.xlsx')
+              ..writeAsBytesSync(bytes),
             contentType: 'application/vnd.ms-excel',
             fileName: Translit()
                 .toTranslit(source: path.split(Platform.pathSeparator).last))

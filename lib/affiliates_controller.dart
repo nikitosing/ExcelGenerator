@@ -130,7 +130,7 @@ class _AffiliateControllerState extends State<AffiliatesController>
 
   void _saveState() async {
     Directory tempDir = await getApplicationSupportDirectory();
-    var file = File('${tempDir.path}\\excel_generator_state6.json');
+    var file = File('${tempDir.path}${Platform.pathSeparator}excel_generator_state6.json');
     file.writeAsStringSync(jsonEncode(_cities));
   }
 

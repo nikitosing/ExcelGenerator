@@ -79,7 +79,7 @@ class _UserTableState extends State<UserTable> with WidgetsBindingObserver {
 
   Future<void> _saveState() async {
     Directory tempDir = await getApplicationSupportDirectory();
-    var file = File('${tempDir.path}\\excel_generator_state6.json');
+    var file = File('${tempDir.path}${Platform.pathSeparator}excel_generator_state6.json');
     file.writeAsStringSync(jsonEncode(cities));
   }
 
