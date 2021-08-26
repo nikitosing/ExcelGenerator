@@ -53,6 +53,7 @@ class _UserTableState extends State<UserTable> with WidgetsBindingObserver {
   late List<City> cities;
   late Affiliate affiliate;
   late List<String> userDefinedColumns;
+  late List<Types> userDefinedColumnsTypes;
 
   @override
   initState() {
@@ -61,6 +62,7 @@ class _UserTableState extends State<UserTable> with WidgetsBindingObserver {
     cities = widget.cities;
     affiliate = widget.affiliate;
     userDefinedColumns = affiliate.userDefinedColumns;
+    userDefinedColumnsTypes = affiliate.userDefinedColumnsTypes;
     users = affiliate.users;
 
     for (var user in users) {
@@ -255,6 +257,7 @@ class _UserTableState extends State<UserTable> with WidgetsBindingObserver {
               child: const Text('Да'),
               onPressed: () {
                 userDefinedColumns.removeAt(index);
+                userDefinedColumnsTypes.removeAt(index);
                 users.forEach((element) {
                   element.properties.removeAt(months.length + index);
                 });

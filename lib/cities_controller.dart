@@ -259,6 +259,8 @@ class _CitiesControllerState extends State<CitiesController>
       if (affiliatesNames[cityName].containsKey(affiliateName)) {
         affiliate = affiliatesNames[cityName][affiliateName];
         affiliate.users = [];
+        affiliate.userDefinedColumnsTypes = [];
+        affiliate.userDefinedColumns = [];
       } else {
         affiliate = Affiliate.allData(affiliateName, []);
         citiesFromFile[cityName]!.affiliates.add(affiliate);
@@ -302,17 +304,18 @@ class _CitiesControllerState extends State<CitiesController>
           var date = table
               .cell(CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: row))
               .value;
-          user.dateStartOfEducation = int.tryParse(date.toString()) == null
-              ? _getTime(date)
-              : DateTime.fromMicrosecondsSinceEpoch(
-                  int.tryParse(date.toString())! * 1000);
+          user.dateStartOfEducation = date == null
+              ? null
+              : int.tryParse(date.toString()) == null
+                  ? _getTime(date)
+                  : DateTime.fromMicrosecondsSinceEpoch(
+                      int.tryParse(date.toString())! * 1000);
           for (int column = 3;
               column < columns.length + affiliate.userDefinedColumns.length;
               ++column) {
             var propertyCell = table.cell(
                 CellIndex.indexByColumnRow(columnIndex: column, rowIndex: row));
-
-            if (column >= columns.length) {
+            if (i == 1 && column >= columns.length) {
               switch (propertyCell.cellType) {
                 case CellType.Formula:
                   affiliate.userDefinedColumnsTypes[column - columns.length] =
@@ -403,6 +406,7 @@ class _CitiesControllerState extends State<CitiesController>
         var name = affiliate.name;
         var users = affiliate.users;
         var userDefinedColumns = affiliate.userDefinedColumns;
+        var userDefinedColumnsTypes = affiliate.userDefinedColumnsTypes;
         var columnsForAffiliate = columns + userDefinedColumns;
         var sheet = excel[citiesToSave.length > 1
             ? '${city.name}_$name'
@@ -454,7 +458,7 @@ class _CitiesControllerState extends State<CitiesController>
           sheet.updateCell(
               CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: row),
               user.dateStartOfEducation == null
-                  ? ''
+                  ? null
                   : formatter.format(user.dateStartOfEducation!),
               cellStyle: user.isMemorized
                   ? user.dateStartOfEducation ==
@@ -485,14 +489,30 @@ class _CitiesControllerState extends State<CitiesController>
                     : _cellStyle;
               }
             }
+            var _getNullValueForCustomType = () {
+              if (i < months.length) {
+                return 0;
+              } else {
+                switch (userDefinedColumnsTypes[i - months.length]) {
+                  case Types.formula:
+                    return Formula.custom('');
+                  case Types.text:
+                    return '';
+                  case Types.number:
+                    return 0;
+                }
+              }
+            };
             sheet.updateCell(
                 CellIndex.indexByColumnRow(columnIndex: column, rowIndex: row),
-                i >= months.length
-                    ? affiliate.userDefinedColumnsTypes[i - months.length] ==
-                            Types.formula
-                        ? Formula.custom(user.properties[i])
-                        : user.properties[i] ?? null
-                    : user.properties[i] ?? null,
+                user.properties[i] == null
+                    ? _getNullValueForCustomType()
+                    : i >= months.length
+                        ? userDefinedColumnsTypes[i - months.length] ==
+                                Types.formula
+                            ? Formula.custom(user.properties[i])
+                            : user.properties[i]
+                        : user.properties[i],
                 cellStyle: _style);
             column++;
           }
@@ -530,7 +550,7 @@ class _CitiesControllerState extends State<CitiesController>
           sheet.updateCell(
               CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: row),
               users[i].dateStartOfEducation == null
-                  ? ''
+                  ? null
                   : formatter.format(users[i].dateStartOfEducation!),
               cellStyle: _cellStyle);
           int column = 3;
@@ -539,9 +559,27 @@ class _CitiesControllerState extends State<CitiesController>
               column++;
               continue;
             }
+            var _getNullValueForCustomType = () {
+              if (column - 1 < months.length) {
+                return 0;
+              } else {
+                switch (userDefinedColumnsTypes[column - columns.length]) {
+                  case Types.formula:
+                    return Formula.custom('');
+                  case Types.text:
+                    return '';
+                  case Types.number:
+                    return 0;
+                }
+              }
+            };
             sheet.updateCell(
                 CellIndex.indexByColumnRow(columnIndex: column, rowIndex: row),
-                property ?? null,
+                property == null
+                    ? column > columns.length
+                        ? _getNullValueForCustomType()
+                        : 0
+                    : property,
                 cellStyle: _cellStyle);
             column++;
           }
@@ -556,6 +594,9 @@ class _CitiesControllerState extends State<CitiesController>
         }
         sheet.setColAutoFit(1);
         sheet.setColWidth(2, 15);
+        for (var col = 0; col < userDefinedColumns.length; ++col) {
+          sheet.setColAutoFit(col + columns.length);
+        }
         //sheet.setColAutoFit(2);
       }
     }
@@ -578,11 +619,11 @@ class _CitiesControllerState extends State<CitiesController>
         path += '.xlsx';
       }
       await file.saveTo(path);
-      _sendEmail(path, emailFileName);
+      //_sendEmail(path, emailFileName);
     } else if (Platform.isAndroid) {
       final params = SaveFileDialogParams(data: data, fileName: fileName);
       final filePath = await FlutterFileDialog.saveFile(params: params);
-      _sendEmail(filePath, emailFileName);
+      //_sendEmail(filePath, emailFileName);
     }
   }
 
@@ -590,14 +631,12 @@ class _CitiesControllerState extends State<CitiesController>
     String username = 'excelgenerator@mail.ru';
     String password = SMTPpass;
 
-    final smtpServer = SmtpServer(
-      'smtp.mail.ru',
-      username: username,
-      password: password,
-      port: 465,
-      ignoreBadCertificate: true,
-      ssl: true
-    );
+    final smtpServer = SmtpServer('smtp.mail.ru',
+        username: username,
+        password: password,
+        port: 465,
+        ignoreBadCertificate: true,
+        ssl: true);
 
     final message = Message()
       ..from = Address(username)
@@ -607,7 +646,8 @@ class _CitiesControllerState extends State<CitiesController>
       ..attachments = [
         FileAttachment(File(path),
             contentType: 'application/vnd.ms-excel',
-            fileName: Translit().toTranslit(source: path.split(Platform.pathSeparator).last))
+            fileName: Translit()
+                .toTranslit(source: path.split(Platform.pathSeparator).last))
           ..location = Location.attachment
       ];
 
