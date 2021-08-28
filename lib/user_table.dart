@@ -230,6 +230,7 @@ class _UserTableState extends State<UserTable> with WidgetsBindingObserver {
                       affiliate.userDefinedColumnsTypes.add(chosen);
                       users.forEach((element) {
                         element.properties.add(null);
+                        element.toPaint.add(false);
                       });
                       Navigator.of(context).pop();
                       if (Platform.isWindows) _saveState();
@@ -261,6 +262,7 @@ class _UserTableState extends State<UserTable> with WidgetsBindingObserver {
                 userDefinedColumnsTypes.removeAt(index);
                 users.forEach((element) {
                   element.properties.removeAt(months.length + index);
+                  element.toPaint.removeAt(months.length + index + 2);
                 });
                 Navigator.of(context).pop();
               },
@@ -398,35 +400,39 @@ class _UserTableState extends State<UserTable> with WidgetsBindingObserver {
       height: 52,
       padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
       alignment: Alignment.centerLeft,
+      color:
+          user.toPaint[index + 2 + months.length] ? Colors.yellowAccent : null,
     );
   }
 
   Container _getStringCell(User user, int index) {
     return Container(
-      child: Focus(
-          skipTraversal: true,
-          onFocusChange: (isFocus) {
-            if (!isFocus && Platform.isWindows) _saveState();
-          },
-          child: TextFormField(
-            key: Key('${user.hashCode}Month$index'),
-            autofocus: true,
-            readOnly: user.status != UserStatus.normal,
-            initialValue: user.properties[index + months.length] == null
-                ? ''
-                : user.properties[index + months.length],
-            onChanged: (val) {
-              user.properties[index + months.length] = val;
-              setState(() {});
+        child: Focus(
+            skipTraversal: true,
+            onFocusChange: (isFocus) {
+              if (!isFocus && Platform.isWindows) _saveState();
             },
-            decoration: const InputDecoration(counterText: ""),
-            maxLength: 60,
-          )),
-      width: 200,
-      height: 52,
-      padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
-      alignment: Alignment.centerLeft,
-    );
+            child: TextFormField(
+              key: Key('${user.hashCode}Month$index'),
+              autofocus: true,
+              readOnly: user.status != UserStatus.normal,
+              initialValue: user.properties[index + months.length] == null
+                  ? ''
+                  : user.properties[index + months.length],
+              onChanged: (val) {
+                user.properties[index + months.length] = val;
+                setState(() {});
+              },
+              decoration: const InputDecoration(counterText: ""),
+              maxLength: 60,
+            )),
+        width: 200,
+        height: 52,
+        padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
+        alignment: Alignment.centerLeft,
+        color: user.toPaint[index + 2 + months.length]
+            ? Colors.yellowAccent
+            : null);
   }
 
   List<Widget> _buildColumns() {
@@ -552,6 +558,7 @@ class _UserTableState extends State<UserTable> with WidgetsBindingObserver {
       padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
       alignment: Alignment.centerLeft,
       color: () {
+        if (user.toPaint[0]) return Colors.yellowAccent;
         switch (user.status) {
           case UserStatus.normal:
             return Colors.transparent;
@@ -568,76 +575,76 @@ class _UserTableState extends State<UserTable> with WidgetsBindingObserver {
     var _cells = LinkedHashMap<String, Widget>();
 
     _cells['date'] = Container(
-      child: Focus(
-          skipTraversal: true,
-          autofocus: false,
-          onFocusChange: (isFocused) {
-            if (isFocused && user.status == UserStatus.normal) {
-              showDatePicker(
-                      context: context,
-                      initialDate: DateTime.now(),
-                      firstDate: DateTime(2001),
-                      lastDate: DateTime.now())
-                  .then((date) => setState(() {
-                        user.dateStartOfEducation = date;
-                      }));
-            }
-            if (!isFocused && Platform.isWindows) {
-              _saveState();
-            }
-          },
-          child: TextFormField(
-            autofocus: false,
-            key: UniqueKey(),
-            readOnly: true,
-            initialValue: user.dateStartOfEducation == null
-                ? ''
-                : '${user.dateStartOfEducation.day}/${user.dateStartOfEducation.month}/${user.dateStartOfEducation.year}',
-            decoration: const InputDecoration(hintText: "Выберите дату"),
-            keyboardType: null,
-          )),
-      width: 200,
-      height: 52,
-      padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
-      alignment: Alignment.centerLeft,
-    );
-    for (var i = 0; i < months.length; ++i) {
-      _cells[months[i]] = Container(
         child: Focus(
             skipTraversal: true,
-            onFocusChange: (isFocus) {
-              if (!isFocus && Platform.isWindows) _saveState();
+            autofocus: false,
+            onFocusChange: (isFocused) {
+              if (isFocused && user.status == UserStatus.normal) {
+                showDatePicker(
+                        context: context,
+                        initialDate: DateTime.now(),
+                        firstDate: DateTime(2001),
+                        lastDate: DateTime.now())
+                    .then((date) => setState(() {
+                          user.dateStartOfEducation = date;
+                        }));
+              }
+              if (!isFocused && Platform.isWindows) {
+                _saveState();
+              }
             },
             child: TextFormField(
-              key: Key('${user.hashCode}Month$i'),
-              autofocus: true,
-              readOnly: user.status != UserStatus.normal,
-              keyboardType: TextInputType.number,
-              initialValue: user.properties[i] == null
+              autofocus: false,
+              key: UniqueKey(),
+              readOnly: true,
+              initialValue: user.dateStartOfEducation == null
                   ? ''
-                  : user.properties[i].toStringAsFixed(2),
-              inputFormatters: [
-                FilteringTextInputFormatter.allow(RegExp("^\\d*\\.?\\d*")),
-                DecimalTextInputFormatter(decimalRange: 2)
-              ],
-              onChanged: (val) {
-                user.properties[i] = val == '' ? 0 : num.parse(val);
-                user.calculateResult();
-                setState(() {});
-              },
-              decoration: const InputDecoration(counterText: ""),
-              maxLength: 12,
-              // onTap: () {
-              //   if (Platform.isWindows) {
-              //     _saveState();
-              //   }
-              // }
+                  : '${user.dateStartOfEducation.day}/${user.dateStartOfEducation.month}/${user.dateStartOfEducation.year}',
+              decoration: const InputDecoration(hintText: "Выберите дату"),
+              keyboardType: null,
             )),
-        width: i == months.length - 3 ? 220 : 100,
+        width: 200,
         height: 52,
         padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
         alignment: Alignment.centerLeft,
-      );
+        color: user.toPaint[1] ? Colors.yellowAccent : null);
+    for (var i = 0; i < months.length; ++i) {
+      _cells[months[i]] = Container(
+          child: Focus(
+              skipTraversal: true,
+              onFocusChange: (isFocus) {
+                if (!isFocus && Platform.isWindows) _saveState();
+              },
+              child: TextFormField(
+                key: Key('${user.hashCode}Month$i'),
+                autofocus: true,
+                readOnly: user.status != UserStatus.normal,
+                keyboardType: TextInputType.number,
+                initialValue: user.properties[i] == null
+                    ? ''
+                    : user.properties[i].toStringAsFixed(2),
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(RegExp("^\\d*\\.?\\d*")),
+                  DecimalTextInputFormatter(decimalRange: 2)
+                ],
+                onChanged: (val) {
+                  user.properties[i] = val == '' ? 0 : num.parse(val);
+                  user.calculateResult();
+                  setState(() {});
+                },
+                decoration: const InputDecoration(counterText: ""),
+                maxLength: 12,
+                // onTap: () {
+                //   if (Platform.isWindows) {
+                //     _saveState();
+                //   }
+                // }
+              )),
+          width: i == months.length - 3 ? 220 : 100,
+          height: 52,
+          padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
+          alignment: Alignment.centerLeft,
+          color: user.toPaint[i + 2] ? Colors.yellowAccent : null);
     }
 
     _cells['Итого'] = Container(
@@ -720,6 +727,7 @@ class User {
   late String name;
   late DateTime? dateStartOfEducation;
   late List<dynamic> properties;
+  List<bool> toPaint = List.filled(months.length + 2, false, growable: true);
   late User initUser;
   late num result;
   UserStatus status = UserStatus.normal;
@@ -769,13 +777,18 @@ class User {
     dateStartOfEducation = null;
     properties =
         List.filled(months.length + numberOfUDColumns, null, growable: true);
+    toPaint = List.filled(months.length + 2 + numberOfUDColumns, false,
+        growable: true);
   }
 
   User.byName(String name) {
     this.name = name;
     properties = List.filled(months.length, null, growable: true);
+    toPaint = List.filled(months.length + 2, false, growable: true);
   }
 
   User.allData(this.name, this.dateStartOfEducation, this.properties,
-      this.result, this.status);
+      this.result, this.status) {
+    toPaint = List.filled(properties.length + 2, false, growable: true);
+  }
 }

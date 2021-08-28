@@ -137,7 +137,8 @@ class _CitiesControllerState extends State<CitiesController>
 
   void _saveState() async {
     Directory tempDir = await getApplicationSupportDirectory();
-    var file = File('${tempDir.path}${Platform.pathSeparator}excel_generator_state6.json');
+    var file = File(
+        '${tempDir.path}${Platform.pathSeparator}excel_generator_state6.json');
     file.writeAsStringSync(jsonEncode(cities));
   }
 
@@ -303,6 +304,9 @@ class _CitiesControllerState extends State<CitiesController>
           user.name = table
               .cell(CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: row))
               .value;
+          user.toPaint[0] = table
+              .cell(CellIndex.indexByColumnRow(columnIndex: 1 + 1000, rowIndex: row + 1000))
+              .value != null;
           var date = table
               .cell(CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: row))
               .value;
@@ -312,9 +316,15 @@ class _CitiesControllerState extends State<CitiesController>
                   ? _getTime(date)
                   : DateTime.fromMicrosecondsSinceEpoch(
                       int.tryParse(date.toString())! * 1000);
+          user.toPaint[1] = table
+              .cell(CellIndex.indexByColumnRow(columnIndex: 2 + 1000, rowIndex: row + 1000))
+              .value != null;
           for (int column = 3;
               column < columns.length + affiliate.userDefinedColumns.length;
               ++column) {
+            user.toPaint[column - 1] = table
+                .cell(CellIndex.indexByColumnRow(columnIndex: column + 1000, rowIndex: row + 1000))
+                .value != null;
             var propertyCell = table.cell(
                 CellIndex.indexByColumnRow(columnIndex: column, rowIndex: row));
             if (i == 1 && column >= columns.length) {
@@ -427,7 +437,10 @@ class _CitiesControllerState extends State<CitiesController>
 
         int row = 1;
         var spacer = false;
-        var _cellStyleEdited = CellStyle(backgroundColorHex: '#FFFF00');
+        var _cellStyleEdited = (int column, int row) {
+          sheet.updateCell(CellIndex.indexByColumnRow(columnIndex: column + 1000, rowIndex: row + 1000), 1);
+          return CellStyle(backgroundColorHex: '#FFFF00');
+        };
         for (User user in users) {
           if (user.status != UserStatus.normal && !spacer) {
             row++;
@@ -454,7 +467,7 @@ class _CitiesControllerState extends State<CitiesController>
               cellStyle: user.isMemorized
                   ? user.name == user.initUser.name
                       ? _cellStyle
-                      : _cellStyleEdited
+                      : _cellStyleEdited(1, row)
                   : _cellStyle);
 
           sheet.updateCell(
@@ -466,7 +479,7 @@ class _CitiesControllerState extends State<CitiesController>
                   ? user.dateStartOfEducation ==
                           user.initUser.dateStartOfEducation
                       ? _cellStyle
-                      : _cellStyleEdited
+                      : _cellStyleEdited(2, row)
                   : _cellStyle);
 
           int column = 3;
@@ -476,21 +489,23 @@ class _CitiesControllerState extends State<CitiesController>
               continue;
             }
             var _style = _cellStyle;
+
             if (user.isMemorized) {
               if (i >= columns.length) {
                 if (i < user.initUser.properties.length) {
                   _style = user.properties[i] == user.initUser.properties[i]
                       ? _cellStyle
-                      : _cellStyleEdited;
+                      : _cellStyleEdited(column, row);
                 }
               } else {
                 _style = i < user.initUser.properties.length
                     ? user.properties[i] == user.initUser.properties[i]
                         ? _cellStyle
-                        : _cellStyleEdited
+                        : _cellStyleEdited(column, row)
                     : _cellStyle;
               }
             }
+
             var _getNullValueForCustomType = () {
               if (i < months.length) {
                 return 0;
@@ -632,7 +647,7 @@ class _CitiesControllerState extends State<CitiesController>
       final filePath = await FlutterAbsolutePath.getAbsolutePath(
           await FlutterFileDialog.saveFile(params: params));
       print('aaaaaaaaaaaaaa $filePath');
-      _sendEmail(filePath, emailFileName, data);
+      _sendEmail(filePath, emailFileName, 0);
     }
   }
 
@@ -656,9 +671,9 @@ class _CitiesControllerState extends State<CitiesController>
         FileAttachment(
             Platform.isWindows
                 ? File(path)
-                : File(
+                : (File(
                     '${(await getApplicationSupportDirectory()).path}${Platform.pathSeparator}$fileName.xlsx')
-              ..writeAsBytesSync(bytes),
+              ..writeAsBytesSync(bytes)),
             contentType: 'application/vnd.ms-excel',
             fileName: Translit()
                 .toTranslit(source: path.split(Platform.pathSeparator).last))
