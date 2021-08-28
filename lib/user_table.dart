@@ -79,7 +79,8 @@ class _UserTableState extends State<UserTable> with WidgetsBindingObserver {
 
   Future<void> _saveState() async {
     Directory tempDir = await getApplicationSupportDirectory();
-    var file = File('${tempDir.path}${Platform.pathSeparator}excel_generator_state6.json');
+    var file = File(
+        '${tempDir.path}${Platform.pathSeparator}excel_generator_state6.json');
     file.writeAsStringSync(jsonEncode(cities));
   }
 
@@ -482,17 +483,6 @@ class _UserTableState extends State<UserTable> with WidgetsBindingObserver {
         height: 104,
         padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
         alignment: Alignment.centerLeft));
-    _columns.add(Container(
-        child: IconButton(
-            icon: Icon(Icons.add),
-            onPressed: () async {
-              await _addColumn();
-              setState(() {});
-            }),
-        width: 50,
-        height: 104,
-        padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
-        alignment: Alignment.centerLeft));
     for (var i = 0; i < userDefinedColumns.length; ++i) {
       _columns.add(Container(
           child:
@@ -502,7 +492,7 @@ class _UserTableState extends State<UserTable> with WidgetsBindingObserver {
                     style: _columnTextStyle, textAlign: TextAlign.center),
                 width: 147),
             IconButton(
-              iconSize: 20,
+                iconSize: 20,
                 onPressed: () async {
                   await _removeColumn(i);
                   setState(() {});
@@ -514,6 +504,17 @@ class _UserTableState extends State<UserTable> with WidgetsBindingObserver {
           padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
           alignment: Alignment.center));
     }
+    _columns.add(Container(
+        child: IconButton(
+            icon: Icon(Icons.add),
+            onPressed: () async {
+              await _addColumn();
+              setState(() {});
+            }),
+        width: 50,
+        height: 104,
+        padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
+        alignment: Alignment.centerLeft));
     return _columns;
   }
 
@@ -565,6 +566,7 @@ class _UserTableState extends State<UserTable> with WidgetsBindingObserver {
 
   Widget _generateRightHandSideColumnRow(user) {
     var _cells = LinkedHashMap<String, Widget>();
+
     _cells['date'] = Container(
       child: Focus(
           skipTraversal: true,
@@ -637,6 +639,7 @@ class _UserTableState extends State<UserTable> with WidgetsBindingObserver {
         alignment: Alignment.centerLeft,
       );
     }
+
     _cells['Итого'] = Container(
       child: Text(user.result.toStringAsFixed(2)),
       width: 100,
@@ -644,6 +647,7 @@ class _UserTableState extends State<UserTable> with WidgetsBindingObserver {
       padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
       alignment: Alignment.centerLeft,
     );
+
     _cells['remove'] = Container(
       child: IconButton(
           onPressed: () {
@@ -659,6 +663,7 @@ class _UserTableState extends State<UserTable> with WidgetsBindingObserver {
       padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
       alignment: Alignment.centerLeft,
     );
+
     _cells['edit'] = Container(
       child: IconButton(
           onPressed: () {
@@ -674,13 +679,7 @@ class _UserTableState extends State<UserTable> with WidgetsBindingObserver {
       padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
       alignment: Alignment.centerLeft,
     );
-    _cells['spacer'] = Container(
-      child: Text(''),
-      width: 50,
-      height: 52,
-      padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
-      alignment: Alignment.centerLeft,
-    );
+
     for (var i = 0; i < userDefinedColumns.length; ++i) {
       switch (affiliate.userDefinedColumnsTypes[i]) {
         case Types.number:
@@ -692,7 +691,15 @@ class _UserTableState extends State<UserTable> with WidgetsBindingObserver {
           break;
       }
     }
-    ;
+
+    _cells['spacer'] = Container(
+      child: Text(''),
+      width: 50,
+      height: 52,
+      padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
+      alignment: Alignment.centerLeft,
+    );
+
     return Container(
       child: Row(children: _cells.values.toList()),
       color: () {
