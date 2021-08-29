@@ -588,7 +588,7 @@ class _CitiesControllerState extends State<CitiesController>
               continue;
             }
             var _getNullValueForCustomType = () {
-              if (column - 1 < months.length) {
+              if (column - 1 < columns.length) {
                 return 0;
               } else {
                 switch (userDefinedColumnsTypes[column - columns.length]) {
@@ -604,9 +604,12 @@ class _CitiesControllerState extends State<CitiesController>
             sheet.updateCell(
                 CellIndex.indexByColumnRow(columnIndex: column, rowIndex: row),
                 property == null
-                    ? column > columns.length
-                        ? _getNullValueForCustomType()
-                        : 0
+                    ? _getNullValueForCustomType()
+                    : column >= columns.length
+                    ? userDefinedColumnsTypes[column - columns.length] ==
+                    Types.formula
+                    ? Formula.custom(property.replaceFirst('=', ''))
+                    : property
                     : property,
                 cellStyle: _cellStyle);
             column++;

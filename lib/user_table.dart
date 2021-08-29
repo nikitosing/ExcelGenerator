@@ -98,7 +98,7 @@ class _UserTableState extends State<UserTable> {
               .substring(userDefinedColumns[i].indexOf('='))
               .split(RegExp(r'(?:-?(?:0|[1-9][0-9]*))'));
           element.properties[i + months.length] = formulaReadyToEdit.join(
-              '${index + 2 + element.status.index + (element.status.index - 1)}');
+              '${index + 2 + element.status.index + (element.status == UserStatus.toEdit ? 1 : 0)}');
         }
       }
     });
@@ -251,7 +251,7 @@ class _UserTableState extends State<UserTable> {
                       users.asMap().forEach((index, element) {
                         element.properties.add(chosen == Types.formula
                             ? property.join(
-                                '${index + 2 + element.status.index + (element.status.index - 1)}')
+                            '${index + 2 + element.status.index + (element.status == UserStatus.toEdit ? 1 : 0)}')
                             : property);
                         element.toPaint.add(false);
                       });
