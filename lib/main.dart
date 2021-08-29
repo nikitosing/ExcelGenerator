@@ -6,11 +6,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 
-// var affiliateCnt = 1;
-// var affiliates = {
-//   '0': {'name': '', 'users': []}
-// };
-// var cityName = '';
 
 List<City> cities = [];
 const _title = 'ExcelGenerator';
@@ -26,18 +21,9 @@ Future<void> getState() async {
   var file = File('${tempDir.path}\\excel_generator_state6.json');
   if (file.existsSync()) {
     var json = jsonDecode(file.readAsStringSync());
-    cities = json == null ? [] : json.map((e) => City.fromJson(e)).toList().cast<City>();
-    // affiliates = {};
-    // cityName = json.containsKey('cityName') ? json['cityName'] : '';
-    // for (var entry in json['affiliates'].entries) {
-    //   affiliateCnt = 0;
-    //   affiliates[entry.key] = {
-    //     'name': entry.value['name'],
-    //     'users':
-    //         entry.value['users'].map((user) => User.fromJson(user)).toList()
-    //   };
-    // }
-    // affiliateCnt = affiliates.isEmpty ? 0 : int.parse(affiliates.keys.last);
+    cities = json == null
+        ? []
+        : json.map((e) => City.fromJson(e)).toList().cast<City>();
   }
 }
 
@@ -47,12 +33,14 @@ class LoadingScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+        //key: UniqueKey(),
         title: _title,
         theme: ThemeData(
           primarySwatch: Colors.teal,
           primaryColor: Colors.grey,
         ),
         home: Scaffold(
+            //key: UniqueKey(),
             appBar: AppBar(
               title: const Text(_title),
               actions: [
@@ -71,6 +59,7 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
+        //key: UniqueKey(),
         showSemanticsDebugger: false,
         debugShowCheckedModeBanner: true,
         title: _title,
@@ -78,7 +67,7 @@ class MyApp extends StatelessWidget {
           primarySwatch: Colors.teal,
           primaryColor: Colors.grey,
         ),
-        home: CitiesController(cities: cities));
+        home: CitiesController(key: UniqueKey(), cities: cities));
   }
 }
 

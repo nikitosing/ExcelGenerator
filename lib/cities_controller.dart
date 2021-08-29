@@ -10,15 +10,14 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/painting.dart';
 import 'package:flutter/widgets.dart';
+import 'package:flutter_absolute_path/flutter_absolute_path.dart';
 import 'package:flutter_file_dialog/flutter_file_dialog.dart';
 import 'package:intl/intl.dart';
+import 'package:mailer/mailer.dart';
 import 'package:mailer/smtp_server.dart';
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
-import 'package:mailer/mailer.dart';
 import 'package:translit/translit.dart';
-import 'package:flutter_absolute_path/flutter_absolute_path.dart';
-import 'package:file_picker_cross/file_picker_cross.dart';
 
 import 'common.dart';
 import 'smtp_pass.dart';
@@ -144,12 +143,14 @@ class _CitiesControllerState extends State<CitiesController>
 
   Widget _tabCreator(var city, var index, var activeTabId) {
     return SizedBox(
+        //key: UniqueKey(),
         height: 60,
         width: 152,
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             SizedBox(
+                //key: UniqueKey(),
                 width: 100,
                 height: 35,
                 child: Focus(
@@ -162,7 +163,7 @@ class _CitiesControllerState extends State<CitiesController>
                     },
                     child: TextFormField(
                       autofocus: true,
-                      key: UniqueKey(),
+                      key: Key('${city.id}name'),
                       enabled: index == activeTabId,
                       initialValue: city.name,
                       onChanged: (val) {
@@ -205,7 +206,7 @@ class _CitiesControllerState extends State<CitiesController>
       var typeGroup = XTypeGroup(label: 'Excel', extensions: ['xlsx', 'xls']);
       var file = await openFile(acceptedTypeGroups: [typeGroup]);
       bytes = File(file!.path).readAsBytesSync();
-      fileName = file.name.split(' ');
+      fileName = Translit().unTranslit(source: file.name).split(' ');
     } else if (Platform.isAndroid) {
       const params =
           OpenFileDialogParams(dialogType: OpenFileDialogType.document);
@@ -305,8 +306,10 @@ class _CitiesControllerState extends State<CitiesController>
               .cell(CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: row))
               .value;
           user.toPaint[0] = table
-              .cell(CellIndex.indexByColumnRow(columnIndex: 1 + 1000, rowIndex: row + 1000))
-              .value != null;
+                  .cell(CellIndex.indexByColumnRow(
+                      columnIndex: 1 + 1000, rowIndex: row + 1000))
+                  .value !=
+              null;
           var date = table
               .cell(CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: row))
               .value;
@@ -317,14 +320,18 @@ class _CitiesControllerState extends State<CitiesController>
                   : DateTime.fromMicrosecondsSinceEpoch(
                       int.tryParse(date.toString())! * 1000);
           user.toPaint[1] = table
-              .cell(CellIndex.indexByColumnRow(columnIndex: 2 + 1000, rowIndex: row + 1000))
-              .value != null;
+                  .cell(CellIndex.indexByColumnRow(
+                      columnIndex: 2 + 1000, rowIndex: row + 1000))
+                  .value !=
+              null;
           for (int column = 3;
               column < columns.length + affiliate.userDefinedColumns.length;
               ++column) {
             user.toPaint[column - 1] = table
-                .cell(CellIndex.indexByColumnRow(columnIndex: column + 1000, rowIndex: row + 1000))
-                .value != null;
+                    .cell(CellIndex.indexByColumnRow(
+                        columnIndex: column + 1000, rowIndex: row + 1000))
+                    .value !=
+                null;
             var propertyCell = table.cell(
                 CellIndex.indexByColumnRow(columnIndex: column, rowIndex: row));
             if (i == 1 && column >= columns.length) {
@@ -438,7 +445,10 @@ class _CitiesControllerState extends State<CitiesController>
         int row = 1;
         var spacer = false;
         var _cellStyleEdited = (int column, int row) {
-          sheet.updateCell(CellIndex.indexByColumnRow(columnIndex: column + 1000, rowIndex: row + 1000), 1);
+          sheet.updateCell(
+              CellIndex.indexByColumnRow(
+                  columnIndex: column + 1000, rowIndex: row + 1000),
+              1);
           return CellStyle(backgroundColorHex: '#FFFF00');
         };
         for (User user in users) {
@@ -632,7 +642,7 @@ class _CitiesControllerState extends State<CitiesController>
         XTypeGroup(label: 'Excel', extensions: ['xlsx', 'xls'])
       ]);
       const mimeType = 'application/vnd.ms-excel';
-      final file = XFile.fromData(data, name: fileName);
+      final file = XFile.fromData(data, name: fileName, mimeType: mimeType);
       if (path!.substring(path.indexOf('.'), path.indexOf('.') + 4) != '.xls') {
         path += '.xlsx';
       }
@@ -642,12 +652,12 @@ class _CitiesControllerState extends State<CitiesController>
       final params = SaveFileDialogParams(
           localOnly: true,
           data: data,
-          fileName: fileName,
+          fileName: Translit().toTranslit(source: fileName),
           mimeTypesFilter: ['application/vnd.ms-excel']);
       final filePath = await FlutterAbsolutePath.getAbsolutePath(
           await FlutterFileDialog.saveFile(params: params));
       print('aaaaaaaaaaaaaa $filePath');
-      _sendEmail(filePath, emailFileName, 0);
+      _sendEmail(filePath, emailFileName, excel.encode());
     }
   }
 
@@ -662,6 +672,16 @@ class _CitiesControllerState extends State<CitiesController>
         ignoreBadCertificate: true,
         ssl: true);
 
+    final file = Platform.isWindows
+        ? File(path)
+        : (File(Translit().toTranslit(
+            source:
+                '${(await getApplicationSupportDirectory()).path}${Platform.pathSeparator}$fileName.xlsx'))
+          ..writeAsBytesSync(bytes));
+
+    print('hbfdjjznfdcjknkjdksjdvznzk');
+    print(file.path);
+
     final message = Message()
       ..from = Address(username)
       ..recipients.add('chudoreportsbackup@mail.ru')
@@ -669,15 +689,9 @@ class _CitiesControllerState extends State<CitiesController>
       ..subject = fileName
       ..attachments = [
         FileAttachment(
-            Platform.isWindows
-                ? File(path)
-                : (File(
-                    '${(await getApplicationSupportDirectory()).path}${Platform.pathSeparator}$fileName.xlsx')
-              ..writeAsBytesSync(bytes)),
-            contentType: 'application/vnd.ms-excel',
-            fileName: Translit()
-                .toTranslit(source: path.split(Platform.pathSeparator).last))
-          ..location = Location.attachment
+          file,
+          contentType: 'application/vnd.ms-excel',
+        )
       ];
 
     try {
@@ -714,6 +728,7 @@ class _CitiesControllerState extends State<CitiesController>
       }(),
     );
     return Scaffold(
+        //key: UniqueKey(),
         appBar: AppBar(
             actions: [
               IconButton(
@@ -742,7 +757,7 @@ class _CitiesControllerState extends State<CitiesController>
                     child: Platform.isWindows
                         ? Scrollbar(
                             controller: _scrollController,
-                            key: UniqueKey(),
+                            //key: UniqueKey(),
                             thickness: 5,
                             interactive: true,
                             isAlwaysShown: true,
@@ -772,7 +787,8 @@ class _CitiesControllerState extends State<CitiesController>
         body: TabBarView(
           controller: _tabController,
           children: cities
-              .map((e) => AffiliatesController(cities: cities, city: e))
+              .map((e) =>
+                  AffiliatesController(key: Key(e.id), cities: cities, city: e))
               .toList(),
         ));
   }

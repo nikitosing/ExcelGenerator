@@ -2,6 +2,7 @@ import 'dart:collection';
 import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
+
 import 'package:excel/excel.dart';
 import 'package:excel_generator/affiliates_controller.dart';
 import 'package:flutter/cupertino.dart';
@@ -43,7 +44,7 @@ class UserTable extends StatefulWidget {
   State<UserTable> createState() => _UserTableState();
 }
 
-class _UserTableState extends State<UserTable> with WidgetsBindingObserver {
+class _UserTableState extends State<UserTable> {
   @override
   UserTable get widget => super.widget;
 
@@ -74,6 +75,7 @@ class _UserTableState extends State<UserTable> with WidgetsBindingObserver {
 
   @override
   void dispose() {
+    //WidgetsBinding.instance!.removeObserver(this);
     super.dispose();
   }
 
@@ -282,56 +284,51 @@ class _UserTableState extends State<UserTable> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      //key: UniqueKey(),
-      body: Stack(
-          //key: UniqueKey(),
-          children: [
-            _getBodyWidget(),
-            Align(
-                alignment: Alignment.topLeft,
-                child: SizedBox(
-                    width: min(MediaQuery.of(context).size.width - 150, 500),
-                    height: 104,
-                    child: FlutterSlider(
-                      //key: Key('Slider ${affiliate.id}'),
-                      trackBar: const FlutterSliderTrackBar(
-                        inactiveTrackBar: BoxDecoration(
-                          color: Colors.transparent,
-                        ),
-                        activeTrackBar: BoxDecoration(
-                          color: Colors.transparent,
-                        ),
-                        activeDisabledTrackBarColor: Colors.transparent,
-                        inactiveDisabledTrackBarColor: Colors.transparent,
-                      ),
-                      handlerWidth: 5,
-                      handlerAnimation:
-                          const FlutterSliderHandlerAnimation(scale: 1),
-                      handler: FlutterSliderHandler(
-                          foregroundDecoration:
-                              BoxDecoration(color: Colors.grey[400]),
-                          child: const SizedBox(
-                              width: 9,
-                              height: double.infinity,
-                              child: MouseRegion(
-                                  cursor: SystemMouseCursors.resizeColumn))),
-                      handlerHeight: double.infinity,
-                      touchSize: 10,
-                      visibleTouchArea: false,
-                      selectByTap: false,
-                      jump: false,
-                      values: [_nameColumnWidth],
-                      tooltip: FlutterSliderTooltip(
-                        disabled: true,
-                      ),
-                      max: min(MediaQuery.of(context).size.width - 150, 500),
-                      min: 0,
-                      onDragging: (handlerIndex, lowerValue, upperValue) {
-                        _nameColumnWidth = lowerValue < 45 ? 45 : lowerValue;
-                        setState(() {});
-                      },
-                    )))
-          ]),
+      body: Stack(children: [
+        _getBodyWidget(),
+        Align(
+            alignment: Alignment.topLeft,
+            child: SizedBox(
+                width: min(MediaQuery.of(context).size.width - 150, 500),
+                height: 104,
+                child: FlutterSlider(
+                  trackBar: FlutterSliderTrackBar(
+                    inactiveTrackBar: BoxDecoration(
+                      color: Colors.transparent,
+                    ),
+                    activeTrackBar: BoxDecoration(
+                      color: Colors.transparent,
+                    ),
+                    activeDisabledTrackBarColor: Colors.transparent,
+                    inactiveDisabledTrackBarColor: Colors.transparent,
+                  ),
+                  handlerWidth: 5,
+                  handlerAnimation: FlutterSliderHandlerAnimation(scale: 1),
+                  handler: FlutterSliderHandler(
+                      foregroundDecoration:
+                          BoxDecoration(color: Colors.grey[400]),
+                      child: SizedBox(
+                          width: 9,
+                          height: double.infinity,
+                          child: MouseRegion(
+                              cursor: SystemMouseCursors.resizeColumn))),
+                  handlerHeight: double.infinity,
+                  touchSize: 10,
+                  visibleTouchArea: false,
+                  selectByTap: false,
+                  jump: false,
+                  values: [_nameColumnWidth],
+                  tooltip: FlutterSliderTooltip(
+                    disabled: true,
+                  ),
+                  max: min(MediaQuery.of(context).size.width - 150, 500),
+                  min: 0,
+                  onDragging: (handlerIndex, lowerValue, upperValue) {
+                    _nameColumnWidth = lowerValue < 45 ? 45 : lowerValue;
+                    setState(() {});
+                  },
+                )))
+      ]),
       floatingActionButton: FloatingActionButton(
         onPressed: () {
           setState(() {
@@ -361,7 +358,7 @@ class _UserTableState extends State<UserTable> with WidgetsBindingObserver {
               .map((user) => _generateRightHandSideColumnRow(user))
               .toList(),
           itemCount: users.length,
-          horizontalScrollbarStyle: const ScrollbarStyle(
+          horizontalScrollbarStyle: ScrollbarStyle(
             isAlwaysShown: true,
             thickness: 5.0,
             radius: Radius.circular(5.0),
@@ -378,7 +375,7 @@ class _UserTableState extends State<UserTable> with WidgetsBindingObserver {
             if (!isFocus && Platform.isWindows) _saveState();
           },
           child: TextFormField(
-            key: Key('${user.hashCode}Month$index'),
+            key: Key('${user.id}UDDColumn$index'),
             autofocus: true,
             readOnly: user.status != UserStatus.normal,
             keyboardType: TextInputType.number,
@@ -413,7 +410,7 @@ class _UserTableState extends State<UserTable> with WidgetsBindingObserver {
               if (!isFocus && Platform.isWindows) _saveState();
             },
             child: TextFormField(
-              key: Key('${user.hashCode}Month$index'),
+              key: Key('${user.id}UDDColumn$index'),
               autofocus: true,
               readOnly: user.status != UserStatus.normal,
               initialValue: user.properties[index + months.length] == null
@@ -532,7 +529,7 @@ class _UserTableState extends State<UserTable> with WidgetsBindingObserver {
             if (!isFocus && Platform.isWindows) _saveState();
           },
           child: TextFormField(
-            key: UniqueKey(),
+            key: Key('${user.id}name'),
             readOnly: user.status == UserStatus.toRemove,
             initialValue: user.name,
             inputFormatters: [
@@ -577,10 +574,10 @@ class _UserTableState extends State<UserTable> with WidgetsBindingObserver {
     _cells['date'] = Container(
         child: Focus(
             skipTraversal: true,
-            autofocus: false,
-            onFocusChange: (isFocused) {
+            //autofocus: true,
+            onFocusChange: (isFocused) async {
               if (isFocused && user.status == UserStatus.normal) {
-                showDatePicker(
+                await showDatePicker(
                         context: context,
                         initialDate: DateTime.now(),
                         firstDate: DateTime(2001),
@@ -589,13 +586,10 @@ class _UserTableState extends State<UserTable> with WidgetsBindingObserver {
                           user.dateStartOfEducation = date;
                         }));
               }
-              if (!isFocused && Platform.isWindows) {
-                _saveState();
-              }
             },
             child: TextFormField(
               autofocus: false,
-              key: UniqueKey(),
+              key: Key('${user.id}${user.dateStartOfEducation.toString()}'),
               readOnly: true,
               initialValue: user.dateStartOfEducation == null
                   ? ''
@@ -616,7 +610,7 @@ class _UserTableState extends State<UserTable> with WidgetsBindingObserver {
                 if (!isFocus && Platform.isWindows) _saveState();
               },
               child: TextFormField(
-                key: Key('${user.hashCode}Month$i'),
+                key: Key('${user.id}Month$i'),
                 autofocus: true,
                 readOnly: user.status != UserStatus.normal,
                 keyboardType: TextInputType.number,
@@ -724,6 +718,7 @@ class _UserTableState extends State<UserTable> with WidgetsBindingObserver {
 }
 
 class User {
+  String id = UniqueKey().hashCode.toString();
   late String name;
   late DateTime? dateStartOfEducation;
   late List<dynamic> properties;
