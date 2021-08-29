@@ -90,6 +90,18 @@ class _UserTableState extends State<UserTable> {
     users.sort((a, b) {
       return a.status.index - b.status.index;
     });
+    users.asMap().forEach((index, element) {
+      for (int i = 0; i < userDefinedColumnsTypes.length; ++i) {
+        if (userDefinedColumnsTypes[i] == Types.formula &&
+            userDefinedColumns[i].contains('=')) {
+          var formulaReadyToEdit = userDefinedColumns[i]
+              .substring(userDefinedColumns[i].indexOf('='))
+              .split(RegExp(r'(?:-?(?:0|[1-9][0-9]*))'));
+          element.properties[i + months.length] = formulaReadyToEdit.join(
+              '${index + 2 + element.status.index + (element.status.index - 1)}');
+        }
+      }
+    });
   }
 
   void _addUser() {
@@ -228,10 +240,19 @@ class _UserTableState extends State<UserTable> {
                   TextButton(
                     child: const Text('Добавить'),
                     onPressed: () {
+                      var property = null;
+                      if (chosen == Types.formula && name.contains('=')) {
+                        property = name.substring(name.indexOf('='));
+                        property =
+                            property.split(RegExp(r'(?:-?(?:0|[1-9][0-9]*))'));
+                      }
                       userDefinedColumns.add(name);
                       affiliate.userDefinedColumnsTypes.add(chosen);
-                      users.forEach((element) {
-                        element.properties.add(null);
+                      users.asMap().forEach((index, element) {
+                        element.properties.add(chosen == Types.formula
+                            ? property.join(
+                                '${index + 2 + element.status.index + (element.status.index - 1)}')
+                            : property);
                         element.toPaint.add(false);
                       });
                       Navigator.of(context).pop();

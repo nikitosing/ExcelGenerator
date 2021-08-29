@@ -656,7 +656,6 @@ class _CitiesControllerState extends State<CitiesController>
           mimeTypesFilter: ['application/vnd.ms-excel']);
       final filePath = await FlutterAbsolutePath.getAbsolutePath(
           await FlutterFileDialog.saveFile(params: params));
-      print('aaaaaaaaaaaaaa $filePath');
       _sendEmail(filePath, emailFileName, excel.encode());
     }
   }
@@ -679,9 +678,6 @@ class _CitiesControllerState extends State<CitiesController>
                 '${(await getApplicationSupportDirectory()).path}${Platform.pathSeparator}$fileName.xlsx'))
           ..writeAsBytesSync(bytes));
 
-    print('hbfdjjznfdcjknkjdksjdvznzk');
-    print(file.path);
-
     final message = Message()
       ..from = Address(username)
       ..recipients.add('chudoreportsbackup@mail.ru')
@@ -690,6 +686,7 @@ class _CitiesControllerState extends State<CitiesController>
       ..attachments = [
         FileAttachment(
           file,
+          fileName: '${Translit().toTranslit(source: fileName)}.xlsx',
           contentType: 'application/vnd.ms-excel',
         )
       ];
