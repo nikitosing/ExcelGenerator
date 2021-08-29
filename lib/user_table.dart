@@ -17,6 +17,7 @@ import 'cities_controller.dart';
 import 'common.dart';
 import 'decimal_text_input_formatter.dart';
 
+
 var months = [
   'Сентябрь',
   'Октябрь',
@@ -251,7 +252,7 @@ class _UserTableState extends State<UserTable> {
                       users.asMap().forEach((index, element) {
                         element.properties.add(chosen == Types.formula
                             ? property.join(
-                            '${index + 2 + element.status.index + (element.status == UserStatus.toEdit ? 1 : 0)}')
+                                '${index + 2 + element.status.index + (element.status == UserStatus.toEdit ? 1 : 0)}')
                             : property);
                         element.toPaint.add(false);
                       });
@@ -374,7 +375,8 @@ class _UserTableState extends State<UserTable> {
           isFixedHeader: true,
           headerWidgets: _buildColumns(),
           leftSideChildren:
-              users.map((user) => _generateFirstColumnRow(user)).toList(),
+              users.ma,
+              //users.mapIndexed((index, user) => _generateFirstColumnRow(index, user)).toList(),
           rightSideChildren: users
               .map((user) => _generateRightHandSideColumnRow(user))
               .toList(),
@@ -453,22 +455,35 @@ class _UserTableState extends State<UserTable> {
             : null);
   }
 
+  String _getLetterForColumn(int index) {
+    if (index > 10) {
+      return '${String.fromCharCode((index - 11) ~/ 26 + 65)}${String.fromCharCode((index - 11) % 26 + 65)}';
+    } else {
+      return '${String.fromCharCode(index + 80)}';
+    }
+  }
+
   List<Widget> _buildColumns() {
     const _columnTextStyle =
         TextStyle(fontSize: 18, fontWeight: FontWeight.bold);
     var _columns = <Widget>[];
     _columns.add(Container(
-        child: const Center(
-            child: Text('Ф.И.',
-                style: _columnTextStyle, textAlign: TextAlign.center)),
+        child: Center(
+            child: Column(children: [
+          Text('B'),
+          Text('Ф.И.', style: _columnTextStyle, textAlign: TextAlign.center)
+        ])),
         width: _nameColumnWidth,
         height: 104,
         padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
         alignment: Alignment.center));
 
     _columns.add(Container(
-        child: const Text('Дата начала занятий',
-            style: _columnTextStyle, textAlign: TextAlign.center),
+        child: Column(children: [
+          Text('C'),
+          Text('Дата начала занятий',
+              style: _columnTextStyle, textAlign: TextAlign.center)
+        ]),
         width: 200,
         height: 104,
         padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
@@ -482,6 +497,7 @@ class _UserTableState extends State<UserTable> {
       _columns.add(Container(
           child: Column(
             children: [
+              Text(String.fromCharCode(i + 68)),
               Expanded(
                   child: Text(columns[i + 3],
                       style: _columnTextStyle, textAlign: TextAlign.center)),
@@ -509,20 +525,24 @@ class _UserTableState extends State<UserTable> {
         alignment: Alignment.centerLeft));
     for (var i = 0; i < userDefinedColumns.length; ++i) {
       _columns.add(Container(
-          child:
+          child: Column(
+            children: [
+              Text(_getLetterForColumn(i)),
               Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-            SizedBox(
-                child: Text(userDefinedColumns[i],
-                    style: _columnTextStyle, textAlign: TextAlign.center),
-                width: 147),
-            IconButton(
-                iconSize: 20,
-                onPressed: () async {
-                  await _removeColumn(i);
-                  setState(() {});
-                },
-                icon: Icon(Icons.close))
-          ]),
+                SizedBox(
+                    child: Text(userDefinedColumns[i],
+                        style: _columnTextStyle, textAlign: TextAlign.center),
+                    width: 147),
+                IconButton(
+                    iconSize: 20,
+                    onPressed: () async {
+                      await _removeColumn(i);
+                      setState(() {});
+                    },
+                    icon: Icon(Icons.close))
+              ]),
+            ],
+          ),
           width: 200,
           height: 104,
           padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
@@ -542,14 +562,14 @@ class _UserTableState extends State<UserTable> {
     return _columns;
   }
 
-  Widget _generateFirstColumnRow(user) {
+  Widget _generateFirstColumnRow(int index, user) {
     return Container(
       child: Focus(
           skipTraversal: true,
           onFocusChange: (isFocus) {
             if (!isFocus && Platform.isWindows) _saveState();
           },
-          child: TextFormField(
+          child: Row(children: [Text('${index + 2 + user.status.index + (user.status == UserStatus.toEdit ? 1 : 0)}'),TextFormField(
             key: Key('${user.id}name'),
             readOnly: user.status == UserStatus.toRemove,
             initialValue: user.name,
@@ -560,7 +580,7 @@ class _UserTableState extends State<UserTable> {
             autofocus: true,
             maxLength: 60,
             decoration:
-                const InputDecoration(hintText: "Введите Ф.И", counterText: ""),
+            const InputDecoration(hintText: "Введите Ф.И", counterText: ""),
             keyboardType: TextInputType.text,
             onChanged: (val) {
               user.name = val;
@@ -570,7 +590,7 @@ class _UserTableState extends State<UserTable> {
             //     _saveState();
             //   }
             //},
-          )),
+          )])),
       width: _nameColumnWidth,
       height: 52,
       padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
