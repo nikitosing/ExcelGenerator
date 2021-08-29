@@ -16,7 +16,7 @@ dependencies:
   path_provider: ^2.0.2
   file_selector: ^0.8.2
   file_selector_windows: ^0.0.2
-  flutter_file_dialog: 2.1.0
+  flutter_file_dialog: ^2.1.1
   flutter_native_splash: ^1.2.0
   horizontal_data_table: ^3.4.1
   flutter_xlider: ^3.4.0
@@ -25,6 +25,7 @@ dependencies:
   translit: ^2.0.0
   flutter_absolute_path: ^1.0.6
   file_picker_cross: ^4.4.2
+  collection: ^1.15.0
 
 
 dev_dependencies:

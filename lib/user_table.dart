@@ -12,11 +12,11 @@ import 'package:flutter/services.dart';
 import 'package:flutter_xlider/flutter_xlider.dart';
 import 'package:horizontal_data_table/horizontal_data_table.dart';
 import 'package:path_provider/path_provider.dart';
+import 'package:collection/collection.dart';
 
 import 'cities_controller.dart';
 import 'common.dart';
 import 'decimal_text_input_formatter.dart';
-
 
 var months = [
   'Сентябрь',
@@ -374,9 +374,9 @@ class _UserTableState extends State<UserTable> {
               1670 + affiliate.userDefinedColumns.length * 200,
           isFixedHeader: true,
           headerWidgets: _buildColumns(),
-          leftSideChildren:
-              users.ma,
-              //users.mapIndexed((index, user) => _generateFirstColumnRow(index, user)).toList(),
+          leftSideChildren: users
+              .mapIndexed((index, user) => _generateFirstColumnRow(index, user))
+              .toList(),
           rightSideChildren: users
               .map((user) => _generateRightHandSideColumnRow(user))
               .toList(),
@@ -564,37 +564,40 @@ class _UserTableState extends State<UserTable> {
 
   Widget _generateFirstColumnRow(int index, user) {
     return Container(
-      child: Focus(
-          skipTraversal: true,
-          onFocusChange: (isFocus) {
-            if (!isFocus && Platform.isWindows) _saveState();
-          },
-          child: Row(children: [Text('${index + 2 + user.status.index + (user.status == UserStatus.toEdit ? 1 : 0)}'),TextFormField(
-            key: Key('${user.id}name'),
-            readOnly: user.status == UserStatus.toRemove,
-            initialValue: user.name,
-            inputFormatters: [
-              FilteringTextInputFormatter.deny(RegExp("[0-9]+"))
-            ],
-            // ^(\d*\.)?\d+$
-            autofocus: true,
-            maxLength: 60,
-            decoration:
-            const InputDecoration(hintText: "Введите Ф.И", counterText: ""),
-            keyboardType: TextInputType.text,
-            onChanged: (val) {
-              user.name = val;
-            },
-            // onTap: () {
-            //   if (Platform.isWindows) {
-            //     _saveState();
-            //   }
-            //},
-          )])),
+      child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+              '${index + 2 + user.status.index + (user.status == UserStatus.toEdit ? 1 : 0)}'),
+          Focus(
+              skipTraversal: true,
+              onFocusChange: (isFocus) {
+                if (!isFocus && Platform.isWindows) _saveState();
+              },
+              child: SizedBox.fromSize(
+                  child: TextFormField(
+                    key: Key('${user.id}name'),
+                    readOnly: user.status == UserStatus.toRemove,
+                    initialValue: user.name,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.deny(RegExp("[0-9]+"))
+                    ],
+                    // ^(\d*\.)?\d+$
+                    autofocus: true,
+                    maxLength: 60,
+                    decoration: const InputDecoration(
+                        hintText: "Введите Ф.И", counterText: ""),
+                    keyboardType: TextInputType.text,
+                    onChanged: (val) {
+                      user.name = val;
+                    },
+                  ),
+                  size: Size(_nameColumnWidth - 23, 52))),
+        ],
+      ),
       width: _nameColumnWidth,
       height: 52,
-      padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
-      alignment: Alignment.centerLeft,
+      padding: const EdgeInsets.fromLTRB(5, 2, 0, 0),
+      alignment: Alignment.bottomLeft,
       color: () {
         if (user.toPaint[0]) return Colors.yellowAccent;
         switch (user.status) {
