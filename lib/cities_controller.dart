@@ -464,7 +464,13 @@ class _CitiesControllerState extends State<CitiesController>
 
           var _cellStyle = CellStyle(
               backgroundColorHex:
-                  user.status == UserStatus.normal ? '#ffffff' : '#FFFF00');
+              user.status == UserStatus.normal ? '#ffffff' : '#FFFF00');
+
+          if (!user.toPaint.contains(false)) {
+            for (int i = 1; i < user.properties.length + 3; ++i) {
+              _cellStyle = _cellStyleEdited(i, row);
+            }
+          }
 
           sheet.updateCell(
               CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: row),

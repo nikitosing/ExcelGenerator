@@ -111,7 +111,7 @@ class _UserTableState extends State<UserTable> {
             users[users.length - 1 - numberOfDeletedUsers]
                     .dateStartOfEducation !=
                 null)) {
-      users.add(User(userDefinedColumns.length));
+      users.add(User.toPaint(userDefinedColumns.length));
       _sortUsers();
     }
   }
@@ -254,7 +254,7 @@ class _UserTableState extends State<UserTable> {
                             ? property.join(
                                 '${index + 2 + element.status.index + (element.status == UserStatus.toEdit ? 1 : 0)}')
                             : property);
-                        element.toPaint.add(false);
+                        element.toPaint.add(true);
                       });
                       Navigator.of(context).pop();
                       if (Platform.isWindows) _saveState();
@@ -420,8 +420,8 @@ class _UserTableState extends State<UserTable> {
       height: 52,
       padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
       alignment: Alignment.centerLeft,
-      color:
-          user.toPaint[index + 2 + months.length] ? Colors.yellowAccent : null,
+      //color:
+          //user.toPaint[index + 2 + months.length] ? Colors.yellow : null,
     );
   }
 
@@ -450,9 +450,10 @@ class _UserTableState extends State<UserTable> {
         height: 52,
         padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
         alignment: Alignment.centerLeft,
-        color: user.toPaint[index + 2 + months.length]
-            ? Colors.yellowAccent
-            : null);
+        //color: user.toPaint[index + 2 + months.length]
+          //  ? Colors.yellow
+            //: null
+    );
   }
 
   String _getLetterForColumn(int index) {
@@ -599,7 +600,7 @@ class _UserTableState extends State<UserTable> {
       padding: const EdgeInsets.fromLTRB(5, 2, 0, 0),
       alignment: Alignment.bottomLeft,
       color: () {
-        if (user.toPaint[0]) return Colors.yellowAccent;
+        if (user.toPaint[0]) return Colors.yellow;
         switch (user.status) {
           case UserStatus.normal:
             return Colors.transparent;
@@ -645,7 +646,8 @@ class _UserTableState extends State<UserTable> {
         height: 52,
         padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
         alignment: Alignment.centerLeft,
-        color: user.toPaint[1] ? Colors.yellowAccent : null);
+        //color: user.toPaint[1] ? Colors.yellow : null)
+    );
     for (var i = 0; i < months.length; ++i) {
       _cells[months[i]] = Container(
           child: Focus(
@@ -681,8 +683,8 @@ class _UserTableState extends State<UserTable> {
           width: i == months.length - 3 ? 220 : 100,
           height: 52,
           padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
-          alignment: Alignment.centerLeft,
-          color: user.toPaint[i + 2] ? Colors.yellowAccent : null);
+          alignment: Alignment.centerLeft);
+          //color: user.toPaint[i + 2] ? Colors.yellow : null);
     }
 
     _cells['Итого'] = Container(
@@ -748,6 +750,7 @@ class _UserTableState extends State<UserTable> {
     return Container(
       child: Row(children: _cells.values.toList()),
       color: () {
+        if (!user.toPaint.contains(false)) return Colors.yellow;
         switch (user.status) {
           case UserStatus.normal:
             return Colors.transparent;
@@ -829,5 +832,15 @@ class User {
   User.allData(this.name, this.dateStartOfEducation, this.properties,
       this.result, this.status) {
     toPaint = List.filled(properties.length + 2, false, growable: true);
+  }
+
+  User.toPaint(int numberOfUDColumns) {
+    result = 0;
+    name = '';
+    dateStartOfEducation = null;
+    properties =
+        List.filled(months.length + numberOfUDColumns, null, growable: true);
+    toPaint = List.filled(months.length + 2 + numberOfUDColumns, true,
+        growable: true);
   }
 }
