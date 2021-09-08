@@ -26,6 +26,7 @@ dependencies:
   flutter_absolute_path: ^1.0.6
   file_picker_cross: ^4.4.2
   collection: ^1.15.0
+  syncfusion_flutter_xlsio: ^19.2.59-beta
 
 
 dev_dependencies:

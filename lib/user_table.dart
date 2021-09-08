@@ -13,6 +13,8 @@ import 'package:flutter_xlider/flutter_xlider.dart';
 import 'package:horizontal_data_table/horizontal_data_table.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:collection/collection.dart';
+import 'package:syncfusion_flutter_xlsio/xlsio.dart'
+    hide Column, Row, Alignment, Stack;
 
 import 'cities_controller.dart';
 import 'common.dart';
@@ -56,11 +58,13 @@ class _UserTableState extends State<UserTable> {
   late Affiliate affiliate;
   late List<String> userDefinedColumns;
   late List<Types> userDefinedColumnsTypes;
+  late List<TextEditingController> formulaFieldsControllers;
 
   @override
   initState() {
     super.initState();
 
+    formulaFieldsControllers = [];
     cities = widget.cities;
     affiliate = widget.affiliate;
     userDefinedColumns = affiliate.userDefinedColumns;
@@ -77,6 +81,9 @@ class _UserTableState extends State<UserTable> {
   @override
   void dispose() {
     //WidgetsBinding.instance!.removeObserver(this);
+    formulaFieldsControllers.forEach((controller) {
+      controller.dispose();
+    });
     super.dispose();
   }
 
@@ -114,6 +121,56 @@ class _UserTableState extends State<UserTable> {
       users.add(User.toPaint(userDefinedColumns.length));
       _sortUsers();
     }
+  }
+
+  String calculateFormulas(User user, int indexOfFormula, int indexOfUser) {
+    String translatedFormula = user.properties[indexOfFormula + months.length];
+    for (String frml in ruFormulasToEn.keys) {
+      translatedFormula =
+          translatedFormula.replaceAll(frml, ruFormulasToEn[frml]!);
+    }
+    translatedFormula =
+        translatedFormula.split(RegExp(r'(?:-?(?:0|[1-9][0-9]*))')).join(('1'));
+    Workbook wb = Workbook.withCulture('ru');
+    Worksheet ws = wb.worksheets[0];
+    ws.getRangeByName('A1').number = indexOfUser + 1;
+    ws.getRangeByName('B1').text = user.name;
+    ws.getRangeByName('C1').dateTime = user.dateStartOfEducation;
+    int column = 3;
+    for (var property in user.properties) {
+      ++column;
+      if (column - 1 < columns.length) {
+        ws.getRangeByIndex(1, column).number =
+            property == null ? 0 : property.toDouble();
+        continue;
+      }
+      switch (affiliate.userDefinedColumnsTypes[column - columns.length - 1]) {
+        case Types.number:
+          ws.getRangeByIndex(1, column).number = property;
+          break;
+        case Types.text:
+          ws.getRangeByIndex(1, column).text = property;
+          break;
+        case Types.formula:
+          String translatedFormula = property;
+          for (String frml in ruFormulasToEn.keys) {
+            translatedFormula =
+                translatedFormula.replaceAll(frml, ruFormulasToEn[frml]!);
+          }
+          translatedFormula = translatedFormula
+              .split(RegExp(r'(?:-?(?:0|[1-9][0-9]*))'))
+              .join(('1'));
+          ws.getRangeByIndex(1, column).formula = translatedFormula;
+          break;
+      }
+    }
+    ws.enableSheetCalculations();
+    String value = ws
+        .getRangeByIndex(1, indexOfFormula + 1 + columns.length)
+        .calculatedValue!;
+    wb.dispose();
+    print(value);
+    return value;
   }
 
   Future<void> _editDialog(user) async {
@@ -200,6 +257,7 @@ class _UserTableState extends State<UserTable> {
     };
     Types chosen = Types.number;
     String name = '';
+    //bool isValidName
     return showDialog<void>(
         context: context,
         builder: (BuildContext context) {
@@ -243,7 +301,8 @@ class _UserTableState extends State<UserTable> {
                     onPressed: () {
                       var property = null;
                       if (chosen == Types.formula && name.contains('=')) {
-                        property = name.substring(name.indexOf('='));
+                        property =
+                            name.substring(name.indexOf('=')).toUpperCase();
                         property =
                             property.split(RegExp(r'(?:-?(?:0|[1-9][0-9]*))'));
                       }
@@ -378,7 +437,8 @@ class _UserTableState extends State<UserTable> {
               .mapIndexed((index, user) => _generateFirstColumnRow(index, user))
               .toList(),
           rightSideChildren: users
-              .map((user) => _generateRightHandSideColumnRow(user))
+              .mapIndexed(
+                  (index, user) => _generateRightHandSideColumnRow(index, user))
               .toList(),
           itemCount: users.length,
           horizontalScrollbarStyle: ScrollbarStyle(
@@ -420,28 +480,83 @@ class _UserTableState extends State<UserTable> {
       height: 52,
       padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
       alignment: Alignment.centerLeft,
-      //color:
-          //user.toPaint[index + 2 + months.length] ? Colors.yellow : null,
+      color: user.toPaint[index + 2 + months.length] ? Colors.yellow : null,
     );
   }
 
   Container _getStringCell(User user, int index) {
     return Container(
+      child: Focus(
+          skipTraversal: true,
+          onFocusChange: (isFocus) {
+            if (!isFocus && Platform.isWindows) _saveState();
+          },
+          child: TextFormField(
+            key: Key('${user.id}UDDColumn$index'),
+            autofocus: true,
+            readOnly: user.status != UserStatus.normal,
+            initialValue: user.properties[index + months.length] == null
+                ? ''
+                : user.properties[index + months.length],
+            onChanged: (val) {
+              user.properties[index + months.length] = val;
+              setState(() {});
+            },
+            decoration: const InputDecoration(counterText: ""),
+            maxLength: 60,
+          )),
+      width: 200,
+      height: 52,
+      padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
+      alignment: Alignment.centerLeft,
+      //color: user.toPaint[index + 2 + months.length]
+      //  ? Colors.yellow
+      //: null
+    );
+  }
+
+  Container _getFormulaCell(User user, int index, int indexOfUser) {
+    // CONTROLLERS
+    TextEditingController controller = TextEditingController(
+        text: user.properties[index + months.length] == null ||
+                user.properties[index + months.length] == ''
+            ? ''
+            : calculateFormulas(user, index, indexOfUser));
+    bool isFocused = false;
+    return Container(
         child: Focus(
             skipTraversal: true,
             onFocusChange: (isFocus) {
+              if (isFocus) {
+                controller.text = user.properties[index + months.length] ?? '';
+              } else {
+                controller.text =
+                    user.properties[index + months.length] == null ||
+                            user.properties[index + months.length] == ''
+                        ? ''
+                        : calculateFormulas(user, index, indexOfUser);
+              }
+
               if (!isFocus && Platform.isWindows) _saveState();
             },
             child: TextFormField(
+              controller: controller,
+              inputFormatters: [UpperCaseTextFormatter()],
               key: Key('${user.id}UDDColumn$index'),
               autofocus: true,
               readOnly: user.status != UserStatus.normal,
-              initialValue: user.properties[index + months.length] == null
-                  ? ''
-                  : user.properties[index + months.length],
               onChanged: (val) {
-                user.properties[index + months.length] = val;
+                user.properties[index + months.length] = val.toUpperCase();
                 setState(() {});
+              },
+              onEditingComplete: () {
+                print('onEditingComplete');
+              },
+              onFieldSubmitted: (val) {
+                print('onFieldSubmitted $val');
+              },
+              onSaved: (val) {
+                print('onSaved $val');
               },
               decoration: const InputDecoration(counterText: ""),
               maxLength: 60,
@@ -450,10 +565,7 @@ class _UserTableState extends State<UserTable> {
         height: 52,
         padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
         alignment: Alignment.centerLeft,
-        //color: user.toPaint[index + 2 + months.length]
-          //  ? Colors.yellow
-            //: null
-    );
+        color: user.toPaint[index + 2 + months.length] ? Colors.teal : null);
   }
 
   String _getLetterForColumn(int index) {
@@ -565,7 +677,8 @@ class _UserTableState extends State<UserTable> {
 
   Widget _generateFirstColumnRow(int index, user) {
     return Container(
-      child: Row(mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
               '${index + 2 + user.status.index + (user.status == UserStatus.toEdit ? 1 : 0)}'),
@@ -600,7 +713,7 @@ class _UserTableState extends State<UserTable> {
       padding: const EdgeInsets.fromLTRB(5, 2, 0, 0),
       alignment: Alignment.bottomLeft,
       color: () {
-        if (user.toPaint[0]) return Colors.yellow;
+        if (user.toPaint[0]) return Colors.teal;
         switch (user.status) {
           case UserStatus.normal:
             return Colors.transparent;
@@ -613,7 +726,7 @@ class _UserTableState extends State<UserTable> {
     );
   }
 
-  Widget _generateRightHandSideColumnRow(user) {
+  Widget _generateRightHandSideColumnRow(int index, user) {
     var _cells = LinkedHashMap<String, Widget>();
 
     _cells['date'] = Container(
@@ -646,8 +759,7 @@ class _UserTableState extends State<UserTable> {
         height: 52,
         padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
         alignment: Alignment.centerLeft,
-        //color: user.toPaint[1] ? Colors.yellow : null)
-    );
+        color: user.toPaint[1] ? Colors.teal : null);
     for (var i = 0; i < months.length; ++i) {
       _cells[months[i]] = Container(
           child: Focus(
@@ -683,8 +795,8 @@ class _UserTableState extends State<UserTable> {
           width: i == months.length - 3 ? 220 : 100,
           height: 52,
           padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
-          alignment: Alignment.centerLeft);
-          //color: user.toPaint[i + 2] ? Colors.yellow : null);
+          alignment: Alignment.centerLeft,
+          color: user.toPaint[i + 2] ? Colors.teal : null);
     }
 
     _cells['Итого'] = Container(
@@ -730,11 +842,13 @@ class _UserTableState extends State<UserTable> {
     for (var i = 0; i < userDefinedColumns.length; ++i) {
       switch (affiliate.userDefinedColumnsTypes[i]) {
         case Types.number:
-          _cells[userDefinedColumns[i]] = _getNumCell(user, i);
+          _cells['$i UDColumn'] = _getNumCell(user, i);
           break;
         case Types.text:
+          _cells['$i UDColumn'] = _getStringCell(user, i);
+          break;
         case Types.formula:
-          _cells[userDefinedColumns[i]] = _getStringCell(user, i);
+          _cells['$i UDColumn'] = _getFormulaCell(user, i, index);
           break;
       }
     }
@@ -766,6 +880,7 @@ class _UserTableState extends State<UserTable> {
 
 class User {
   String id = UniqueKey().hashCode.toString();
+
   late String name;
   late DateTime? dateStartOfEducation;
   late List<dynamic> properties;
