@@ -6,7 +6,6 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 
-
 List<City> cities = [];
 const _title = 'ExcelGenerator';
 
@@ -18,7 +17,7 @@ Future<void> main() async {
 
 Future<void> getState() async {
   Directory tempDir = await getApplicationSupportDirectory();
-  var file = File('${tempDir.path}\\excel_generator_state6.json');
+  var file = File('${tempDir.path}\\excel_generator_state7.json');
   if (file.existsSync()) {
     var json = jsonDecode(file.readAsStringSync());
     cities = json == null
@@ -70,18 +69,3 @@ class MyApp extends StatelessWidget {
         home: CitiesController(key: UniqueKey(), cities: cities));
   }
 }
-
-//UserTable(users: affilates[affilates.keys.first].map((user) => User.fromJson(user)).toList(), name: affilates.keys.first),
-
-// TODO:
-// 1. сделать кнопку сохранить для строки или автоматом как-нибудь все это дело чтобы сохранялось              - done
-// 1.1 разобраться с сабмитом этих форм которые в строке                                                       - done
-// 2. экспорт xlsx:                                                                                            - done
-// 2.1. базовый экспорт: разобраться с либой, выводить просто строчки                                          - done
-// 2.2. разобраться со стилями, чтобы все красиво +- как в примере выводилось                                  - done
-// 3. добавить автоподсчет ИТОГО                                                                               - done
-// 4. настроить логику удаления (как в скринах) (чтобы падала вниз и раскрашивалась строчка)                   - done
-// 5. если делать будет нечего, то заняться тем, чтобы убрать хардкод в моменте наполненния колонок для строки - done
-// 6. добавить ввод для названия филиала                                                                       - done
-// 7. добавить сохранение текущего стейта, чтобы данные не терялись при закрытии                               - done (можно попытаться ловить закрытие на винде)
-// 8. сохранение xlsx на андроиде                                                                              - done

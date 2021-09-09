@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 
+import 'package:collection/collection.dart';
 import 'package:excel/excel.dart';
 import 'package:excel_generator/affiliates_controller.dart';
 import 'package:flutter/cupertino.dart';
@@ -12,7 +13,6 @@ import 'package:flutter/services.dart';
 import 'package:flutter_xlider/flutter_xlider.dart';
 import 'package:horizontal_data_table/horizontal_data_table.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:collection/collection.dart';
 import 'package:syncfusion_flutter_xlsio/xlsio.dart'
     hide Column, Row, Alignment, Stack;
 
@@ -58,13 +58,13 @@ class _UserTableState extends State<UserTable> {
   late Affiliate affiliate;
   late List<String> userDefinedColumns;
   late List<Types> userDefinedColumnsTypes;
-  late List<TextEditingController> formulaFieldsControllers;
+  late Map<String, TextEditingController> formulaFieldsControllers;
 
   @override
   initState() {
     super.initState();
 
-    formulaFieldsControllers = [];
+    formulaFieldsControllers = {};
     cities = widget.cities;
     affiliate = widget.affiliate;
     userDefinedColumns = affiliate.userDefinedColumns;
@@ -81,7 +81,7 @@ class _UserTableState extends State<UserTable> {
   @override
   void dispose() {
     //WidgetsBinding.instance!.removeObserver(this);
-    formulaFieldsControllers.forEach((controller) {
+    formulaFieldsControllers.values.forEach((controller) {
       controller.dispose();
     });
     super.dispose();
@@ -90,7 +90,7 @@ class _UserTableState extends State<UserTable> {
   Future<void> _saveState() async {
     Directory tempDir = await getApplicationSupportDirectory();
     var file = File(
-        '${tempDir.path}${Platform.pathSeparator}excel_generator_state6.json');
+        '${tempDir.path}${Platform.pathSeparator}excel_generator_state7.json');
     file.writeAsStringSync(jsonEncode(cities));
   }
 
@@ -100,13 +100,27 @@ class _UserTableState extends State<UserTable> {
     });
     users.asMap().forEach((index, element) {
       for (int i = 0; i < userDefinedColumnsTypes.length; ++i) {
-        if (userDefinedColumnsTypes[i] == Types.formula &&
-            userDefinedColumns[i].contains('=')) {
-          var formulaReadyToEdit = userDefinedColumns[i]
-              .substring(userDefinedColumns[i].indexOf('='))
-              .split(RegExp(r'(?:-?(?:0|[1-9][0-9]*))'));
-          element.properties[i + months.length] = formulaReadyToEdit.join(
-              '${index + 2 + element.status.index + (element.status == UserStatus.toEdit ? 1 : 0)}');
+        if (userDefinedColumnsTypes[i] == Types.formula) {
+          num rowOfUser = index +
+              2 +
+              element.status.index +
+              (element.status == UserStatus.toEdit ? 1 : 0);
+          if (element.properties[i + months.length] != null) {
+            var formulaReadyToEdit = element.properties[i + months.length]
+                .split(RegExp(r'(?:-?(?:0|[1-9][0-9]*))'));
+            if (formulaReadyToEdit != null) {
+              element.properties[i + months.length] =
+                  formulaReadyToEdit.join('$rowOfUser');
+            }
+          } else {
+            if (userDefinedColumns[i].contains('=')) {
+              var formulaReadyToEdit = userDefinedColumns[i]
+                  .substring(userDefinedColumns[i].indexOf('='))
+                  .split(RegExp(r'(?:-?(?:0|[1-9][0-9]*))'));
+              element.properties[i + months.length] =
+                  formulaReadyToEdit.join('$rowOfUser').toUpperCase();
+            }
+          }
         }
       }
     });
@@ -169,7 +183,6 @@ class _UserTableState extends State<UserTable> {
         .getRangeByIndex(1, indexOfFormula + 1 + columns.length)
         .calculatedValue!;
     wb.dispose();
-    print(value);
     return value;
   }
 
@@ -309,7 +322,8 @@ class _UserTableState extends State<UserTable> {
                       userDefinedColumns.add(name);
                       affiliate.userDefinedColumnsTypes.add(chosen);
                       users.asMap().forEach((index, element) {
-                        element.properties.add(chosen == Types.formula
+                        element.properties.add(property !=
+                                null // means that chosen is formula and has some formula in its name
                             ? property.join(
                                 '${index + 2 + element.status.index + (element.status == UserStatus.toEdit ? 1 : 0)}')
                             : property);
@@ -472,6 +486,11 @@ class _UserTableState extends State<UserTable> {
             onChanged: (val) {
               user.properties[index + months.length] =
                   val == '' ? 0 : num.parse(val);
+              if (user.isMemorized) {
+                user.toPaint[index + months.length] =
+                    user.properties[index + months.length] !=
+                        user.initUser.properties[index + months.length];
+              }
             },
             decoration: const InputDecoration(counterText: ""),
             maxLength: 12,
@@ -480,49 +499,57 @@ class _UserTableState extends State<UserTable> {
       height: 52,
       padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
       alignment: Alignment.centerLeft,
-      color: user.toPaint[index + 2 + months.length] ? Colors.yellow : null,
+      color: user.toPaint[index + 2 + months.length] ? Colors.teal[100] : null,
     );
   }
 
   Container _getStringCell(User user, int index) {
     return Container(
-      child: Focus(
-          skipTraversal: true,
-          onFocusChange: (isFocus) {
-            if (!isFocus && Platform.isWindows) _saveState();
-          },
-          child: TextFormField(
-            key: Key('${user.id}UDDColumn$index'),
-            autofocus: true,
-            readOnly: user.status != UserStatus.normal,
-            initialValue: user.properties[index + months.length] == null
-                ? ''
-                : user.properties[index + months.length],
-            onChanged: (val) {
-              user.properties[index + months.length] = val;
-              setState(() {});
+        child: Focus(
+            skipTraversal: true,
+            onFocusChange: (isFocus) {
+              if (!isFocus && Platform.isWindows) _saveState();
             },
-            decoration: const InputDecoration(counterText: ""),
-            maxLength: 60,
-          )),
-      width: 200,
-      height: 52,
-      padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
-      alignment: Alignment.centerLeft,
-      //color: user.toPaint[index + 2 + months.length]
-      //  ? Colors.yellow
-      //: null
-    );
+            child: TextFormField(
+              key: Key('${user.id}UDDColumn$index'),
+              autofocus: true,
+              readOnly: user.status != UserStatus.normal,
+              initialValue: user.properties[index + months.length] == null
+                  ? ''
+                  : user.properties[index + months.length],
+              onChanged: (val) {
+                user.properties[index + months.length] = val;
+                if (user.isMemorized) {
+                  user.toPaint[index + months.length] =
+                      user.properties[index + months.length] !=
+                          user.initUser.properties[index + months.length];
+                }
+                setState(() {});
+              },
+              decoration: const InputDecoration(counterText: ""),
+              maxLength: 60,
+            )),
+        width: 200,
+        height: 52,
+        padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
+        alignment: Alignment.centerLeft,
+        color:
+            user.toPaint[index + 2 + months.length] ? Colors.teal[100] : null);
   }
 
   Container _getFormulaCell(User user, int index, int indexOfUser) {
     // CONTROLLERS
-    TextEditingController controller = TextEditingController(
-        text: user.properties[index + months.length] == null ||
-                user.properties[index + months.length] == ''
-            ? ''
-            : calculateFormulas(user, index, indexOfUser));
-    bool isFocused = false;
+    TextEditingController controller;
+    if (formulaFieldsControllers.containsKey('${user.id}$index')) {
+      controller = formulaFieldsControllers['${user.id}$index']!;
+    } else {
+      formulaFieldsControllers['${user.id}$index'] = TextEditingController(
+          text: user.properties[index + months.length] == null ||
+                  user.properties[index + months.length] == ''
+              ? ''
+              : calculateFormulas(user, index, indexOfUser));
+      controller = formulaFieldsControllers['${user.id}$index']!;
+    }
     return Container(
         child: Focus(
             skipTraversal: true,
@@ -547,16 +574,12 @@ class _UserTableState extends State<UserTable> {
               readOnly: user.status != UserStatus.normal,
               onChanged: (val) {
                 user.properties[index + months.length] = val.toUpperCase();
-                setState(() {});
-              },
-              onEditingComplete: () {
-                print('onEditingComplete');
-              },
-              onFieldSubmitted: (val) {
-                print('onFieldSubmitted $val');
-              },
-              onSaved: (val) {
-                print('onSaved $val');
+                if (user.isMemorized) {
+                  user.toPaint[index + months.length] =
+                      user.properties[index + months.length] !=
+                          user.initUser.properties[index + months.length];
+                }
+                //setState(() {});
               },
               decoration: const InputDecoration(counterText: ""),
               maxLength: 60,
@@ -565,7 +588,8 @@ class _UserTableState extends State<UserTable> {
         height: 52,
         padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
         alignment: Alignment.centerLeft,
-        color: user.toPaint[index + 2 + months.length] ? Colors.teal : null);
+        color:
+            user.toPaint[index + 2 + months.length] ? Colors.teal[100] : null);
   }
 
   String _getLetterForColumn(int index) {
@@ -703,6 +727,10 @@ class _UserTableState extends State<UserTable> {
                     keyboardType: TextInputType.text,
                     onChanged: (val) {
                       user.name = val;
+                      if (user.isMemorized) {
+                        user.toPaint[0] = user.name != user.initUser.name;
+                      }
+                      setState(() {});
                     },
                   ),
                   size: Size(_nameColumnWidth - 23, 52))),
@@ -713,7 +741,7 @@ class _UserTableState extends State<UserTable> {
       padding: const EdgeInsets.fromLTRB(5, 2, 0, 0),
       alignment: Alignment.bottomLeft,
       color: () {
-        if (user.toPaint[0]) return Colors.teal;
+        if (user.toPaint[0]) return Colors.teal[100];
         switch (user.status) {
           case UserStatus.normal:
             return Colors.transparent;
@@ -732,7 +760,6 @@ class _UserTableState extends State<UserTable> {
     _cells['date'] = Container(
         child: Focus(
             skipTraversal: true,
-            //autofocus: true,
             onFocusChange: (isFocused) async {
               if (isFocused && user.status == UserStatus.normal) {
                 await showDatePicker(
@@ -742,12 +769,18 @@ class _UserTableState extends State<UserTable> {
                         lastDate: DateTime.now())
                     .then((date) => setState(() {
                           user.dateStartOfEducation = date;
+                          if (user.isMemorized) {
+                            user.toPaint[1] = user.dateStartOfEducation !=
+                                user.initUser.dateStartOfEducation;
+                          }
                         }));
+                if (Platform.isWindows) _saveState();
               }
             },
             child: TextFormField(
               autofocus: false,
-              key: Key('${user.id}${user.dateStartOfEducation.toString()}'),
+              key: Key(
+                  '${user.id}${user.dateStartOfEducation.toString()}${Random().nextInt(1024)}'),
               readOnly: true,
               initialValue: user.dateStartOfEducation == null
                   ? ''
@@ -759,7 +792,7 @@ class _UserTableState extends State<UserTable> {
         height: 52,
         padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
         alignment: Alignment.centerLeft,
-        color: user.toPaint[1] ? Colors.teal : null);
+        color: user.toPaint[1] ? Colors.teal[100] : Colors.transparent);
     for (var i = 0; i < months.length; ++i) {
       _cells[months[i]] = Container(
           child: Focus(
@@ -781,22 +814,21 @@ class _UserTableState extends State<UserTable> {
                 ],
                 onChanged: (val) {
                   user.properties[i] = val == '' ? 0 : num.parse(val);
+                  if (user.isMemorized) {
+                    user.toPaint[i + 2] =
+                        user.properties[i] != user.initUser.properties[i];
+                  }
                   user.calculateResult();
                   setState(() {});
                 },
                 decoration: const InputDecoration(counterText: ""),
                 maxLength: 12,
-                // onTap: () {
-                //   if (Platform.isWindows) {
-                //     _saveState();
-                //   }
-                // }
               )),
           width: i == months.length - 3 ? 220 : 100,
           height: 52,
           padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
           alignment: Alignment.centerLeft,
-          color: user.toPaint[i + 2] ? Colors.teal : null);
+          color: user.toPaint[i + 2] ? Colors.teal[100] : Colors.transparent);
     }
 
     _cells['Итого'] = Container(
@@ -864,7 +896,7 @@ class _UserTableState extends State<UserTable> {
     return Container(
       child: Row(children: _cells.values.toList()),
       color: () {
-        if (!user.toPaint.contains(false)) return Colors.yellow;
+        if (!user.toPaint.contains(false)) return Colors.teal[100];
         switch (user.status) {
           case UserStatus.normal:
             return Colors.transparent;
@@ -892,8 +924,8 @@ class User {
   bool isMemorized = false;
 
   void memorizeProperties() {
-    initUser = User.allData(
-        name, dateStartOfEducation, List.from(properties), result, status);
+    initUser = User.allData(name, dateStartOfEducation, List.from(properties),
+        result, status, toPaint);
     isMemorized = true;
   }
 
@@ -913,6 +945,7 @@ class User {
             properties.map((e) => e is Formula ? e.formula : e).toList(),
         'result': result,
         'status': status.index,
+        'toPaint': toPaint
       };
 
   factory User.fromJson(dynamic json) {
@@ -923,7 +956,8 @@ class User {
             : DateTime.parse(json['dateStartOfEducation']),
         json['properties'],
         json['result'] as num,
-        UserStatus.values[json['status']]);
+        UserStatus.values[json['status']],
+        json['toPaint'].cast<bool>());
     temp.memorizeProperties();
     return temp;
   }
@@ -945,9 +979,7 @@ class User {
   }
 
   User.allData(this.name, this.dateStartOfEducation, this.properties,
-      this.result, this.status) {
-    toPaint = List.filled(properties.length + 2, false, growable: true);
-  }
+      this.result, this.status, this.toPaint);
 
   User.toPaint(int numberOfUDColumns) {
     result = 0;

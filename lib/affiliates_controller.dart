@@ -128,7 +128,7 @@ class _AffiliateControllerState extends State<AffiliatesController>
   void _saveState() async {
     Directory tempDir = await getApplicationSupportDirectory();
     var file = File(
-        '${tempDir.path}${Platform.pathSeparator}excel_generator_state6.json');
+        '${tempDir.path}${Platform.pathSeparator}excel_generator_state7.json');
     file.writeAsStringSync(jsonEncode(_cities));
   }
 
@@ -242,7 +242,7 @@ class Affiliate {
 
   Affiliate() {
     name = '';
-    users = [User(userDefinedColumns.length)];
+    users = [User.toPaint(userDefinedColumns.length)];
   }
 
   Map toJson() => {

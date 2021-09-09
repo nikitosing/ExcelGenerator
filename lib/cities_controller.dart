@@ -137,7 +137,7 @@ class _CitiesControllerState extends State<CitiesController>
   void _saveState() async {
     Directory tempDir = await getApplicationSupportDirectory();
     var file = File(
-        '${tempDir.path}${Platform.pathSeparator}excel_generator_state6.json');
+        '${tempDir.path}${Platform.pathSeparator}excel_generator_state7.json');
     file.writeAsStringSync(jsonEncode(cities));
   }
 
@@ -285,6 +285,14 @@ class _CitiesControllerState extends State<CitiesController>
         column++;
       }
 
+      var _translateFormula = (String formula) {
+        String temp = formula;
+        for (String en in enFormulasToRu.keys) {
+          temp = temp.replaceAll(en, enFormulasToRu[en]!);
+        }
+        return temp;
+      };
+
       for (int i = 1; i < 4; ++i) {
         while (table
                     .cell(CellIndex.indexByColumnRow(
@@ -332,11 +340,6 @@ class _CitiesControllerState extends State<CitiesController>
                         columnIndex: column + 1000, rowIndex: row + 1000))
                     .value !=
                 null;
-            if (table
-                    .cell(CellIndex.indexByColumnRow(
-                        columnIndex: column, rowIndex: row))
-                    .cellType ==
-                CellType.Formula) {}
             var propertyCell = table.cell(
                 CellIndex.indexByColumnRow(columnIndex: column, rowIndex: row));
             if (i == 1 && column >= columns.length) {
@@ -358,7 +361,7 @@ class _CitiesControllerState extends State<CitiesController>
             user.properties[column - 3] = propertyCell.value == ''
                 ? null
                 : propertyCell.cellType == CellType.Formula
-                    ? propertyCell.value.formula
+                    ? '=' + _translateFormula(propertyCell.value.formula)
                     : propertyCell.value;
           }
           user.calculateResult();
@@ -449,15 +452,24 @@ class _CitiesControllerState extends State<CitiesController>
 
         int row = 1;
         var spacer = false;
+
         var _cellStyleEdited = (int column, int row) {
           sheet.updateCell(
               CellIndex.indexByColumnRow(
                   columnIndex: column + 1000, rowIndex: row + 1000),
               1);
-          return CellStyle(backgroundColorHex: '#009688');
+          return CellStyle(backgroundColorHex: '#B2DFDB');
         };
+
+        var _translateFormula = (String formula) {
+          String temp = formula;
+          for (String ru in ruFormulasToEn.keys) {
+            temp = temp.replaceAll(ru, ruFormulasToEn[ru]!);
+          }
+          return temp;
+        };
+
         for (User user in users) {
-          user.toPaint = List.filled(user.toPaint.length, false, growable: true);
           if (user.status != UserStatus.normal && !spacer) {
             row++;
             spacer = true;
@@ -470,7 +482,7 @@ class _CitiesControllerState extends State<CitiesController>
 
           var _cellStyle = CellStyle(
               backgroundColorHex:
-                  user.status == UserStatus.normal ? '#ffffff' : '#009688');
+                  user.status == UserStatus.normal ? '#ffffff' : '#FFFF00');
 
           if (!user.toPaint.contains(false)) {
             for (int i = 1; i < user.properties.length + 3; ++i) {
@@ -550,7 +562,8 @@ class _CitiesControllerState extends State<CitiesController>
                         ? userDefinedColumnsTypes[i - months.length] ==
                                 Types.formula
                             ? Formula.custom(
-                                user.properties[i].replaceFirst('=', ''))
+                                _translateFormula(user.properties[i])
+                                    .replaceFirst('=', ''))
                             : user.properties[i]
                         : user.properties[i],
                 cellStyle: _style);
@@ -564,6 +577,9 @@ class _CitiesControllerState extends State<CitiesController>
               formula,
               cellStyle: _cellStyle);
           row++;
+          user.toPaint =
+              List.filled(user.toPaint.length, false, growable: true);
+          user.memorizeProperties();
         }
         const String columnsForSum = 'DEFGHIJKLMNO';
         for (int i = 0; i < months.length; ++i) {
@@ -578,22 +594,25 @@ class _CitiesControllerState extends State<CitiesController>
         row += 2;
 
         for (int i = row - 3 - (spacer ? 1 : 0); i < users.length; ++i) {
-          users[i].toPaint = List.filled(users[i].toPaint.length, false, growable: true);
           var _cellStyle = CellStyle(backgroundColorHex: '#FF5722');
+
           sheet.updateCell(
               CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: row),
               row - 2 - (spacer ? 1 : 0),
               cellStyle: _cellStyle);
+
           sheet.updateCell(
               CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: row),
               users[i].name,
               cellStyle: _cellStyle);
+
           sheet.updateCell(
               CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: row),
               users[i].dateStartOfEducation == null
                   ? null
                   : formatter.format(users[i].dateStartOfEducation!),
               cellStyle: _cellStyle);
+
           int column = 3;
           for (var property in users[i].properties) {
             if (column == 13) {
@@ -601,7 +620,7 @@ class _CitiesControllerState extends State<CitiesController>
               continue;
             }
             var _getNullValueForCustomType = () {
-              if (column - 1 < columns.length) {
+              if (column < columns.length) {
                 return 0;
               } else {
                 switch (userDefinedColumnsTypes[column - columns.length]) {
@@ -621,11 +640,11 @@ class _CitiesControllerState extends State<CitiesController>
                     : column >= columns.length
                         ? userDefinedColumnsTypes[column - columns.length] ==
                                 Types.formula
-                            ? Formula.custom(property.replaceFirst('=', ''))
+                            ? Formula.custom(_translateFormula(property)
+                                .replaceFirst('=', ''))
                             : property
                         : property,
                 cellStyle: _cellStyle);
-            column++;
           }
           var rowForSum = row + 1;
           Formula formula =
@@ -635,6 +654,9 @@ class _CitiesControllerState extends State<CitiesController>
               formula,
               cellStyle: _cellStyle);
           ++row;
+          users[i].toPaint =
+              List.filled(users[i].toPaint.length, false, growable: true);
+          users[i].memorizeProperties();
         }
         sheet.setColAutoFit(1);
         sheet.setColWidth(2, 15);
@@ -644,6 +666,7 @@ class _CitiesControllerState extends State<CitiesController>
         //sheet.setColAutoFit(2);
       }
     }
+    setState(() {});
     excel.delete('Sheet1');
     DateTime now = DateTime.now();
     String formattedDate = DateFormat('yyyy-MM-dd-HH-mm').format(now);
@@ -708,8 +731,8 @@ class _CitiesControllerState extends State<CitiesController>
       ];
 
     try {
-      //final sendReport = await send(message, smtpServer);
-      //print('Message sent: ' + sendReport.toString());
+      final sendReport = await send(message, smtpServer);
+      print('Message sent: ' + sendReport.toString());
     } on MailerException catch (e) {
       print('Message not sent.');
       print(e);
