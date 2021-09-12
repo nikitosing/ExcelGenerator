@@ -220,7 +220,7 @@ class _CitiesControllerState extends State<CitiesController>
     var citiesNames = {};
 
     cities.asMap().forEach((key, value) {
-      citiesNames['${value.name}'] = key;
+      citiesNames[value.name] = key;
     });
 
     fileName.removeLast();
@@ -241,13 +241,13 @@ class _CitiesControllerState extends State<CitiesController>
 
     var affiliatesNames = {};
 
-    cities.forEach((element) {
+    for (var element in cities) {
       var nameToAffiliate = {};
-      element.affiliates.forEach((el) {
+      for (var el in element.affiliates) {
         nameToAffiliate[el.name] = el;
-      });
+      }
       affiliatesNames[element.name] = nameToAffiliate;
-    });
+    }
 
     for (var tableName in excel.tables.keys) {
       late Affiliate affiliate;

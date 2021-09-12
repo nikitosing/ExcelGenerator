@@ -8,6 +8,7 @@ import 'package:path_provider/path_provider.dart';
 
 List<City> cities = [];
 const _title = 'ExcelGenerator';
+final theme = ThemeData.from(colorScheme: ColorScheme.fromSwatch(primarySwatch: Colors.grey));
 
 Future<void> main() async {
   runApp(const LoadingScreen());
@@ -34,10 +35,7 @@ class LoadingScreen extends StatelessWidget {
     return MaterialApp(
         //key: UniqueKey(),
         title: _title,
-        theme: ThemeData(
-          primarySwatch: Colors.teal,
-          primaryColor: Colors.grey,
-        ),
+        theme: theme,
         home: Scaffold(
             //key: UniqueKey(),
             appBar: AppBar(
@@ -62,10 +60,7 @@ class MyApp extends StatelessWidget {
         showSemanticsDebugger: false,
         debugShowCheckedModeBanner: true,
         title: _title,
-        theme: ThemeData(
-          primarySwatch: Colors.teal,
-          primaryColor: Colors.grey,
-        ),
+        theme: theme,
         home: CitiesController(key: UniqueKey(), cities: cities));
   }
 }

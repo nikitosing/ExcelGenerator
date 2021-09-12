@@ -36,6 +36,7 @@ var months = [
 ];
 
 var columns = ['Кол. Чел', 'Ф. И.', 'Дата начала занятий'] + months;
+var regexp = RegExp(r'(?<=[A-Z])(?:-?(?:0|[1-9][0-9]*))');
 
 class UserTable extends StatefulWidget {
   final cities;
@@ -81,9 +82,9 @@ class _UserTableState extends State<UserTable> {
   @override
   void dispose() {
     //WidgetsBinding.instance!.removeObserver(this);
-    formulaFieldsControllers.values.forEach((controller) {
+    for (var controller in formulaFieldsControllers.values) {
       controller.dispose();
-    });
+    }
     super.dispose();
   }
 
@@ -107,7 +108,7 @@ class _UserTableState extends State<UserTable> {
               (element.status == UserStatus.toEdit ? 1 : 0);
           if (element.properties[i + months.length] != null) {
             var formulaReadyToEdit = element.properties[i + months.length]
-                .split(RegExp(r'(?:-?(?:0|[1-9][0-9]*))'));
+                .split(regexp);
             if (formulaReadyToEdit != null) {
               element.properties[i + months.length] =
                   formulaReadyToEdit.join('$rowOfUser');
@@ -116,7 +117,7 @@ class _UserTableState extends State<UserTable> {
             if (userDefinedColumns[i].contains('=')) {
               var formulaReadyToEdit = userDefinedColumns[i]
                   .substring(userDefinedColumns[i].indexOf('='))
-                  .split(RegExp(r'(?:-?(?:0|[1-9][0-9]*))'));
+                  .split(regexp);
               element.properties[i + months.length] =
                   formulaReadyToEdit.join('$rowOfUser').toUpperCase();
             }
@@ -144,7 +145,7 @@ class _UserTableState extends State<UserTable> {
           translatedFormula.replaceAll(frml, ruFormulasToEn[frml]!);
     }
     translatedFormula =
-        translatedFormula.split(RegExp(r'(?:-?(?:0|[1-9][0-9]*))')).join(('1'));
+        translatedFormula.split(regexp).join(('1'));
     Workbook wb = Workbook.withCulture('ru');
     Worksheet ws = wb.worksheets[0];
     ws.getRangeByName('A1').number = indexOfUser + 1;
@@ -172,7 +173,7 @@ class _UserTableState extends State<UserTable> {
                 translatedFormula.replaceAll(frml, ruFormulasToEn[frml]!);
           }
           translatedFormula = translatedFormula
-              .split(RegExp(r'(?:-?(?:0|[1-9][0-9]*))'))
+              .split(regexp)
               .join(('1'));
           ws.getRangeByIndex(1, column).formula = translatedFormula;
           break;
@@ -317,7 +318,7 @@ class _UserTableState extends State<UserTable> {
                         property =
                             name.substring(name.indexOf('=')).toUpperCase();
                         property =
-                            property.split(RegExp(r'(?:-?(?:0|[1-9][0-9]*))'));
+                            property.split(regexp);
                       }
                       userDefinedColumns.add(name);
                       affiliate.userDefinedColumnsTypes.add(chosen);
@@ -357,10 +358,10 @@ class _UserTableState extends State<UserTable> {
               onPressed: () {
                 userDefinedColumns.removeAt(index);
                 userDefinedColumnsTypes.removeAt(index);
-                users.forEach((element) {
+                for (var element in users) {
                   element.properties.removeAt(months.length + index);
                   element.toPaint.removeAt(months.length + index + 2);
-                });
+                }
                 Navigator.of(context).pop();
               },
             ),
@@ -387,7 +388,7 @@ class _UserTableState extends State<UserTable> {
                 width: min(MediaQuery.of(context).size.width - 150, 500),
                 height: 104,
                 child: FlutterSlider(
-                  trackBar: FlutterSliderTrackBar(
+                  trackBar: const FlutterSliderTrackBar(
                     inactiveTrackBar: BoxDecoration(
                       color: Colors.transparent,
                     ),
@@ -398,11 +399,11 @@ class _UserTableState extends State<UserTable> {
                     inactiveDisabledTrackBarColor: Colors.transparent,
                   ),
                   handlerWidth: 5,
-                  handlerAnimation: FlutterSliderHandlerAnimation(scale: 1),
+                  handlerAnimation: const FlutterSliderHandlerAnimation(scale: 1),
                   handler: FlutterSliderHandler(
                       foregroundDecoration:
                           BoxDecoration(color: Colors.grey[400]),
-                      child: SizedBox(
+                      child: const SizedBox(
                           width: 9,
                           height: double.infinity,
                           child: MouseRegion(
@@ -455,7 +456,7 @@ class _UserTableState extends State<UserTable> {
                   (index, user) => _generateRightHandSideColumnRow(index, user))
               .toList(),
           itemCount: users.length,
-          horizontalScrollbarStyle: ScrollbarStyle(
+          horizontalScrollbarStyle: const ScrollbarStyle(
             isAlwaysShown: true,
             thickness: 5.0,
             radius: Radius.circular(5.0),
@@ -514,9 +515,7 @@ class _UserTableState extends State<UserTable> {
               key: Key('${user.id}UDDColumn$index'),
               autofocus: true,
               readOnly: user.status != UserStatus.normal,
-              initialValue: user.properties[index + months.length] == null
-                  ? ''
-                  : user.properties[index + months.length],
+              initialValue: user.properties[index + months.length] ?? '',
               onChanged: (val) {
                 user.properties[index + months.length] = val;
                 if (user.isMemorized) {
@@ -596,7 +595,7 @@ class _UserTableState extends State<UserTable> {
     if (index > 10) {
       return '${String.fromCharCode((index - 11) ~/ 26 + 65)}${String.fromCharCode((index - 11) % 26 + 65)}';
     } else {
-      return '${String.fromCharCode(index + 80)}';
+      return String.fromCharCode(index + 80);
     }
   }
 
@@ -606,7 +605,7 @@ class _UserTableState extends State<UserTable> {
     var _columns = <Widget>[];
     _columns.add(Container(
         child: Center(
-            child: Column(children: [
+            child: Column(children: const [
           Text('B'),
           Text('Ф.И.', style: _columnTextStyle, textAlign: TextAlign.center)
         ])),
@@ -616,7 +615,7 @@ class _UserTableState extends State<UserTable> {
         alignment: Alignment.center));
 
     _columns.add(Container(
-        child: Column(children: [
+        child: Column(children: const [
           Text('C'),
           Text('Дата начала занятий',
               style: _columnTextStyle, textAlign: TextAlign.center)
@@ -655,7 +654,7 @@ class _UserTableState extends State<UserTable> {
         padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
         alignment: Alignment.centerLeft));
     _columns.add(Container(
-        child: Text(''),
+        child: const Text(''),
         width: 50,
         height: 104,
         padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
@@ -676,7 +675,7 @@ class _UserTableState extends State<UserTable> {
                       await _removeColumn(i);
                       setState(() {});
                     },
-                    icon: Icon(Icons.close))
+                    icon: const Icon(Icons.close))
               ]),
             ],
           ),
@@ -687,7 +686,7 @@ class _UserTableState extends State<UserTable> {
     }
     _columns.add(Container(
         child: IconButton(
-            icon: Icon(Icons.add),
+            icon: const Icon(Icons.add),
             onPressed: () async {
               await _addColumn();
               setState(() {});
@@ -886,7 +885,7 @@ class _UserTableState extends State<UserTable> {
     }
 
     _cells['spacer'] = Container(
-      child: Text(''),
+      child: const Text(''),
       width: 50,
       height: 52,
       padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
@@ -972,8 +971,7 @@ class User {
         growable: true);
   }
 
-  User.byName(String name) {
-    this.name = name;
+  User.byName(this.name) {
     properties = List.filled(months.length, null, growable: true);
     toPaint = List.filled(months.length + 2, false, growable: true);
   }
