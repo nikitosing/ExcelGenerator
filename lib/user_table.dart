@@ -107,8 +107,8 @@ class _UserTableState extends State<UserTable> {
               element.status.index +
               (element.status == UserStatus.toEdit ? 1 : 0);
           if (element.properties[i + months.length] != null) {
-            var formulaReadyToEdit = element.properties[i + months.length]
-                .split(regexp);
+            var formulaReadyToEdit =
+                element.properties[i + months.length].split(regexp);
             if (formulaReadyToEdit != null) {
               element.properties[i + months.length] =
                   formulaReadyToEdit.join('$rowOfUser');
@@ -144,8 +144,7 @@ class _UserTableState extends State<UserTable> {
       translatedFormula =
           translatedFormula.replaceAll(frml, ruFormulasToEn[frml]!);
     }
-    translatedFormula =
-        translatedFormula.split(regexp).join(('1'));
+    translatedFormula = translatedFormula.split(regexp).join(('1'));
     Workbook wb = Workbook.withCulture('ru');
     Worksheet ws = wb.worksheets[0];
     ws.getRangeByName('A1').number = indexOfUser + 1;
@@ -161,7 +160,8 @@ class _UserTableState extends State<UserTable> {
       }
       switch (affiliate.userDefinedColumnsTypes[column - columns.length - 1]) {
         case Types.number:
-          ws.getRangeByIndex(1, column).number = property;
+          ws.getRangeByIndex(1, column).number =
+              property == null ? 0 : property.toDouble();
           break;
         case Types.text:
           ws.getRangeByIndex(1, column).text = property;
@@ -172,9 +172,7 @@ class _UserTableState extends State<UserTable> {
             translatedFormula =
                 translatedFormula.replaceAll(frml, ruFormulasToEn[frml]!);
           }
-          translatedFormula = translatedFormula
-              .split(regexp)
-              .join(('1'));
+          translatedFormula = translatedFormula.split(regexp).join(('1'));
           ws.getRangeByIndex(1, column).formula = translatedFormula;
           break;
       }
@@ -317,8 +315,7 @@ class _UserTableState extends State<UserTable> {
                       if (chosen == Types.formula && name.contains('=')) {
                         property =
                             name.substring(name.indexOf('=')).toUpperCase();
-                        property =
-                            property.split(regexp);
+                        property = property.split(regexp);
                       }
                       userDefinedColumns.add(name);
                       affiliate.userDefinedColumnsTypes.add(chosen);
@@ -362,6 +359,7 @@ class _UserTableState extends State<UserTable> {
                   element.properties.removeAt(months.length + index);
                   element.toPaint.removeAt(months.length + index + 2);
                 }
+                if (Platform.isWindows) _saveState();
                 Navigator.of(context).pop();
               },
             ),
@@ -399,7 +397,8 @@ class _UserTableState extends State<UserTable> {
                     inactiveDisabledTrackBarColor: Colors.transparent,
                   ),
                   handlerWidth: 5,
-                  handlerAnimation: const FlutterSliderHandlerAnimation(scale: 1),
+                  handlerAnimation:
+                      const FlutterSliderHandlerAnimation(scale: 1),
                   handler: FlutterSliderHandler(
                       foregroundDecoration:
                           BoxDecoration(color: Colors.grey[400]),
@@ -488,10 +487,11 @@ class _UserTableState extends State<UserTable> {
               user.properties[index + months.length] =
                   val == '' ? 0 : num.parse(val);
               if (user.isMemorized) {
-                user.toPaint[index + months.length] =
+                user.toPaint[index + months.length + 2] =
                     user.properties[index + months.length] !=
                         user.initUser.properties[index + months.length];
               }
+              setState(() {});
             },
             decoration: const InputDecoration(counterText: ""),
             maxLength: 12,
@@ -500,7 +500,7 @@ class _UserTableState extends State<UserTable> {
       height: 52,
       padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
       alignment: Alignment.centerLeft,
-      color: user.toPaint[index + 2 + months.length] ? Colors.teal[100] : null,
+      color: user.toPaint[index + 2 + months.length] ? Colors.teal[100] : Colors.transparent,
     );
   }
 
@@ -519,7 +519,7 @@ class _UserTableState extends State<UserTable> {
               onChanged: (val) {
                 user.properties[index + months.length] = val;
                 if (user.isMemorized) {
-                  user.toPaint[index + months.length] =
+                  user.toPaint[index + months.length + 2] =
                       user.properties[index + months.length] !=
                           user.initUser.properties[index + months.length];
                 }
@@ -533,7 +533,7 @@ class _UserTableState extends State<UserTable> {
         padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
         alignment: Alignment.centerLeft,
         color:
-            user.toPaint[index + 2 + months.length] ? Colors.teal[100] : null);
+            user.toPaint[index + 2 + months.length] ? Colors.teal[100] : Colors.transparent);
   }
 
   Container _getFormulaCell(User user, int index, int indexOfUser) {
@@ -574,11 +574,11 @@ class _UserTableState extends State<UserTable> {
               onChanged: (val) {
                 user.properties[index + months.length] = val.toUpperCase();
                 if (user.isMemorized) {
-                  user.toPaint[index + months.length] =
+                  user.toPaint[index + months.length + 2] =
                       user.properties[index + months.length] !=
                           user.initUser.properties[index + months.length];
                 }
-                //setState(() {});
+                setState(() {});
               },
               decoration: const InputDecoration(counterText: ""),
               maxLength: 60,
@@ -588,7 +588,7 @@ class _UserTableState extends State<UserTable> {
         padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
         alignment: Alignment.centerLeft,
         color:
-            user.toPaint[index + 2 + months.length] ? Colors.teal[100] : null);
+            user.toPaint[index + 2 + months.length] ? Colors.teal[100] : Colors.transparent);
   }
 
   String _getLetterForColumn(int index) {

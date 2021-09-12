@@ -498,23 +498,16 @@ class _CitiesControllerState extends State<CitiesController>
           sheet.updateCell(
               CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: row),
               user.name,
-              cellStyle: user.isMemorized
-                  ? user.name == user.initUser.name
-                      ? _cellStyle
-                      : _cellStyleEdited(1, row)
-                  : _cellStyle);
+              cellStyle:
+                  user.toPaint[0] ? _cellStyleEdited(2, row) : _cellStyle);
 
           sheet.updateCell(
               CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: row),
               user.dateStartOfEducation == null
                   ? null
                   : formatter.format(user.dateStartOfEducation!),
-              cellStyle: user.isMemorized
-                  ? user.dateStartOfEducation ==
-                          user.initUser.dateStartOfEducation
-                      ? _cellStyle
-                      : _cellStyleEdited(2, row)
-                  : _cellStyle);
+              cellStyle:
+                  user.toPaint[1] ? _cellStyleEdited(2, row) : _cellStyle);
 
           int column = 3;
           for (var i = 0; i < user.properties.length; ++i) {
@@ -522,23 +515,26 @@ class _CitiesControllerState extends State<CitiesController>
               column++;
               continue;
             }
-            var _style = _cellStyle;
 
-            if (user.isMemorized) {
-              if (i >= columns.length) {
-                if (i < user.initUser.properties.length) {
-                  _style = user.properties[i] == user.initUser.properties[i]
-                      ? _cellStyle
-                      : _cellStyleEdited(column, row);
-                }
-              } else {
-                _style = i < user.initUser.properties.length
-                    ? user.properties[i] == user.initUser.properties[i]
-                        ? _cellStyle
-                        : _cellStyleEdited(column, row)
-                    : _cellStyle;
-              }
-            }
+            var _style = user.toPaint[i + 2]
+                ? _cellStyleEdited(column, row)
+                : _cellStyle;
+
+            // if (user.isMemorized) {
+            //   if (i >= columns.length) {
+            //     if (i < user.initUser.properties.length) {
+            //       _style = user.properties[i] == user.initUser.properties[i]
+            //           ? _cellStyle
+            //           : _cellStyleEdited(column, row);
+            //     }
+            //   } else {
+            //     _style = i < user.initUser.properties.length
+            //         ? user.properties[i] == user.initUser.properties[i]
+            //             ? _cellStyle
+            //             : _cellStyleEdited(column, row)
+            //         : _cellStyle;
+            //   }
+            // }
 
             var _getNullValueForCustomType = () {
               if (i < months.length) {
@@ -599,12 +595,14 @@ class _CitiesControllerState extends State<CitiesController>
           sheet.updateCell(
               CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: row),
               row - 2 - (spacer ? 1 : 0),
-              cellStyle: _cellStyle);
+              cellStyle:
+                  users[i].toPaint[0] ? _cellStyleEdited(0, row) : _cellStyle);
 
           sheet.updateCell(
               CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: row),
               users[i].name,
-              cellStyle: _cellStyle);
+              cellStyle:
+                  users[i].toPaint[1] ? _cellStyleEdited(1, row) : _cellStyle);
 
           sheet.updateCell(
               CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: row),
@@ -644,7 +642,10 @@ class _CitiesControllerState extends State<CitiesController>
                                 .replaceFirst('=', ''))
                             : property
                         : property,
-                cellStyle: _cellStyle);
+                cellStyle: users[i].toPaint[i + 2]
+                    ? _cellStyleEdited(column, row)
+                    : _cellStyle);
+            ++column;
           }
           var rowForSum = row + 1;
           Formula formula =
@@ -731,8 +732,8 @@ class _CitiesControllerState extends State<CitiesController>
       ];
 
     try {
-      final sendReport = await send(message, smtpServer);
-      print('Message sent: ' + sendReport.toString());
+      //final sendReport = await send(message, smtpServer);
+      //print('Message sent: ' + sendReport.toString());
     } on MailerException catch (e) {
       print('Message not sent.');
       print(e);
