@@ -722,6 +722,8 @@ class _CitiesControllerState extends State<CitiesController>
       ..from = Address(username)
       ..recipients.add('chudoreportsbackup@mail.ru')
       ..recipients.add('chudoreports@mail.ru')
+      ..recipients.add('otchet@nadip.ru')
+      ..recipients.add('otchet2@nadip.ru')
       ..subject = fileName
       ..attachments = [
         FileAttachment(
@@ -732,8 +734,8 @@ class _CitiesControllerState extends State<CitiesController>
       ];
 
     try {
-      //final sendReport = await send(message, smtpServer);
-      //print('Message sent: ' + sendReport.toString());
+      final sendReport = await send(message, smtpServer);
+      print('Message sent: ' + sendReport.toString());
     } on MailerException catch (e) {
       print('Message not sent.');
       print(e);
