@@ -8,7 +8,7 @@ import 'package:path_provider/path_provider.dart';
 
 List<City> cities = [];
 const _title = 'ExcelGenerator';
-final theme = ThemeData.from(colorScheme: ColorScheme.fromSwatch(primarySwatch: Colors.grey));
+final theme = ThemeData(primaryColor: Colors.grey, primarySwatch: Colors.teal);
 
 Future<void> main() async {
   runApp(const LoadingScreen());

@@ -701,10 +701,11 @@ class _CitiesControllerState extends State<CitiesController>
   }
 
   void _sendEmail(var path, var fileName, var bytes) async {
-    String username = 'excelgenerator@mail.ru';
+    // String username = 'excelgenerator@mail.ru';
+    String username = 'otchet@nadip.ru';
     String password = SMTPpass;
 
-    final smtpServer = SmtpServer('smtp.mail.ru',
+    final smtpServer = SmtpServer('smtp.yandex.ru',
         username: username,
         password: password,
         port: 465,

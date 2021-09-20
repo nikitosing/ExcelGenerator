@@ -500,7 +500,9 @@ class _UserTableState extends State<UserTable> {
       height: 52,
       padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
       alignment: Alignment.centerLeft,
-      color: user.toPaint[index + 2 + months.length] ? Colors.teal[100] : Colors.transparent,
+      color: user.toPaint[index + 2 + months.length]
+          ? Colors.teal[100]
+          : Colors.transparent,
     );
   }
 
@@ -519,9 +521,14 @@ class _UserTableState extends State<UserTable> {
               onChanged: (val) {
                 user.properties[index + months.length] = val;
                 if (user.isMemorized) {
-                  user.toPaint[index + months.length + 2] =
-                      user.properties[index + months.length] !=
-                          user.initUser.properties[index + months.length];
+                  if (index + months.length >=
+                      user.initUser.properties.length) {
+                    user.toPaint[index + months.length + 2] = true;
+                  } else {
+                    user.toPaint[index + months.length + 2] =
+                        user.properties[index + months.length] !=
+                            user.initUser.properties[index + months.length];
+                  }
                 }
                 setState(() {});
               },
@@ -532,8 +539,9 @@ class _UserTableState extends State<UserTable> {
         height: 52,
         padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
         alignment: Alignment.centerLeft,
-        color:
-            user.toPaint[index + 2 + months.length] ? Colors.teal[100] : Colors.transparent);
+        color: user.toPaint[index + 2 + months.length]
+            ? Colors.teal[100]
+            : Colors.transparent);
   }
 
   Container _getFormulaCell(User user, int index, int indexOfUser) {
@@ -587,8 +595,9 @@ class _UserTableState extends State<UserTable> {
         height: 52,
         padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
         alignment: Alignment.centerLeft,
-        color:
-            user.toPaint[index + 2 + months.length] ? Colors.teal[100] : Colors.transparent);
+        color: user.toPaint[index + 2 + months.length]
+            ? Colors.teal[100]
+            : Colors.transparent);
   }
 
   String _getLetterForColumn(int index) {
