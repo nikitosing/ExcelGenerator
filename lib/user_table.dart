@@ -95,6 +95,16 @@ class _UserTableState extends State<UserTable> {
     file.writeAsStringSync(jsonEncode(cities));
   }
 
+  int numberOfRowInExcel(int index, User user) {
+    int numberOfRowInExcel = index +
+        3 +
+        user.status.index +
+        (user.status == UserStatus.toEdit
+            ? 1
+            : 0);
+    return numberOfRowInExcel;
+  }
+
   void _sortUsers() {
     users.sort((a, b) {
       return a.status.index - b.status.index;
@@ -102,10 +112,7 @@ class _UserTableState extends State<UserTable> {
     users.asMap().forEach((index, element) {
       for (int i = 0; i < userDefinedColumnsTypes.length; ++i) {
         if (userDefinedColumnsTypes[i] == Types.formula) {
-          num rowOfUser = index +
-              2 +
-              element.status.index +
-              (element.status == UserStatus.toEdit ? 1 : 0);
+          int rowOfUser = numberOfRowInExcel(index, element);
           if (element.properties[i + months.length] != null) {
             var formulaReadyToEdit =
                 element.properties[i + months.length].split(regexp);
@@ -323,7 +330,7 @@ class _UserTableState extends State<UserTable> {
                         element.properties.add(property !=
                                 null // means that chosen is formula and has some formula in its name
                             ? property.join(
-                                '${index + 2 + element.status.index + (element.status == UserStatus.toEdit ? 1 : 0)}')
+                                '${index + 3 + element.status.index + (element.status == UserStatus.toEdit ? 1 : 0)}')
                             : property);
                         element.toPaint.add(true);
                       });
@@ -517,7 +524,7 @@ class _UserTableState extends State<UserTable> {
               key: Key('${user.id}UDDColumn$index'),
               autofocus: true,
               readOnly: user.status != UserStatus.normal,
-              initialValue: user.properties[index + months.length] ?? '',
+              initialValue: (user.properties[index + months.length] ?? '').toString(),
               onChanged: (val) {
                 user.properties[index + months.length] = val;
                 if (user.isMemorized) {
@@ -712,8 +719,7 @@ class _UserTableState extends State<UserTable> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-              '${index + 2 + user.status.index + (user.status == UserStatus.toEdit ? 1 : 0)}'),
+          Text(numberOfRowInExcel(index, user).toString()),
           Focus(
               skipTraversal: true,
               onFocusChange: (isFocus) {
@@ -722,7 +728,7 @@ class _UserTableState extends State<UserTable> {
               child: SizedBox.fromSize(
                   child: TextFormField(
                     key: Key('${user.id}name'),
-                    readOnly: user.status == UserStatus.toRemove,
+                    readOnly: user.status != UserStatus.normal,
                     initialValue: user.name,
                     inputFormatters: [
                       FilteringTextInputFormatter.deny(RegExp("[0-9]+"))

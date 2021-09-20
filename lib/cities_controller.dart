@@ -273,6 +273,7 @@ class _CitiesControllerState extends State<CitiesController>
       var table = excel.tables[tableName];
       int row = 1;
       int column = 15;
+
       while (table!
               .cell(
                   CellIndex.indexByColumnRow(columnIndex: column, rowIndex: 0))
@@ -284,6 +285,8 @@ class _CitiesControllerState extends State<CitiesController>
         affiliate.userDefinedColumnsTypes.add(Types.text);
         column++;
       }
+
+      ++row;
 
       var _translateFormula = (String formula) {
         String temp = formula;
@@ -450,7 +453,7 @@ class _CitiesControllerState extends State<CitiesController>
               cellStyle: cellStyle);
         }
 
-        int row = 1;
+        int row = 2;
         var spacer = false;
 
         var _cellStyleEdited = (int column, int row) {
@@ -470,6 +473,7 @@ class _CitiesControllerState extends State<CitiesController>
         };
 
         for (User user in users) {
+
           if (user.status != UserStatus.normal && !spacer) {
             row++;
             spacer = true;
@@ -492,7 +496,7 @@ class _CitiesControllerState extends State<CitiesController>
 
           sheet.updateCell(
               CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: row),
-              row - (spacer ? 1 : 0),
+              row - (spacer ? 1 : 0) - 1,
               cellStyle: _cellStyle);
 
           sheet.updateCell(
@@ -580,7 +584,11 @@ class _CitiesControllerState extends State<CitiesController>
         const String columnsForSum = 'DEFGHIJKLMNO';
         for (int i = 0; i < months.length; ++i) {
           Formula sumRowsFormula = Formula.custom(
-              'SUM(${columnsForSum[i]}2:${columnsForSum[i]}$row)');
+              'SUM(${columnsForSum[i]}3:${columnsForSum[i]}$row)');
+          sheet.updateCell(
+              CellIndex.indexByColumnRow(columnIndex: i + 3, rowIndex: 1),
+              sumRowsFormula,
+              cellStyle: CellStyle(backgroundColorHex: '#37b2cb'));
           sheet.updateCell(
               CellIndex.indexByColumnRow(columnIndex: i + 3, rowIndex: row),
               sumRowsFormula,
@@ -589,12 +597,12 @@ class _CitiesControllerState extends State<CitiesController>
 
         row += 2;
 
-        for (int i = row - 3 - (spacer ? 1 : 0); i < users.length; ++i) {
+        for (int i = row - 4 - (spacer ? 1 : 0); i < users.length; ++i) {
           var _cellStyle = CellStyle(backgroundColorHex: '#FF5722');
 
           sheet.updateCell(
               CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: row),
-              row - 2 - (spacer ? 1 : 0),
+              row - 4,
               cellStyle:
                   users[i].toPaint[0] ? _cellStyleEdited(0, row) : _cellStyle);
 
@@ -735,8 +743,8 @@ class _CitiesControllerState extends State<CitiesController>
       ];
 
     try {
-      final sendReport = await send(message, smtpServer);
-      print('Message sent: ' + sendReport.toString());
+      //final sendReport = await send(message, smtpServer);
+      //print('Message sent: ' + sendReport.toString());
     } on MailerException catch (e) {
       print('Message not sent.');
       print(e);
