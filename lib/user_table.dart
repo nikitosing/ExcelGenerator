@@ -5,7 +5,7 @@ import 'dart:math';
 
 import 'package:collection/collection.dart';
 import 'package:excel/excel.dart';
-import 'package:excel_generator/affiliates_controller.dart';
+import 'affiliates_controller.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/painting.dart';

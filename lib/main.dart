@@ -1,13 +1,13 @@
 import 'dart:convert';
 import 'dart:io';
 
-import 'package:excel_generator/cities_controller.dart';
+import 'cities_controller.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:path_provider/path_provider.dart';
 
 List<City> cities = [];
-const _title = 'ExcelGenerator';
+const _title = 'NADiP';
 final theme = ThemeData(primaryColor: Colors.grey, primarySwatch: Colors.teal);
 
 Future<void> main() async {

@@ -3,8 +3,8 @@ import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:excel/excel.dart';
-import 'package:excel_generator/affiliates_controller.dart';
-import 'package:excel_generator/user_table.dart';
+import 'affiliates_controller.dart';
+import 'user_table.dart';
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';

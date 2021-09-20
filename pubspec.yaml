@@ -1,4 +1,4 @@
-name: excel_generator
+name: NADiP
 description: A new Flutter project.
 
 publish_to: 'none' # Remove this line if you wish to publish to pub.dev
@@ -27,6 +27,7 @@ dependencies:
   file_picker_cross: ^4.4.2
   collection: ^1.15.0
   syncfusion_flutter_xlsio: ^19.2.59-beta
+  flutter_launcher_icons: ^0.9.2
 
 
 dev_dependencies:
@@ -36,6 +37,10 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+
+flutter_icons:
+  android: true
+  image_path: "assets/logo.png"
 
 flutter_native_splash:
 
