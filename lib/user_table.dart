@@ -828,9 +828,9 @@ class _UserTableState extends State<UserTable> {
           case UserStatus.normal:
             return Colors.transparent;
           case UserStatus.toEdit:
-            return Colors.deepOrange;
+            return Colors.deepOrange[400];
           case UserStatus.toRemove:
-            return Colors.yellowAccent;
+            return Colors.yellow[400];
         }
       }(),
     );
@@ -896,6 +896,7 @@ class _UserTableState extends State<UserTable> {
       padding: const EdgeInsets.fromLTRB(5, 0, 0, 5),
       alignment: Alignment.bottomLeft,
     );
+
     for (var i = 0; i < months.length; ++i) {
       _cells[months[i]] = Container(
         child: Focus(
@@ -1022,9 +1023,9 @@ class _UserTableState extends State<UserTable> {
           case UserStatus.normal:
             return Colors.transparent;
           case UserStatus.toEdit:
-            return Colors.deepOrange;
+            return Colors.deepOrange[400];
           case UserStatus.toRemove:
-            return Colors.yellowAccent;
+            return Colors.yellow[400];
         }
       }(),
     );
