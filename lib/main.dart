@@ -57,7 +57,9 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
         //key: UniqueKey(),
-        showSemanticsDebugger: false,
+      //debugShowMaterialGrid: true,
+
+        //showSemanticsDebugger: true,
         debugShowCheckedModeBanner: true,
         title: _title,
         theme: theme,

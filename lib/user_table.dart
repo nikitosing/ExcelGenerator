@@ -14,7 +14,7 @@ import 'package:flutter_xlider/flutter_xlider.dart';
 import 'package:horizontal_data_table/horizontal_data_table.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:syncfusion_flutter_xlsio/xlsio.dart'
-    hide Column, Row, Alignment, Stack;
+    hide Column, Row, Alignment, Stack, Border;
 
 import 'cities_controller.dart';
 import 'common.dart';
@@ -99,9 +99,7 @@ class _UserTableState extends State<UserTable> {
     int numberOfRowInExcel = index +
         3 +
         user.status.index +
-        (user.status == UserStatus.toEdit
-            ? 1
-            : 0);
+        (user.status == UserStatus.toEdit ? 1 : 0);
     return numberOfRowInExcel;
   }
 
@@ -479,52 +477,68 @@ class _UserTableState extends State<UserTable> {
             if (!isFocus && Platform.isWindows) _saveState();
           },
           child: TextFormField(
-            key: Key('${user.id}UDDColumn$index'),
-            autofocus: true,
-            readOnly: user.status != UserStatus.normal,
-            keyboardType: TextInputType.number,
-            initialValue: user.properties[index + months.length] == null
-                ? ''
-                : user.properties[index + months.length].toStringAsFixed(2),
-            inputFormatters: [
-              FilteringTextInputFormatter.allow(RegExp("^\\d*\\.?\\d*")),
-              DecimalTextInputFormatter(decimalRange: 2)
-            ],
-            onChanged: (val) {
-              user.properties[index + months.length] =
-                  val == '' ? 0 : num.parse(val);
-              if (user.isMemorized) {
-                user.toPaint[index + months.length + 2] =
-                    user.properties[index + months.length] !=
-                        user.initUser.properties[index + months.length];
-              }
-              setState(() {});
-            },
-            decoration: const InputDecoration(counterText: ""),
-            maxLength: 12,
-          )),
+              key: Key('${user.id}UDDColumn$index'),
+              autofocus: true,
+              readOnly: user.status != UserStatus.normal,
+              keyboardType: TextInputType.number,
+              initialValue: user.properties[index + months.length] == null
+                  ? ''
+                  : user.properties[index + months.length].toStringAsFixed(2),
+              inputFormatters: [
+                FilteringTextInputFormatter.allow(RegExp("^\\d*\\.?\\d*")),
+                DecimalTextInputFormatter(decimalRange: 2)
+              ],
+              onChanged: (val) {
+                user.properties[index + months.length] =
+                    val == '' ? 0 : num.parse(val);
+                if (user.isMemorized) {
+                  user.toPaint[index + months.length + 2] =
+                      user.properties[index + months.length] !=
+                          user.initUser.properties[index + months.length];
+                }
+                setState(() {});
+              },
+              maxLength: 12,
+              textAlignVertical: TextAlignVertical.bottom,
+              decoration: user.toPaint[index + 2 + months.length]
+                  ? InputDecoration(
+                      isDense: true,
+                      suffixIconConstraints:
+                          BoxConstraints(minHeight: 42, minWidth: 10),
+                      suffixIcon: Icon(
+                        Icons.brightness_1_rounded,
+                        size: 10,
+                      ),
+                      counterText: "")
+                  : InputDecoration(
+                      isDense: true,
+                      suffixIconConstraints:
+                          BoxConstraints(minHeight: 0, minWidth: 0),
+                      suffixIcon: Icon(
+                        Icons.brightness_1_rounded,
+                        size: 0,
+                      ),
+                      counterText: ""))),
       width: 200,
       height: 52,
-      padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
-      alignment: Alignment.centerLeft,
-      color: user.toPaint[index + 2 + months.length]
-          ? Colors.teal[100]
-          : Colors.transparent,
+      padding: const EdgeInsets.fromLTRB(5, 0, 0, 5),
+      alignment: Alignment.bottomLeft,
     );
   }
 
   Container _getStringCell(User user, int index) {
     return Container(
-        child: Focus(
-            skipTraversal: true,
-            onFocusChange: (isFocus) {
-              if (!isFocus && Platform.isWindows) _saveState();
-            },
-            child: TextFormField(
+      child: Focus(
+          skipTraversal: true,
+          onFocusChange: (isFocus) {
+            if (!isFocus && Platform.isWindows) _saveState();
+          },
+          child: TextFormField(
               key: Key('${user.id}UDDColumn$index'),
               autofocus: true,
               readOnly: user.status != UserStatus.normal,
-              initialValue: (user.properties[index + months.length] ?? '').toString(),
+              initialValue:
+                  (user.properties[index + months.length] ?? '').toString(),
               onChanged: (val) {
                 user.properties[index + months.length] = val;
                 if (user.isMemorized) {
@@ -539,16 +553,32 @@ class _UserTableState extends State<UserTable> {
                 }
                 setState(() {});
               },
-              decoration: const InputDecoration(counterText: ""),
               maxLength: 60,
-            )),
-        width: 200,
-        height: 52,
-        padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
-        alignment: Alignment.centerLeft,
-        color: user.toPaint[index + 2 + months.length]
-            ? Colors.teal[100]
-            : Colors.transparent);
+              textAlignVertical: TextAlignVertical.bottom,
+              decoration: user.toPaint[index + 2 + months.length]
+                  ? InputDecoration(
+                      isDense: true,
+                      suffixIconConstraints:
+                          BoxConstraints(minHeight: 42, minWidth: 10),
+                      suffixIcon: Icon(
+                        Icons.brightness_1_rounded,
+                        size: 10,
+                      ),
+                      counterText: "")
+                  : InputDecoration(
+                      isDense: true,
+                      suffixIconConstraints:
+                          BoxConstraints(minHeight: 0, minWidth: 0),
+                      suffixIcon: Icon(
+                        Icons.brightness_1_rounded,
+                        size: 0,
+                      ),
+                      counterText: ""))),
+      width: 200,
+      height: 52,
+      padding: const EdgeInsets.fromLTRB(5, 0, 0, 5),
+      alignment: Alignment.bottomLeft,
+    );
   }
 
   Container _getFormulaCell(User user, int index, int indexOfUser) {
@@ -565,22 +595,22 @@ class _UserTableState extends State<UserTable> {
       controller = formulaFieldsControllers['${user.id}$index']!;
     }
     return Container(
-        child: Focus(
-            skipTraversal: true,
-            onFocusChange: (isFocus) {
-              if (isFocus) {
-                controller.text = user.properties[index + months.length] ?? '';
-              } else {
-                controller.text =
-                    user.properties[index + months.length] == null ||
-                            user.properties[index + months.length] == ''
-                        ? ''
-                        : calculateFormulas(user, index, indexOfUser);
-              }
+      child: Focus(
+          skipTraversal: true,
+          onFocusChange: (isFocus) {
+            if (isFocus) {
+              controller.text = user.properties[index + months.length] ?? '';
+            } else {
+              controller.text =
+                  user.properties[index + months.length] == null ||
+                          user.properties[index + months.length] == ''
+                      ? ''
+                      : calculateFormulas(user, index, indexOfUser);
+            }
 
-              if (!isFocus && Platform.isWindows) _saveState();
-            },
-            child: TextFormField(
+            if (!isFocus && Platform.isWindows) _saveState();
+          },
+          child: TextFormField(
               controller: controller,
               inputFormatters: [UpperCaseTextFormatter()],
               key: Key('${user.id}UDDColumn$index'),
@@ -595,16 +625,32 @@ class _UserTableState extends State<UserTable> {
                 }
                 setState(() {});
               },
-              decoration: const InputDecoration(counterText: ""),
               maxLength: 60,
-            )),
-        width: 200,
-        height: 52,
-        padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
-        alignment: Alignment.centerLeft,
-        color: user.toPaint[index + 2 + months.length]
-            ? Colors.teal[100]
-            : Colors.transparent);
+              textAlignVertical: TextAlignVertical.bottom,
+              decoration: user.toPaint[index + 2 + months.length]
+                  ? InputDecoration(
+                      isDense: true,
+                      suffixIconConstraints:
+                          BoxConstraints(minHeight: 42, minWidth: 10),
+                      suffixIcon: Icon(
+                        Icons.brightness_1_rounded,
+                        size: 10,
+                      ),
+                      counterText: "")
+                  : InputDecoration(
+                      isDense: true,
+                      suffixIconConstraints:
+                          BoxConstraints(minHeight: 0, minWidth: 0),
+                      suffixIcon: Icon(
+                        Icons.brightness_1_rounded,
+                        size: 0,
+                      ),
+                      counterText: ""))),
+      width: 200,
+      height: 52,
+      padding: const EdgeInsets.fromLTRB(5, 0, 0, 5),
+      alignment: Alignment.bottomLeft,
+    );
   }
 
   String _getLetterForColumn(int index) {
@@ -725,37 +771,59 @@ class _UserTableState extends State<UserTable> {
               onFocusChange: (isFocus) {
                 if (!isFocus && Platform.isWindows) _saveState();
               },
-              child: SizedBox.fromSize(
-                  child: TextFormField(
-                    key: Key('${user.id}name'),
-                    readOnly: user.status != UserStatus.normal,
-                    initialValue: user.name,
-                    inputFormatters: [
-                      FilteringTextInputFormatter.deny(RegExp("[0-9]+"))
-                    ],
-                    // ^(\d*\.)?\d+$
-                    autofocus: true,
-                    maxLength: 60,
-                    decoration: const InputDecoration(
-                        hintText: "Введите Ф.И", counterText: ""),
-                    keyboardType: TextInputType.text,
-                    onChanged: (val) {
-                      user.name = val;
-                      if (user.isMemorized) {
-                        user.toPaint[0] = user.name != user.initUser.name;
-                      }
-                      setState(() {});
-                    },
-                  ),
-                  size: Size(_nameColumnWidth - 23, 52))),
+              child: Container(
+                child: TextFormField(
+                  key: Key('${user.id}name'),
+                  readOnly: user.status != UserStatus.normal,
+                  initialValue: user.name,
+                  inputFormatters: [
+                    FilteringTextInputFormatter.deny(RegExp("[0-9]+"))
+                  ],
+                  // ^(\d*\.)?\d+$
+                  autofocus: true,
+                  maxLength: 60,
+                  keyboardType: TextInputType.text,
+                  onChanged: (val) {
+                    user.name = val;
+                    if (user.isMemorized) {
+                      user.toPaint[0] = user.name != user.initUser.name;
+                    }
+                    setState(() {});
+                  },
+                  textAlignVertical: TextAlignVertical.bottom,
+                  decoration: user.toPaint[0]
+                      ? InputDecoration(
+                          hintText: "Введите Ф.И",
+                          isDense: true,
+                          suffixIconConstraints:
+                              BoxConstraints(minHeight: 42, minWidth: 10),
+                          suffixIcon: Icon(
+                            Icons.brightness_1_rounded,
+                            size: 10,
+                          ),
+                          counterText: "")
+                      : InputDecoration(
+                          hintText: "Введите Ф.И",
+                          isDense: true,
+                          suffixIconConstraints:
+                              BoxConstraints(minHeight: 0, minWidth: 0),
+                          suffixIcon: Icon(
+                            Icons.brightness_1_rounded,
+                            size: 0,
+                          ),
+                          counterText: ""),
+                ),
+                width: _nameColumnWidth - 23,
+                height: 52,
+                alignment: Alignment.bottomLeft,
+              ))
         ],
       ),
       width: _nameColumnWidth,
       height: 52,
-      padding: const EdgeInsets.fromLTRB(5, 2, 0, 0),
+      padding: const EdgeInsets.fromLTRB(5, 0, 0, 5),
       alignment: Alignment.bottomLeft,
       color: () {
-        if (user.toPaint[0]) return Colors.teal[100];
         switch (user.status) {
           case UserStatus.normal:
             return Colors.transparent;
@@ -772,77 +840,117 @@ class _UserTableState extends State<UserTable> {
     var _cells = LinkedHashMap<String, Widget>();
 
     _cells['date'] = Container(
-        child: Focus(
-            skipTraversal: true,
-            onFocusChange: (isFocused) async {
-              if (isFocused && user.status == UserStatus.normal) {
-                await showDatePicker(
-                        context: context,
-                        initialDate: DateTime.now(),
-                        firstDate: DateTime(2001),
-                        lastDate: DateTime.now())
-                    .then((date) => setState(() {
-                          user.dateStartOfEducation = date;
-                          if (user.isMemorized) {
-                            user.toPaint[1] = user.dateStartOfEducation !=
-                                user.initUser.dateStartOfEducation;
-                          }
-                        }));
-                if (Platform.isWindows) _saveState();
-              }
-            },
-            child: TextFormField(
-              autofocus: false,
-              key: Key(
-                  '${user.id}${user.dateStartOfEducation.toString()}${Random().nextInt(1024)}'),
-              readOnly: true,
-              initialValue: user.dateStartOfEducation == null
-                  ? ''
-                  : '${user.dateStartOfEducation.day}/${user.dateStartOfEducation.month}/${user.dateStartOfEducation.year}',
-              decoration: const InputDecoration(hintText: "Выберите дату"),
-              keyboardType: null,
-            )),
-        width: 200,
-        height: 52,
-        padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
-        alignment: Alignment.centerLeft,
-        color: user.toPaint[1] ? Colors.teal[100] : Colors.transparent);
+      child: Focus(
+          skipTraversal: true,
+          onFocusChange: (isFocused) async {
+            if (isFocused && user.status == UserStatus.normal) {
+              await showDatePicker(
+                      context: context,
+                      initialDate: DateTime.now(),
+                      firstDate: DateTime(2001),
+                      lastDate: DateTime.now())
+                  .then((date) => setState(() {
+                        user.dateStartOfEducation = date;
+                        if (user.isMemorized) {
+                          user.toPaint[1] = user.dateStartOfEducation !=
+                              user.initUser.dateStartOfEducation;
+                        }
+                      }));
+              if (Platform.isWindows) _saveState();
+            }
+          },
+          child: TextFormField(
+            autofocus: false,
+            key: Key(
+                '${user.id}${user.dateStartOfEducation.toString()}${Random().nextInt(1024)}'),
+            readOnly: true,
+            initialValue: user.dateStartOfEducation == null
+                ? ''
+                : '${user.dateStartOfEducation.day}/${user.dateStartOfEducation.month}/${user.dateStartOfEducation.year}',
+            textAlignVertical: TextAlignVertical.bottom,
+            decoration: user.toPaint[1]
+                ? InputDecoration(
+                    hintText: "Выберите дату",
+                    isDense: true,
+                    suffixIconConstraints:
+                        BoxConstraints(minHeight: 42, minWidth: 10),
+                    suffixIcon: Icon(
+                      Icons.brightness_1_rounded,
+                      size: 10,
+                    ),
+                    counterText: "")
+                : InputDecoration(
+                    hintText: "Выберите дату",
+                    isDense: true,
+                    suffixIconConstraints:
+                        BoxConstraints(minHeight: 0, minWidth: 0),
+                    suffixIcon: Icon(
+                      Icons.brightness_1_rounded,
+                      size: 0,
+                    ),
+                    counterText: ""),
+            keyboardType: null,
+          )),
+      width: 200,
+      height: 52,
+      padding: const EdgeInsets.fromLTRB(5, 0, 0, 5),
+      alignment: Alignment.bottomLeft,
+    );
     for (var i = 0; i < months.length; ++i) {
       _cells[months[i]] = Container(
-          child: Focus(
-              skipTraversal: true,
-              onFocusChange: (isFocus) {
-                if (!isFocus && Platform.isWindows) _saveState();
+        child: Focus(
+            skipTraversal: true,
+            onFocusChange: (isFocus) {
+              if (!isFocus && Platform.isWindows) _saveState();
+            },
+            child: TextFormField(
+              key: Key('${user.id}Month$i'),
+              autofocus: true,
+              readOnly: user.status != UserStatus.normal,
+              keyboardType: TextInputType.number,
+              initialValue: user.properties[i] == null
+                  ? ''
+                  : user.properties[i].toStringAsFixed(2),
+              inputFormatters: [
+                FilteringTextInputFormatter.allow(RegExp("^\\d*\\.?\\d*")),
+                DecimalTextInputFormatter(decimalRange: 2)
+              ],
+              onChanged: (val) {
+                user.properties[i] = val == '' ? 0 : num.parse(val);
+                if (user.isMemorized) {
+                  user.toPaint[i + 2] =
+                      user.properties[i] != user.initUser.properties[i];
+                }
+                user.calculateResult();
+                setState(() {});
               },
-              child: TextFormField(
-                key: Key('${user.id}Month$i'),
-                autofocus: true,
-                readOnly: user.status != UserStatus.normal,
-                keyboardType: TextInputType.number,
-                initialValue: user.properties[i] == null
-                    ? ''
-                    : user.properties[i].toStringAsFixed(2),
-                inputFormatters: [
-                  FilteringTextInputFormatter.allow(RegExp("^\\d*\\.?\\d*")),
-                  DecimalTextInputFormatter(decimalRange: 2)
-                ],
-                onChanged: (val) {
-                  user.properties[i] = val == '' ? 0 : num.parse(val);
-                  if (user.isMemorized) {
-                    user.toPaint[i + 2] =
-                        user.properties[i] != user.initUser.properties[i];
-                  }
-                  user.calculateResult();
-                  setState(() {});
-                },
-                decoration: const InputDecoration(counterText: ""),
-                maxLength: 12,
-              )),
-          width: i == months.length - 3 ? 220 : 100,
-          height: 52,
-          padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
-          alignment: Alignment.centerLeft,
-          color: user.toPaint[i + 2] ? Colors.teal[100] : Colors.transparent);
+              maxLength: 12,
+              textAlignVertical: TextAlignVertical.bottom,
+              decoration: user.toPaint[i + 2]
+                  ? InputDecoration(
+                      isDense: true,
+                      suffixIconConstraints:
+                          BoxConstraints(minHeight: 42, minWidth: 10),
+                      suffixIcon: Icon(
+                        Icons.brightness_1_rounded,
+                        size: 10,
+                      ),
+                      counterText: "")
+                  : InputDecoration(
+                      isDense: true,
+                      suffixIconConstraints:
+                          BoxConstraints(minHeight: 0, minWidth: 0),
+                      suffixIcon: Icon(
+                        Icons.brightness_1_rounded,
+                        size: 0,
+                      ),
+                      counterText: ""),
+            )),
+        width: i == months.length - 3 ? 220 : 100,
+        height: 52,
+        padding: const EdgeInsets.fromLTRB(5, 0, 0, 5),
+        alignment: Alignment.bottomLeft,
+      );
     }
 
     _cells['Итого'] = Container(
@@ -910,7 +1018,6 @@ class _UserTableState extends State<UserTable> {
     return Container(
       child: Row(children: _cells.values.toList()),
       color: () {
-        if (!user.toPaint.contains(false)) return Colors.teal[100];
         switch (user.status) {
           case UserStatus.normal:
             return Colors.transparent;
