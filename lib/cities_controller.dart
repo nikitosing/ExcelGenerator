@@ -766,6 +766,8 @@ class _CitiesControllerState extends State<CitiesController>
     var _tabBar = TabBar(
       controller: _tabController,
       isScrollable: Platform.isAndroid,
+      indicatorWeight: 5,
+      automaticIndicatorColorAdjustment: true,
       tabs: () {
         var activeTabId = _tabController.index;
         var tabs = <Widget>[];
@@ -779,7 +781,7 @@ class _CitiesControllerState extends State<CitiesController>
         //key: UniqueKey(),
         appBar: AppBar(
             actions: [
-              IconButton(
+              IconButton( 
                 onPressed: () {
                   _usersFromXlsx();
                 }, //setState inside
@@ -816,22 +818,6 @@ class _CitiesControllerState extends State<CitiesController>
                                     width: 152.0 * cities.length,
                                     child: _tabBar)))
                         : _tabBar))),
-        // PreferredSize(
-        //     preferredSize: const Size.fromHeight(60.0),
-        //     child: Align(
-        //         alignment: Alignment.bottomLeft,
-        //         child: Platform.isWindows
-        //             ? Scrollbar(
-        //             thickness: 5,
-        //             interactive: true,
-        //             isAlwaysShown: true,
-        //             child: SingleChildScrollView(
-        //                 scrollDirection: Axis.horizontal,
-        //                 primary: true,
-        //                 child: SizedBox(
-        //                     width: 152.0 * affiliates.length,
-        //                     child: _tabBar)))
-        //             : _tabBar))),
         body: TabBarView(
           controller: _tabController,
           children: cities

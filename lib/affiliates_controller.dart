@@ -133,7 +133,7 @@ class _AffiliateControllerState extends State<AffiliatesController>
   }
 
   Widget _tabCreator(var affiliate, var index, var activeTabId) {
-    return SizedBox(
+    return Container(
         //key: UniqueKey(),
         height: 60,
         width: 152,
@@ -183,6 +183,8 @@ class _AffiliateControllerState extends State<AffiliatesController>
     var _tabBar = TabBar(
       controller: _tabController,
       isScrollable: Platform.isAndroid,
+      indicatorWeight: 5,
+      automaticIndicatorColorAdjustment: true,
       tabs: () {
         var activeTabId = _tabController.index;
         var tabs = <Widget>[];
