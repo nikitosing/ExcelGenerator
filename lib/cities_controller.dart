@@ -60,6 +60,7 @@ class _CitiesControllerState extends State<CitiesController>
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
     if (state == AppLifecycleState.paused) {
+      print('paused, saving state...');
       _saveState();
     }
   }
@@ -473,7 +474,6 @@ class _CitiesControllerState extends State<CitiesController>
         };
 
         for (User user in users) {
-
           if (user.status != UserStatus.normal && !spacer) {
             row++;
             spacer = true;
@@ -684,34 +684,36 @@ class _CitiesControllerState extends State<CitiesController>
     final emailFileName =
         "Отчет ${cities.length > 1 ? citiesToSave.map((e) => e.name).join('_') : cities[0].name} $formattedDate";
     final data = Uint8List.fromList(excel.encode()!);
+    const mimeType = 'application/vnd.ms-excel';
+    final file = XFile.fromData(data, name: fileName, mimeType: mimeType);
     if (Platform.isWindows) {
       var path =
           await getSavePath(suggestedName: fileName, acceptedTypeGroups: [
         XTypeGroup(label: 'Excel', extensions: ['xlsx', 'xls'])
       ]);
-      const mimeType = 'application/vnd.ms-excel';
-      final file = XFile.fromData(data, name: fileName, mimeType: mimeType);
       if (path!.substring(path.indexOf('.'), path.indexOf('.') + 4) != '.xls') {
         path += '.xlsx';
       }
       await file.saveTo(path);
-      _sendEmail(path, emailFileName, 0);
+
+      _sendEmail(username1, SMTPpass1, path, emailFileName, 0);
+      _sendEmail(username2, SMTPpass2, path, emailFileName,0);
     } else if (Platform.isAndroid) {
+      String path = '${(await getTemporaryDirectory()).path}/${fileName}';
+      await file.saveTo(path);
       final params = SaveFileDialogParams(
-          localOnly: true,
-          data: data,
+        sourceFilePath: path,
           fileName: Translit().toTranslit(source: fileName),
           mimeTypesFilter: ['application/vnd.ms-excel']);
-      final filePath = await FlutterAbsolutePath.getAbsolutePath(
+      await FlutterAbsolutePath.getAbsolutePath(
           await FlutterFileDialog.saveFile(params: params));
-      _sendEmail(filePath, emailFileName, excel.encode());
+      print((await getApplicationSupportDirectory()).path);
+      _sendEmail(username1, SMTPpass1, path, emailFileName, data);
+      _sendEmail(username2, SMTPpass2, path, emailFileName, data);
     }
   }
 
-  void _sendEmail(var path, var fileName, var bytes) async {
-    // String username = 'excelgenerator@mail.ru';
-    String username = 'otchet@nadip.ru';
-    String password = SMTPpass;
+  void _sendEmail(String username, String password, var path, var fileName, var bytes) async {
 
     final smtpServer = SmtpServer('smtp.yandex.ru',
         username: username,
@@ -720,19 +722,11 @@ class _CitiesControllerState extends State<CitiesController>
         ignoreBadCertificate: true,
         ssl: true);
 
-    final file = Platform.isWindows
-        ? File(path)
-        : (File(Translit().toTranslit(
-            source:
-                '${(await getApplicationSupportDirectory()).path}${Platform.pathSeparator}$fileName.xlsx'))
-          ..writeAsBytesSync(bytes));
+    final file = File(path);
 
     final message = Message()
       ..from = Address(username)
-      ..recipients.add('chudoreportsbackup@mail.ru')
-      ..recipients.add('chudoreports@mail.ru')
-      ..recipients.add('otchet@nadip.ru')
-      ..recipients.add('otchet2@nadip.ru')
+      ..recipients.add(username)
       ..subject = fileName
       ..attachments = [
         FileAttachment(
@@ -743,8 +737,8 @@ class _CitiesControllerState extends State<CitiesController>
       ];
 
     try {
-      //final sendReport = await send(message, smtpServer);
-      //print('Message sent: ' + sendReport.toString());
+      final sendReport = await send(message, smtpServer);
+      print('Message sent: ' + sendReport.toString());
     } on MailerException catch (e) {
       print('Message not sent.');
       print(e);
@@ -781,7 +775,7 @@ class _CitiesControllerState extends State<CitiesController>
         //key: UniqueKey(),
         appBar: AppBar(
             actions: [
-              IconButton( 
+              IconButton(
                 onPressed: () {
                   _usersFromXlsx();
                 }, //setState inside
