@@ -314,6 +314,13 @@ class _CitiesControllerState extends State<CitiesController>
                     .value !=
                 null) {
           var user = User(affiliate.userDefinedColumns.length);
+          if (table
+                  .cell(
+                      CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: row))
+                  .value ==
+              '-') {
+            user.isGroup = true;
+          }
           user.name = table
               .cell(CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: row))
               .value;
@@ -325,7 +332,7 @@ class _CitiesControllerState extends State<CitiesController>
           var date = table
               .cell(CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: row))
               .value;
-          user.dateStartOfEducation = date == null
+          user.dateStartOfEducation = date == ' '
               ? null
               : int.tryParse(date.toString()) == null
                   ? _getTime(date)
@@ -473,6 +480,8 @@ class _CitiesControllerState extends State<CitiesController>
           return temp;
         };
 
+        int decrement = 0;
+
         for (User user in users) {
           if (user.status != UserStatus.normal && !spacer) {
             row++;
@@ -484,9 +493,15 @@ class _CitiesControllerState extends State<CitiesController>
             break;
           }
 
-          var _cellStyle = CellStyle(
-              backgroundColorHex:
-                  user.status == UserStatus.normal ? '#ffffff' : '#FFFF00');
+          var _cellStyle = CellStyle(backgroundColorHex: () {
+            if (user.isGroup) return '#00e676';
+            switch (user.status) {
+              case UserStatus.normal:
+                return '#ffffff';
+              default:
+                return '#ffff00';
+            }
+          }());
 
           if (!user.toPaint.contains(false)) {
             for (int i = 1; i < user.properties.length + 3; ++i) {
@@ -494,21 +509,29 @@ class _CitiesControllerState extends State<CitiesController>
             }
           }
 
-          sheet.updateCell(
-              CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: row),
-              row - (spacer ? 1 : 0) - 1,
-              cellStyle: _cellStyle);
+          if (user.isGroup) {
+            decrement++;
+            sheet.updateCell(
+                CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: row), '-',
+                cellStyle: _cellStyle);
+          } else {
+            sheet.updateCell(
+                CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: row),
+                row - (spacer ? 1 : 0) - 1 - decrement,
+                cellStyle: _cellStyle);
+          }
 
           sheet.updateCell(
               CellIndex.indexByColumnRow(columnIndex: 1, rowIndex: row),
               user.name,
-              cellStyle:
-                  user.toPaint[0] ? _cellStyleEdited(2, row) : _cellStyle);
+              cellStyle: user.toPaint[0] && !user.isGroup
+                  ? _cellStyleEdited(2, row)
+                  : _cellStyle);
 
           sheet.updateCell(
               CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: row),
               user.dateStartOfEducation == null
-                  ? null
+                  ? ' '
                   : formatter.format(user.dateStartOfEducation!),
               cellStyle:
                   user.toPaint[1] ? _cellStyleEdited(2, row) : _cellStyle);
@@ -602,7 +625,7 @@ class _CitiesControllerState extends State<CitiesController>
 
           sheet.updateCell(
               CellIndex.indexByColumnRow(columnIndex: 0, rowIndex: row),
-              row - 4,
+              row - 4 - decrement,
               cellStyle:
                   users[i].toPaint[0] ? _cellStyleEdited(0, row) : _cellStyle);
 
@@ -615,7 +638,7 @@ class _CitiesControllerState extends State<CitiesController>
           sheet.updateCell(
               CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: row),
               users[i].dateStartOfEducation == null
-                  ? null
+                  ? ' '
                   : formatter.format(users[i].dateStartOfEducation!),
               cellStyle: _cellStyle);
 
@@ -697,12 +720,12 @@ class _CitiesControllerState extends State<CitiesController>
       await file.saveTo(path);
 
       _sendEmail(username1, SMTPpass1, path, emailFileName, 0);
-      _sendEmail(username2, SMTPpass2, path, emailFileName,0);
+      _sendEmail(username2, SMTPpass2, path, emailFileName, 0);
     } else if (Platform.isAndroid) {
       String path = '${(await getTemporaryDirectory()).path}/${fileName}';
       await file.saveTo(path);
       final params = SaveFileDialogParams(
-        sourceFilePath: path,
+          sourceFilePath: path,
           fileName: Translit().toTranslit(source: fileName),
           mimeTypesFilter: ['application/vnd.ms-excel']);
       await FlutterAbsolutePath.getAbsolutePath(
@@ -713,8 +736,8 @@ class _CitiesControllerState extends State<CitiesController>
     }
   }
 
-  void _sendEmail(String username, String password, var path, var fileName, var bytes) async {
-
+  void _sendEmail(String username, String password, var path, var fileName,
+      var bytes) async {
     final smtpServer = SmtpServer('smtp.yandex.ru',
         username: username,
         password: password,
@@ -737,8 +760,8 @@ class _CitiesControllerState extends State<CitiesController>
       ];
 
     try {
-      final sendReport = await send(message, smtpServer);
-      print('Message sent: ' + sendReport.toString());
+      // final sendReport = await send(message, smtpServer);
+      // print('Message sent: ' + sendReport.toString());
     } on MailerException catch (e) {
       print('Message not sent.');
       print(e);

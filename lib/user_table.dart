@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'dart:io';
 import 'dart:math';
 
+import 'package:flutter_speed_dial/flutter_speed_dial.dart';
 import 'package:collection/collection.dart';
 import 'package:excel/excel.dart';
 import 'affiliates_controller.dart';
@@ -73,7 +74,8 @@ class _UserTableState extends State<UserTable> {
     users = affiliate.users;
 
     for (var user in users) {
-      if (user.status == UserStatus.toEdit) {
+      if (user.status == UserStatus.toEdit ||
+          user.status == UserStatus.toRemove) {
         ++numberOfDeletedUsers;
       }
     }
@@ -105,7 +107,7 @@ class _UserTableState extends State<UserTable> {
 
   void _sortUsers() {
     users.sort((a, b) {
-      return a.status.index - b.status.index;
+      return (a.status.index % 3) - (b.status.index % 3);
     });
     users.asMap().forEach((index, element) {
       for (int i = 0; i < userDefinedColumnsTypes.length; ++i) {
@@ -134,13 +136,23 @@ class _UserTableState extends State<UserTable> {
 
   void _addUser() {
     if (users.length == numberOfDeletedUsers ||
-        (users[users.length - 1 - numberOfDeletedUsers].name != '' &&
-            users[users.length - 1 - numberOfDeletedUsers]
-                    .dateStartOfEducation !=
-                null)) {
+        users[users.length - 1 - numberOfDeletedUsers].isGroup || (
+            users[users.length - 1 - numberOfDeletedUsers].name != '' &&
+                users[users.length - 1 - numberOfDeletedUsers]
+                        .dateStartOfEducation !=
+                    null)) {
       users.add(User.toPaint(userDefinedColumns.length));
       _sortUsers();
     }
+    if (Platform.isWindows) _saveState();
+  }
+
+  void _addGroup() {
+    User group = User(userDefinedColumns.length);
+    group.isGroup = true;
+    users.add(group);
+    _sortUsers();
+    if (Platform.isWindows) _saveState();
   }
 
   String calculateFormulas(User user, int indexOfFormula, int indexOfUser) {
@@ -429,16 +441,59 @@ class _UserTableState extends State<UserTable> {
                   },
                 )))
       ]),
-      floatingActionButton: FloatingActionButton(
-        onPressed: () {
-          setState(() {
-            _addUser();
-          });
-        },
-        tooltip: 'Добавить пользователя',
-        child: const Icon(Icons.add),
+      floatingActionButton: SpeedDial(
+        //Speed dial menu
+        icon: Icons.add,
+        //icon on Floating action button
+        activeIcon: Icons.close,
+        //icon when menu is expanded on button
+        renderOverlay: true,
+        closeManually: false,
+        spaceBetweenChildren: 10,
+        shape: CircleBorder(),
+        //shape of button
+        children: [
+          SpeedDialChild(
+            //speed dial child
+            child: Icon(Icons.person),
+            //backgroundColor: Colors.red,
+            //foregroundColor: Colors.white,
+            label: 'Добавить ученика',
+            labelStyle: TextStyle(fontSize: 15.0),
+            onTap: () {
+              setState(() {
+                _addUser();
+              });
+            },
+          ),
+          SpeedDialChild(
+            child: Icon(Icons.group),
+            //backgroundColor: Colors.blue,
+            //foregroundColor: Colors.white,
+            label: 'Добавить группу',
+            labelStyle: TextStyle(fontSize: 15.0),
+            onTap: () {
+              setState(() {
+                _addGroup();
+              });
+            },
+          ),
+        ],
       ),
+      // FloatingActionButton(
+      //   onPressed: () {
+      //     setState(() {
+      //       _addUser();
+      //     });
+      //   },
+      //   tooltip: 'Добавить пользователя',
+      //   child: const Icon(Icons.add),
+      // ),
     );
+  }
+
+  double _getWidthOfRhsTable() {
+    return 1670 + affiliate.userDefinedColumns.length * 200;
   }
 
   Widget _getBodyWidget() {
@@ -448,8 +503,7 @@ class _UserTableState extends State<UserTable> {
           leftHandSideColBackgroundColor: const Color(0xFAFAFA),
           rightHandSideColBackgroundColor: const Color(0xFAFAFA),
           leftHandSideColumnWidth: _nameColumnWidth,
-          rightHandSideColumnWidth:
-              1670 + affiliate.userDefinedColumns.length * 200,
+          rightHandSideColumnWidth: _getWidthOfRhsTable(),
           isFixedHeader: true,
           headerWidgets: _buildColumns(),
           leftSideChildren: users
@@ -774,11 +828,12 @@ class _UserTableState extends State<UserTable> {
               child: Container(
                 child: TextFormField(
                   key: Key('${user.id}name'),
-                  readOnly: user.status != UserStatus.normal,
+                  readOnly: user.status == UserStatus.toRemove ||
+                      user.status == UserStatus.toEdit,
                   initialValue: user.name,
-                  inputFormatters: [
-                    FilteringTextInputFormatter.deny(RegExp("[0-9]+"))
-                  ],
+                  inputFormatters: !user.isGroup
+                      ? [FilteringTextInputFormatter.deny(RegExp("[0-9]+"))]
+                      : [],
                   // ^(\d*\.)?\d+$
                   autofocus: true,
                   maxLength: 60,
@@ -803,7 +858,8 @@ class _UserTableState extends State<UserTable> {
                           ),
                           counterText: "")
                       : InputDecoration(
-                          hintText: "Введите Ф.И",
+                          hintText:
+                              user.isGroup ? "Название группы" : "Введите Ф.И",
                           isDense: true,
                           suffixIconConstraints:
                               BoxConstraints(minHeight: 0, minWidth: 0),
@@ -824,6 +880,7 @@ class _UserTableState extends State<UserTable> {
       padding: const EdgeInsets.fromLTRB(5, 0, 0, 5),
       alignment: Alignment.bottomLeft,
       color: () {
+        if (user.isGroup) return Colors.greenAccent[400];
         switch (user.status) {
           case UserStatus.normal:
             return Colors.transparent;
@@ -1016,19 +1073,24 @@ class _UserTableState extends State<UserTable> {
       alignment: Alignment.centerLeft,
     );
 
-    return Container(
-      child: Row(children: _cells.values.toList()),
-      color: () {
-        switch (user.status) {
-          case UserStatus.normal:
-            return Colors.transparent;
-          case UserStatus.toEdit:
-            return Colors.deepOrange[400];
-          case UserStatus.toRemove:
-            return Colors.yellow[400];
-        }
-      }(),
-    );
+    return user.isGroup
+        ? Container(
+            height: 52,
+            width: _getWidthOfRhsTable(),
+            color: Colors.greenAccent[400])
+        : Container(
+            child: Row(children: _cells.values.toList()),
+            color: () {
+              switch (user.status) {
+                case UserStatus.normal:
+                  return Colors.transparent;
+                case UserStatus.toEdit:
+                  return Colors.deepOrange[400];
+                case UserStatus.toRemove:
+                  return Colors.yellow[400];
+              }
+            }(),
+          );
   }
 }
 
@@ -1044,10 +1106,11 @@ class User {
   UserStatus status = UserStatus.normal;
   late List<bool> toSum;
   bool isMemorized = false;
+  bool isGroup = false;
 
   void memorizeProperties() {
     initUser = User.allData(name, dateStartOfEducation, List.from(properties),
-        result, status, toPaint);
+        result, status, toPaint, isGroup);
     isMemorized = true;
   }
 
@@ -1067,7 +1130,8 @@ class User {
             properties.map((e) => e is Formula ? e.formula : e).toList(),
         'result': result,
         'status': status.index,
-        'toPaint': toPaint
+        'toPaint': toPaint,
+        'isGroup': isGroup
       };
 
   factory User.fromJson(dynamic json) {
@@ -1079,7 +1143,8 @@ class User {
         json['properties'],
         json['result'] as num,
         UserStatus.values[json['status']],
-        json['toPaint'].cast<bool>());
+        json['toPaint'].cast<bool>(),
+        json['isGroup']);
     temp.memorizeProperties();
     return temp;
   }
@@ -1100,7 +1165,7 @@ class User {
   }
 
   User.allData(this.name, this.dateStartOfEducation, this.properties,
-      this.result, this.status, this.toPaint);
+      this.result, this.status, this.toPaint, this.isGroup);
 
   User.toPaint(int numberOfUDColumns) {
     result = 0;
