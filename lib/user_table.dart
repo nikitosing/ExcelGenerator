@@ -134,13 +134,46 @@ class _UserTableState extends State<UserTable> {
     });
   }
 
+  void _moveToPrevGroup(int usrIndex) {
+    while (usrIndex > 0 && !users[usrIndex - 1].isGroup && _moveUp(usrIndex--));
+    _moveUp(usrIndex);
+  }
+
+  bool _moveUp(int usrIndex) {
+    if (usrIndex > 0) {
+      var temp = users[usrIndex];
+      users[usrIndex] = users[usrIndex - 1];
+      users[usrIndex - 1] = temp;
+      return true;
+    }
+    return false;
+  }
+
+  bool _moveDown(int usrIndex) {
+    if (usrIndex < users.length &&
+        users[usrIndex + 1].status == UserStatus.normal) {
+      var temp = users[usrIndex];
+      users[usrIndex] = users[usrIndex + 1];
+      users[usrIndex + 1] = temp;
+      return true;
+    }
+    return false;
+  }
+
+  void _moveToNextGroup(int usrIndex) {
+    while (usrIndex < users.length &&
+        !users[usrIndex + 1].isGroup &&
+        _moveDown(usrIndex++));
+    _moveDown(usrIndex);
+  }
+
   void _addUser() {
     if (users.length == numberOfDeletedUsers ||
-        users[users.length - 1 - numberOfDeletedUsers].isGroup || (
-            users[users.length - 1 - numberOfDeletedUsers].name != '' &&
-                users[users.length - 1 - numberOfDeletedUsers]
-                        .dateStartOfEducation !=
-                    null)) {
+        users[users.length - 1 - numberOfDeletedUsers].isGroup ||
+        (users[users.length - 1 - numberOfDeletedUsers].name != '' &&
+            users[users.length - 1 - numberOfDeletedUsers]
+                    .dateStartOfEducation !=
+                null)) {
       users.add(User.toPaint(userDefinedColumns.length));
       _sortUsers();
     }
@@ -493,7 +526,7 @@ class _UserTableState extends State<UserTable> {
   }
 
   double _getWidthOfRhsTable() {
-    return 1670 + affiliate.userDefinedColumns.length * 200;
+    return 1720 + affiliate.userDefinedColumns.length * 200;
   }
 
   Widget _getBodyWidget() {
@@ -1014,6 +1047,90 @@ class _UserTableState extends State<UserTable> {
     _cells['Итого'] = Container(
       child: Text(user.result.toStringAsFixed(2)),
       width: 100,
+      height: 52,
+      padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
+      alignment: Alignment.centerLeft,
+    );
+
+    _cells['moving'] = Container(
+      child: Column(
+        children: [
+          GestureDetector(
+            onSecondaryTap: () {
+              if (user.status == UserStatus.normal) {
+                setState(() {
+                  _moveToPrevGroup(index);
+                });
+                if (Platform.isWindows) _saveState();
+              }
+            },
+            onLongPress: () {
+              if (user.status == UserStatus.normal) {
+                setState(() {
+                  _moveToPrevGroup(index);
+                });
+                if (Platform.isWindows) _saveState();
+              }
+            },
+            child: ClipOval(
+              child: SizedBox(
+                width: 50,
+                height: 26,
+                child: IconButton(
+                  icon: Icon(Icons.keyboard_arrow_up, size: 18),
+                  splashRadius: 20,
+                  onPressed: () {
+                    if (user.status == UserStatus.normal) {
+                      setState(() {
+                        _moveUp(index);
+                      });
+                      if (Platform.isWindows) _saveState();
+                    }
+                  },
+                ),
+              ),
+            ),
+          ),
+          GestureDetector(
+            onSecondaryTap: () {
+              if (user.status == UserStatus.normal) {
+                setState(() {
+                  _moveToNextGroup(index);
+                });
+                if (Platform.isWindows) _saveState();
+              }
+            },
+            onLongPress: () {
+              if (user.status == UserStatus.normal) {
+                setState(() {
+                  _moveToNextGroup(index);
+                });
+                if (Platform.isWindows) _saveState();
+              }
+            },
+            child: ClipOval(
+              child: SizedBox(
+                width: 50,
+                height: 26,
+                child: IconButton(
+                  icon: Icon(Icons.keyboard_arrow_down, size: 18),
+                  splashRadius: 20,
+                  onPressed: () {
+                    if (user.status == UserStatus.normal) {
+                      setState(() {
+                        _moveDown(index);
+                      });
+                      if (Platform.isWindows) _saveState();
+                    }
+                  },
+                  disabledColor: Colors.black,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+      width: 50,
       height: 52,
       padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
       alignment: Alignment.centerLeft,

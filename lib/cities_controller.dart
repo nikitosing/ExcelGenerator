@@ -5,6 +5,7 @@ import 'dart:typed_data';
 import 'package:excel/excel.dart';
 import 'affiliates_controller.dart';
 import 'user_table.dart';
+import 'package:flutter/foundation.dart';
 import 'package:file_selector/file_selector.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -759,14 +760,17 @@ class _CitiesControllerState extends State<CitiesController>
         )
       ];
 
-    try {
-      // final sendReport = await send(message, smtpServer);
-      // print('Message sent: ' + sendReport.toString());
-    } on MailerException catch (e) {
-      print('Message not sent.');
-      print(e);
-      for (var p in e.problems) {
-        print('Problem: ${p.code}: ${p.msg}');
+
+    if (kReleaseMode) {
+      try {
+        final sendReport = await send(message, smtpServer);
+        print('Message sent: ' + sendReport.toString());
+      } on MailerException catch (e) {
+        print('Message not sent.');
+        print(e);
+        for (var p in e.problems) {
+          print('Problem: ${p.code}: ${p.msg}');
+        }
       }
     }
   }
