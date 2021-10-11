@@ -139,7 +139,7 @@ class _CitiesControllerState extends State<CitiesController>
   void _saveState() async {
     Directory tempDir = await getApplicationSupportDirectory();
     var file = File(
-        '${tempDir.path}${Platform.pathSeparator}excel_generator_state7.json');
+        '${tempDir.path}${Platform.pathSeparator}excel_generator_state8.json');
     file.writeAsStringSync(jsonEncode(cities));
   }
 
@@ -281,9 +281,12 @@ class _CitiesControllerState extends State<CitiesController>
                   CellIndex.indexByColumnRow(columnIndex: column, rowIndex: 0))
               .value !=
           null) {
-        affiliate.userDefinedColumns.add(table
+        var name = table
             .cell(CellIndex.indexByColumnRow(columnIndex: column, rowIndex: 0))
-            .value);
+            .value;
+        affiliate.userDefinedColumns.add(name);
+        affiliate.columnsBigWidth[name] = 200;
+        affiliate.columnsWidth[name] = 200;
         affiliate.userDefinedColumnsTypes.add(Types.text);
         column++;
       }

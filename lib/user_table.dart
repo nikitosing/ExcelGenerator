@@ -58,6 +58,8 @@ class _UserTableState extends State<UserTable> {
   var users = [];
   late List<City> cities;
   late Affiliate affiliate;
+  var columnsBigWidth = <String, int>{};
+  var columnsWidth = <String, int>{};
   late List<String> userDefinedColumns;
   late List<Types> userDefinedColumnsTypes;
   late Map<String, TextEditingController> formulaFieldsControllers;
@@ -72,6 +74,8 @@ class _UserTableState extends State<UserTable> {
     userDefinedColumns = affiliate.userDefinedColumns;
     userDefinedColumnsTypes = affiliate.userDefinedColumnsTypes;
     users = affiliate.users;
+    columnsBigWidth = affiliate.columnsBigWidth;
+    columnsWidth = affiliate.columnsWidth;
 
     for (var user in users) {
       if (user.status == UserStatus.toEdit ||
@@ -93,7 +97,7 @@ class _UserTableState extends State<UserTable> {
   Future<void> _saveState() async {
     Directory tempDir = await getApplicationSupportDirectory();
     var file = File(
-        '${tempDir.path}${Platform.pathSeparator}excel_generator_state7.json');
+        '${tempDir.path}${Platform.pathSeparator}excel_generator_state8.json');
     file.writeAsStringSync(jsonEncode(cities));
   }
 
@@ -103,6 +107,14 @@ class _UserTableState extends State<UserTable> {
         user.status.index +
         (user.status == UserStatus.toEdit ? 1 : 0);
     return numberOfRowInExcel;
+  }
+
+  void wrapColumn(String name) {
+    if (columnsWidth[name] == columnsBigWidth[name]) {
+      columnsWidth[name] = 50;
+    } else {
+      columnsWidth[name] = columnsBigWidth[name]!;
+    }
   }
 
   void _sortUsers() {
@@ -368,6 +380,8 @@ class _UserTableState extends State<UserTable> {
                         property = property.split(regexp);
                       }
                       userDefinedColumns.add(name);
+                      affiliate.columnsBigWidth[name] = 200;
+                      affiliate.columnsWidth[name] = 200;
                       affiliate.userDefinedColumnsTypes.add(chosen);
                       users.asMap().forEach((index, element) {
                         element.properties.add(property !=
@@ -430,11 +444,12 @@ class _UserTableState extends State<UserTable> {
     return Scaffold(
       body: Stack(children: [
         _getBodyWidget(),
-        Align(
-            alignment: Alignment.topLeft,
-            child: SizedBox(
+        Container(
+            height: 104,
+            alignment: Alignment.bottomLeft,
+            child: Container(
                 width: min(MediaQuery.of(context).size.width - 150, 500),
-                height: 104,
+                height: 85,
                 child: FlutterSlider(
                   trackBar: const FlutterSliderTrackBar(
                     inactiveTrackBar: BoxDecoration(
@@ -513,20 +528,11 @@ class _UserTableState extends State<UserTable> {
           ),
         ],
       ),
-      // FloatingActionButton(
-      //   onPressed: () {
-      //     setState(() {
-      //       _addUser();
-      //     });
-      //   },
-      //   tooltip: 'Добавить пользователя',
-      //   child: const Icon(Icons.add),
-      // ),
     );
   }
 
   double _getWidthOfRhsTable() {
-    return 1720 + affiliate.userDefinedColumns.length * 200;
+    return columnsWidth.values.sum + 200;
   }
 
   Widget _getBodyWidget() {
@@ -556,7 +562,7 @@ class _UserTableState extends State<UserTable> {
     );
   }
 
-  Container _getNumCell(User user, int index) {
+  Container _getNumCell(User user, int index, double width) {
     return Container(
       child: Focus(
           skipTraversal: true,
@@ -606,14 +612,14 @@ class _UserTableState extends State<UserTable> {
                         size: 0,
                       ),
                       counterText: ""))),
-      width: 200,
+      width: width,
       height: 52,
       padding: const EdgeInsets.fromLTRB(5, 0, 0, 5),
       alignment: Alignment.bottomLeft,
     );
   }
 
-  Container _getStringCell(User user, int index) {
+  Container _getStringCell(User user, int index, double width) {
     return Container(
       child: Focus(
           skipTraversal: true,
@@ -661,14 +667,15 @@ class _UserTableState extends State<UserTable> {
                         size: 0,
                       ),
                       counterText: ""))),
-      width: 200,
+      width: width,
       height: 52,
       padding: const EdgeInsets.fromLTRB(5, 0, 0, 5),
       alignment: Alignment.bottomLeft,
     );
   }
 
-  Container _getFormulaCell(User user, int index, int indexOfUser) {
+  Container _getFormulaCell(
+      User user, int index, int indexOfUser, double width) {
     // CONTROLLERS
     TextEditingController controller;
     if (formulaFieldsControllers.containsKey('${user.id}$index')) {
@@ -733,7 +740,7 @@ class _UserTableState extends State<UserTable> {
                         size: 0,
                       ),
                       counterText: ""))),
-      width: 200,
+      width: width,
       height: 52,
       padding: const EdgeInsets.fromLTRB(5, 0, 0, 5),
       alignment: Alignment.bottomLeft,
@@ -764,12 +771,35 @@ class _UserTableState extends State<UserTable> {
         alignment: Alignment.center));
 
     _columns.add(Container(
-        child: Column(children: const [
-          Text('C'),
+        child: Column(children: [
+          Stack(children: [
+            Align(alignment: Alignment.topCenter, child: Text('C')),
+            Align(
+                alignment: Alignment.topRight,
+                child: Container(
+                    padding: const EdgeInsets.fromLTRB(0, 0, 0, 0),
+                    width: 20,
+                    height: 20,
+                    child: InkWell(
+                        customBorder: CircleBorder(),
+                        onTap: () {
+                          wrapColumn('Дата начала занятий');
+                          setState(() {});
+                        },
+                        child: Icon(
+                          columnsWidth['Дата начала занятий'] ==
+                                  columnsBigWidth['Дата начала занятий']
+                              ? Icons.remove
+                              : Icons.add,
+                          size: 18,
+                        ))))
+          ]),
           Text('Дата начала занятий',
+              overflow: TextOverflow.clip,
+              maxLines: 3,
               style: _columnTextStyle, textAlign: TextAlign.center)
         ]),
-        width: 200,
+        width: columnsWidth['Дата начала занятий']!.toDouble(),
         height: 104,
         padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
         alignment: Alignment.center));
@@ -782,7 +812,30 @@ class _UserTableState extends State<UserTable> {
       _columns.add(Container(
           child: Column(
             children: [
-              Text(String.fromCharCode(i + 68)),
+              Stack(children: [
+                Align(
+                    alignment: Alignment.topCenter,
+                    child: Text(String.fromCharCode(i + 68))),
+                Align(
+                    alignment: Alignment.topRight,
+                    child: Container(
+                        padding: const EdgeInsets.fromLTRB(0, 0, 0, 0),
+                        width: 20,
+                        height: 20,
+                        child: InkWell(
+                            customBorder: CircleBorder(),
+                            onTap: () {
+                              wrapColumn(columns[i + 3]);
+                              setState(() {});
+                            },
+                            child: Icon(
+                              columnsWidth[columns[i + 3]] ==
+                                      columnsBigWidth[columns[i + 3]]
+                                  ? Icons.remove
+                                  : Icons.add,
+                              size: 18,
+                            ))))
+              ]),
               Expanded(
                   child: Text(columns[i + 3],
                       style: _columnTextStyle, textAlign: TextAlign.center)),
@@ -791,7 +844,7 @@ class _UserTableState extends State<UserTable> {
                       textAlign: TextAlign.center, style: _columnTextStyle))
             ],
           ),
-          width: i == months.length - 3 ? 220 : 100,
+          width: columnsWidth[columns[i + 3]]!.toDouble(),
           height: 104,
           padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
           alignment: Alignment.center));
@@ -808,27 +861,70 @@ class _UserTableState extends State<UserTable> {
         height: 104,
         padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
         alignment: Alignment.centerLeft));
+    _columns.add(Container(
+        child: const Text(''),
+        width: 50,
+        height: 104,
+        padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
+        alignment: Alignment.centerLeft));
     for (var i = 0; i < userDefinedColumns.length; ++i) {
       _columns.add(Container(
           child: Column(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(_getLetterForColumn(i)),
-              Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-                SizedBox(
-                    child: Text(userDefinedColumns[i],
-                        style: _columnTextStyle, textAlign: TextAlign.center),
-                    width: 147),
-                IconButton(
-                    iconSize: 20,
-                    onPressed: () async {
-                      await _removeColumn(i);
-                      setState(() {});
-                    },
-                    icon: const Icon(Icons.close))
+              Stack(children: [
+                Align(
+                    alignment: Alignment.topCenter,
+                    child: Text(_getLetterForColumn(i))),
+                Align(
+                    alignment: Alignment.topRight,
+                    child: Container(
+                        padding: const EdgeInsets.fromLTRB(0, 0, 0, 0),
+                        width: 20,
+                        height: 20,
+                        child: InkWell(
+                            customBorder: CircleBorder(),
+                            onTap: () {
+                              wrapColumn(userDefinedColumns[i]);
+                              setState(() {});
+                            },
+                            child: Icon(
+                              columnsWidth[userDefinedColumns[i]] ==
+                                      columnsBigWidth[userDefinedColumns[i]]
+                                  ? Icons.remove
+                                  : Icons.add,
+                              size: 18,
+                            ))))
+              ]),
+              Stack(children: [
+                Align(
+                    alignment: columnsWidth[userDefinedColumns[i]] ==
+                            columnsBigWidth[userDefinedColumns[i]]
+                        ? Alignment.topCenter
+                        : Alignment.center,
+                    heightFactor: 2.5,
+                    child: Text(userDefinedColumns[i], maxLines: 1,
+                        style: _columnTextStyle, textAlign: TextAlign.center)),
+                Align(
+                    alignment: Alignment.topRight,
+                    child: Container(
+                        padding: const EdgeInsets.fromLTRB(0, 0, 0, 0),
+                        width: 30,
+                        height: 30,
+                        child: InkWell(
+                            customBorder: CircleBorder(),
+                            onTap: () async {
+                              await _removeColumn(i);
+                              setState(() {});
+                            },
+                            child: Icon(
+                              Icons.close,
+                              size: 24,
+                            ))))
               ]),
             ],
           ),
-          width: 200,
+          width: columnsWidth[userDefinedColumns[i]]!.toDouble(),
           height: 104,
           padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
           alignment: Alignment.center));
@@ -981,7 +1077,7 @@ class _UserTableState extends State<UserTable> {
                     counterText: ""),
             keyboardType: null,
           )),
-      width: 200,
+      width: columnsWidth['Дата начала занятий']!.toDouble(),
       height: 52,
       padding: const EdgeInsets.fromLTRB(5, 0, 0, 5),
       alignment: Alignment.bottomLeft,
@@ -1037,7 +1133,7 @@ class _UserTableState extends State<UserTable> {
                       ),
                       counterText: ""),
             )),
-        width: i == months.length - 3 ? 220 : 100,
+        width: columnsWidth[months[i]]!.toDouble(),
         height: 52,
         padding: const EdgeInsets.fromLTRB(5, 0, 0, 5),
         alignment: Alignment.bottomLeft,
@@ -1046,7 +1142,7 @@ class _UserTableState extends State<UserTable> {
 
     _cells['Итого'] = Container(
       child: Text(user.result.toStringAsFixed(2)),
-      width: 100,
+      width: columnsWidth['Итого']!.toDouble(),
       height: 52,
       padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
       alignment: Alignment.centerLeft,
@@ -1171,13 +1267,16 @@ class _UserTableState extends State<UserTable> {
     for (var i = 0; i < userDefinedColumns.length; ++i) {
       switch (affiliate.userDefinedColumnsTypes[i]) {
         case Types.number:
-          _cells['$i UDColumn'] = _getNumCell(user, i);
+          _cells['$i UDColumn'] = _getNumCell(
+              user, i, columnsWidth[userDefinedColumns[i]]!.toDouble());
           break;
         case Types.text:
-          _cells['$i UDColumn'] = _getStringCell(user, i);
+          _cells['$i UDColumn'] = _getStringCell(
+              user, i, columnsWidth[userDefinedColumns[i]]!.toDouble());
           break;
         case Types.formula:
-          _cells['$i UDColumn'] = _getFormulaCell(user, i, index);
+          _cells['$i UDColumn'] = _getFormulaCell(
+              user, i, index, columnsWidth[userDefinedColumns[i]]!.toDouble());
           break;
       }
     }

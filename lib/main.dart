@@ -18,7 +18,7 @@ Future<void> main() async {
 
 Future<void> getState() async {
   Directory tempDir = await getApplicationSupportDirectory();
-  var file = File('${tempDir.path}${Platform.pathSeparator}excel_generator_state7.json');
+  var file = File('${tempDir.path}${Platform.pathSeparator}excel_generator_state8.json');
   if (file.existsSync()) {
     var json = jsonDecode(file.readAsStringSync());
     cities = json == null

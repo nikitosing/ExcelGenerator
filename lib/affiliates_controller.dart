@@ -128,7 +128,7 @@ class _AffiliateControllerState extends State<AffiliatesController>
   void _saveState() async {
     Directory tempDir = await getApplicationSupportDirectory();
     var file = File(
-        '${tempDir.path}${Platform.pathSeparator}excel_generator_state7.json');
+        '${tempDir.path}${Platform.pathSeparator}excel_generator_state8.json');
     file.writeAsStringSync(jsonEncode(_cities));
   }
 
@@ -242,6 +242,38 @@ class Affiliate {
   List<Types> userDefinedColumnsTypes = [];
   List<String> userDefinedColumns = [];
 
+  var columnsBigWidth = <String, int>{
+    'Дата начала занятий': 200,
+    'Сентябрь': 100,
+    'Октябрь': 100,
+    'Ноябрь': 100,
+    'Декабрь': 100,
+    'Январь': 100,
+    'Февраль': 100,
+    'Март': 100,
+    'Апрель': 100,
+    'Май': 100,
+    'Сентябрь следующего года': 220,
+    'Итого': 100,
+    'Доп. оплаты': 100
+  };
+
+  var columnsWidth = <String, int>{
+    'Дата начала занятий': 200,
+    'Сентябрь': 100,
+    'Октябрь': 100,
+    'Ноябрь': 100,
+    'Декабрь': 100,
+    'Январь': 100,
+    'Февраль': 100,
+    'Март': 100,
+    'Апрель': 100,
+    'Май': 100,
+    'Сентябрь следующего года': 220,
+    'Итого': 100,
+    'Доп. оплаты': 100
+  };
+
   Affiliate() {
     name = '';
     users = [User.toPaint(userDefinedColumns.length)];
@@ -253,13 +285,15 @@ class Affiliate {
         'users': users.map((e) => e.toJson()).toList(),
         'userDefinedColumns': userDefinedColumns,
         'userDefinedColumnsTypes':
-            userDefinedColumnsTypes.map((e) => e.index).toList()
+            userDefinedColumnsTypes.map((e) => e.index).toList(),
+    'columnsWidth': columnsWidth,
+    'columnsBigWidth': columnsBigWidth
       };
 
   Affiliate.allData(this.name, this.users);
 
   Affiliate.allWithColumns(this.name, this.users, this.userDefinedColumns,
-      this.userDefinedColumnsTypes);
+      this.userDefinedColumnsTypes, this.columnsWidth, this.columnsBigWidth);
 
   factory Affiliate.fromJson(dynamic json) {
     return Affiliate.allWithColumns(
@@ -269,6 +303,8 @@ class Affiliate {
         json['userDefinedColumnsTypes']
             .map((e) => Types.values[e])
             .toList()
-            .cast<Types>());
+            .cast<Types>(),
+    json['columnsWidth'].cast<String, int>(),
+    json['columnsBigWidth'].cast<String, int>());
   }
 }
