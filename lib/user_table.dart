@@ -417,6 +417,8 @@ class _UserTableState extends State<UserTable> {
             TextButton(
               child: const Text('Да'),
               onPressed: () {
+                columnsWidth.remove(userDefinedColumns[index]);
+                columnsBigWidth.remove(userDefinedColumns[index]);
                 userDefinedColumns.removeAt(index);
                 userDefinedColumnsTypes.removeAt(index);
                 for (var element in users) {
