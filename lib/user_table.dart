@@ -1335,7 +1335,22 @@ class _UserTableState extends State<UserTable> {
         ? Container(
             height: 52,
             width: _getWidthOfRhsTable(),
-            color: Colors.greenAccent[400])
+            color: Colors.greenAccent[400],
+            child: Container(
+              child: IconButton(
+                  onPressed: () {
+                    setState(() {
+                      users.removeAt(index);
+                    });
+
+                    if (Platform.isWindows) _saveState();
+                  },
+                  icon: const Icon(Icons.delete, size: 20)),
+              width: 50,
+              height: 52,
+              padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
+              alignment: Alignment.centerLeft,
+            ))
         : Container(
             child: Row(children: _cells.values.toList()),
             color: () {
