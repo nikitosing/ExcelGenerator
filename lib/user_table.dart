@@ -37,7 +37,7 @@ var months = [
 ];
 
 var columns = ['Кол. Чел', 'Ф. И.', 'Дата начала занятий'] + months;
-var regexp = RegExp(r'(?<=[A-Z])(?:-?(?:0|[1-9][0-9]*))');
+var regexp = RegExp(r'(?<=[A-Za-z])(?:-?(?:0|[1-9][0-9]*))');
 
 class UserTable extends StatefulWidget {
   final cities;
@@ -188,7 +188,7 @@ class _UserTableState extends State<UserTable> {
             int rowOfUser = numberOfRowInExcel(index, users[index]);
             if (users[index].properties[i + months.length] != null) {
               var formulaReadyToEdit =
-              users[index].properties[i + months.length].split(regexp);
+                  users[index].properties[i + months.length].split(regexp);
               if (formulaReadyToEdit != null) {
                 users[index].properties[i + months.length] =
                     formulaReadyToEdit.join('$rowOfUser');
@@ -231,47 +231,56 @@ class _UserTableState extends State<UserTable> {
   }
 
   String calculateFormulas(User user, int indexOfFormula, int indexOfUser) {
-    String translatedFormula = user.properties[indexOfFormula + months.length];
-    for (String frml in ruFormulasToEn.keys) {
-      translatedFormula =
-          translatedFormula.replaceAll(frml, ruFormulasToEn[frml]!);
-    }
-    translatedFormula = translatedFormula.split(regexp).join(('1'));
+    // String translatedFormula = user.properties[indexOfFormula + months.length];
+    // for (String frml in ruFormulasToEn.keys) {
+    //   translatedFormula =
+    //       translatedFormula.replaceAll(frml, ruFormulasToEn[frml]!);
+    // }
+    // translatedFormula = translatedFormula.split(regexp).join((numberOfRowInExcel(indexOfUser, user).toString()));
     Workbook wb = Workbook.withCulture('ru');
     Worksheet ws = wb.worksheets[0];
-    ws.getRangeByName('A1').number = indexOfUser + 1;
-    ws.getRangeByName('B1').text = user.name;
-    ws.getRangeByName('C1').dateTime = user.dateStartOfEducation;
-    int column = 3;
-    for (var property in user.properties) {
-      ++column;
-      if (column - 1 < columns.length) {
-        ws.getRangeByIndex(1, column).number =
-            property == null ? 0 : property.toDouble();
+    double decrement = 0;
+    for (int i = 0; i < users.length; ++i) {
+      int numberOfRow = numberOfRowInExcel(i, users[i]);
+      ws.getRangeByName('A$numberOfRow').number = i + 1 - decrement;
+      ws.getRangeByName('B$numberOfRow').text = users[i].name;
+      if (users[i].isGroup) {
+        decrement++;
         continue;
       }
-      switch (affiliate.userDefinedColumnsTypes[column - columns.length - 1]) {
-        case Types.number:
-          ws.getRangeByIndex(1, column).number =
+      ws.getRangeByName('C$numberOfRow').dateTime = users[i].dateStartOfEducation;
+      int column = 3;
+      for (var property in users[i].properties) {
+        ++column;
+        if (property == null) continue;
+        if (column - 1 < columns.length) {
+          ws.getRangeByIndex(numberOfRow, column).number =
               property == null ? 0 : property.toDouble();
-          break;
-        case Types.text:
-          ws.getRangeByIndex(1, column).text = property;
-          break;
-        case Types.formula:
-          String translatedFormula = property;
-          for (String frml in ruFormulasToEn.keys) {
-            translatedFormula =
-                translatedFormula.replaceAll(frml, ruFormulasToEn[frml]!);
-          }
-          translatedFormula = translatedFormula.split(regexp).join(('1'));
-          ws.getRangeByIndex(1, column).formula = translatedFormula;
-          break;
+          continue;
+        }
+        switch (
+            affiliate.userDefinedColumnsTypes[column - columns.length - 1]) {
+          case Types.number:
+            ws.getRangeByIndex(numberOfRow, column).number =
+                property == null ? 0 : property.toDouble();
+            break;
+          case Types.text:
+            ws.getRangeByIndex(numberOfRow, column).text = property;
+            break;
+          case Types.formula:
+            String translatedFormula = property;
+            for (String frml in ruFormulasToEn.keys) {
+              translatedFormula =
+                  translatedFormula.replaceAll(frml, ruFormulasToEn[frml]!);
+            }
+            ws.getRangeByIndex(numberOfRow, column).formula = translatedFormula;
+            break;
+        }
       }
     }
     ws.enableSheetCalculations();
     String value = ws
-        .getRangeByIndex(1, indexOfFormula + 1 + columns.length)
+        .getRangeByIndex(numberOfRowInExcel(indexOfUser, user), indexOfFormula + 1 + columns.length)
         .calculatedValue!;
     wb.dispose();
     return value;
@@ -449,6 +458,7 @@ class _UserTableState extends State<UserTable> {
               onPressed: () {
                 columnsWidth.remove(userDefinedColumns[index]);
                 columnsBigWidth.remove(userDefinedColumns[index]);
+                formulaFieldsControllers.removeWhere((key, value) => key.contains('$index'));
                 userDefinedColumns.removeAt(index);
                 userDefinedColumnsTypes.removeAt(index);
                 for (var element in users) {
@@ -709,25 +719,22 @@ class _UserTableState extends State<UserTable> {
   Container _getFormulaCell(
       User user, int index, int indexOfUser, double width) {
     // CONTROLLERS
-    TextEditingController controller;
-    if (formulaFieldsControllers.containsKey('${user.id}$index')) {
-      controller = formulaFieldsControllers['${user.id}$index']!;
-    } else {
-      formulaFieldsControllers['${user.id}$index'] = TextEditingController(
+    if (!formulaFieldsControllers.containsKey('${index}_${user.id}')) {
+      formulaFieldsControllers['${index}_${user.id}'] = TextEditingController(
           text: user.properties[index + months.length] == null ||
                   user.properties[index + months.length] == ''
               ? ''
               : calculateFormulas(user, index, indexOfUser));
-      controller = formulaFieldsControllers['${user.id}$index']!;
+      formulaFieldsControllers['${index}_${user.id}']!;
     }
     return Container(
       child: Focus(
           skipTraversal: true,
           onFocusChange: (isFocus) {
             if (isFocus) {
-              controller.text = user.properties[index + months.length] ?? '';
+              formulaFieldsControllers['${index}_${user.id}']!.text = user.properties[index + months.length] ?? '';
             } else {
-              controller.text =
+              formulaFieldsControllers['${index}_${user.id}']!.text =
                   user.properties[index + months.length] == null ||
                           user.properties[index + months.length] == ''
                       ? ''
@@ -737,7 +744,7 @@ class _UserTableState extends State<UserTable> {
             if (!isFocus && Platform.isWindows) _saveState();
           },
           child: TextFormField(
-              controller: controller,
+              controller: formulaFieldsControllers['${index}_${user.id}'],
               inputFormatters: [UpperCaseTextFormatter()],
               key: Key('${user.id}UDDColumn$index'),
               autofocus: true,
@@ -749,7 +756,7 @@ class _UserTableState extends State<UserTable> {
                       user.properties[index + months.length] !=
                           user.initUser.properties[index + months.length];
                 }
-                setState(() {});
+                //setState(() {});
               },
               maxLength: 60,
               textAlignVertical: TextAlignVertical.bottom,

@@ -336,7 +336,7 @@ class _CitiesControllerState extends State<CitiesController>
           var date = table
               .cell(CellIndex.indexByColumnRow(columnIndex: 2, rowIndex: row))
               .value;
-          user.dateStartOfEducation = date == ' '
+          user.dateStartOfEducation = date == ' ' || date == null
               ? null
               : int.tryParse(date.toString()) == null
                   ? _getTime(date)
