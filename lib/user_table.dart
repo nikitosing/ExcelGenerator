@@ -156,6 +156,21 @@ class _UserTableState extends State<UserTable> {
       var temp = users[usrIndex];
       users[usrIndex] = users[usrIndex - 1];
       users[usrIndex - 1] = temp;
+      for (int index in [usrIndex - 1, usrIndex]) {
+        for (int i = 0; i < userDefinedColumnsTypes.length; ++i) {
+          if (userDefinedColumnsTypes[i] == Types.formula) {
+            int rowOfUser = numberOfRowInExcel(index, users[index]);
+            if (users[index].properties[i + months.length] != null) {
+              var formulaReadyToEdit =
+                  users[index].properties[i + months.length].split(regexp);
+              if (formulaReadyToEdit != null) {
+                users[index].properties[i + months.length] =
+                    formulaReadyToEdit.join('$rowOfUser');
+              }
+            }
+          }
+        }
+      }
       return true;
     }
     return false;
@@ -167,6 +182,21 @@ class _UserTableState extends State<UserTable> {
       var temp = users[usrIndex];
       users[usrIndex] = users[usrIndex + 1];
       users[usrIndex + 1] = temp;
+      for (int index in [usrIndex + 1, usrIndex]) {
+        for (int i = 0; i < userDefinedColumnsTypes.length; ++i) {
+          if (userDefinedColumnsTypes[i] == Types.formula) {
+            int rowOfUser = numberOfRowInExcel(index, users[index]);
+            if (users[index].properties[i + months.length] != null) {
+              var formulaReadyToEdit =
+              users[index].properties[i + months.length].split(regexp);
+              if (formulaReadyToEdit != null) {
+                users[index].properties[i + months.length] =
+                    formulaReadyToEdit.join('$rowOfUser');
+              }
+            }
+          }
+        }
+      }
       return true;
     }
     return false;
@@ -799,7 +829,8 @@ class _UserTableState extends State<UserTable> {
           Text('Дата начала занятий',
               overflow: TextOverflow.clip,
               maxLines: 3,
-              style: _columnTextStyle, textAlign: TextAlign.center)
+              style: _columnTextStyle,
+              textAlign: TextAlign.center)
         ]),
         width: columnsWidth['Дата начала занятий']!.toDouble(),
         height: 104,
@@ -905,8 +936,10 @@ class _UserTableState extends State<UserTable> {
                         ? Alignment.topCenter
                         : Alignment.center,
                     heightFactor: 2.5,
-                    child: Text(userDefinedColumns[i], maxLines: 1,
-                        style: _columnTextStyle, textAlign: TextAlign.center)),
+                    child: Text(userDefinedColumns[i],
+                        maxLines: 1,
+                        style: _columnTextStyle,
+                        textAlign: TextAlign.center)),
                 Align(
                     alignment: Alignment.topRight,
                     child: Container(
