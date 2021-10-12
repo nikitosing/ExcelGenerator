@@ -177,7 +177,7 @@ class _UserTableState extends State<UserTable> {
   }
 
   bool _moveDown(int usrIndex) {
-    if (usrIndex < users.length &&
+    if (usrIndex + 1 < users.length &&
         users[usrIndex + 1].status == UserStatus.normal) {
       var temp = users[usrIndex];
       users[usrIndex] = users[usrIndex + 1];
@@ -248,7 +248,8 @@ class _UserTableState extends State<UserTable> {
         decrement++;
         continue;
       }
-      ws.getRangeByName('C$numberOfRow').dateTime = users[i].dateStartOfEducation;
+      ws.getRangeByName('C$numberOfRow').dateTime =
+          users[i].dateStartOfEducation;
       int column = 3;
       for (var property in users[i].properties) {
         ++column;
@@ -280,7 +281,8 @@ class _UserTableState extends State<UserTable> {
     }
     ws.enableSheetCalculations();
     String value = ws
-        .getRangeByIndex(numberOfRowInExcel(indexOfUser, user), indexOfFormula + 1 + columns.length)
+        .getRangeByIndex(numberOfRowInExcel(indexOfUser, user),
+            indexOfFormula + 1 + columns.length)
         .calculatedValue!;
     wb.dispose();
     return value;
@@ -458,7 +460,8 @@ class _UserTableState extends State<UserTable> {
               onPressed: () {
                 columnsWidth.remove(userDefinedColumns[index]);
                 columnsBigWidth.remove(userDefinedColumns[index]);
-                formulaFieldsControllers.removeWhere((key, value) => key.contains('$index'));
+                formulaFieldsControllers
+                    .removeWhere((key, value) => key.contains('$index'));
                 userDefinedColumns.removeAt(index);
                 userDefinedColumnsTypes.removeAt(index);
                 for (var element in users) {
@@ -732,7 +735,8 @@ class _UserTableState extends State<UserTable> {
           skipTraversal: true,
           onFocusChange: (isFocus) {
             if (isFocus) {
-              formulaFieldsControllers['${index}_${user.id}']!.text = user.properties[index + months.length] ?? '';
+              formulaFieldsControllers['${index}_${user.id}']!.text =
+                  user.properties[index + months.length] ?? '';
             } else {
               formulaFieldsControllers['${index}_${user.id}']!.text =
                   user.properties[index + months.length] == null ||
@@ -833,11 +837,23 @@ class _UserTableState extends State<UserTable> {
                           size: 18,
                         ))))
           ]),
-          Text('Дата начала занятий',
-              overflow: TextOverflow.clip,
-              maxLines: 3,
-              style: _columnTextStyle,
-              textAlign: TextAlign.center)
+          SizedBox(
+              height: 84,
+              child: SingleChildScrollView(
+                  child: Container(
+                alignment: Alignment.center,
+                width: columnsBigWidth['Дата начала занятий']!.toDouble(),
+                child: RotatedBox(
+                    quarterTurns: columnsWidth['Дата начала занятий'] ==
+                            columnsBigWidth['Дата начала занятий']
+                        ? 0
+                        : 3,
+                    child: Text('Дата начала занятий',
+                        maxLines: 1,
+                        overflow: TextOverflow.visible,
+                        style: _columnTextStyle,
+                        textAlign: TextAlign.center)),
+              )))
         ]),
         width: columnsWidth['Дата начала занятий']!.toDouble(),
         height: 104,
@@ -849,6 +865,12 @@ class _UserTableState extends State<UserTable> {
         if (user.status == UserStatus.toEdit) break;
         _sum += user.properties[i] ?? 0;
       }
+      var texts = [
+        Text(columns[i + 3],
+            style: _columnTextStyle, textAlign: TextAlign.center),
+        Text(_sum.toStringAsFixed(2),
+            textAlign: TextAlign.center, style: _columnTextStyle)
+      ];
       _columns.add(Container(
           child: Column(
             children: [
@@ -876,12 +898,28 @@ class _UserTableState extends State<UserTable> {
                               size: 18,
                             ))))
               ]),
-              Expanded(
-                  child: Text(columns[i + 3],
-                      style: _columnTextStyle, textAlign: TextAlign.center)),
-              Expanded(
-                  child: Text(_sum.toStringAsFixed(2),
-                      textAlign: TextAlign.center, style: _columnTextStyle))
+              SizedBox(
+                  height: 84,
+                  child: SingleChildScrollView(
+                      child: Container(
+                    alignment: Alignment.center,
+                    width: columnsBigWidth[columns[i + 3]]!.toDouble(),
+                    child: RotatedBox(
+                        quarterTurns: columnsWidth[columns[i + 3]] ==
+                                columnsBigWidth[columns[i + 3]]
+                            ? 0
+                            : 3,
+                        child: columnsWidth[columns[i + 3]] ==
+                                columnsBigWidth[columns[i + 3]]
+                            ? Column(children: texts)
+                            : Row(children: [texts[0], Text('  '), texts[1]])),
+                  )))
+              // Expanded(
+              //     child: Text(columns[i + 3],
+              //         style: _columnTextStyle, textAlign: TextAlign.center)),
+              // Expanded(
+              //     child: Text(_sum.toStringAsFixed(2),
+              //         textAlign: TextAlign.center, style: _columnTextStyle))
             ],
           ),
           width: columnsWidth[columns[i + 3]]!.toDouble(),
@@ -908,6 +946,18 @@ class _UserTableState extends State<UserTable> {
         padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
         alignment: Alignment.centerLeft));
     for (var i = 0; i < userDefinedColumns.length; ++i) {
+      var text = Text(userDefinedColumns[i],
+          maxLines: 1, style: _columnTextStyle, textAlign: TextAlign.center);
+      var button = InkWell(
+          customBorder: CircleBorder(),
+          onTap: () async {
+            await _removeColumn(i);
+            setState(() {});
+          },
+          child: Icon(
+            Icons.close,
+            size: 24,
+          ));
       _columns.add(Container(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -936,34 +986,34 @@ class _UserTableState extends State<UserTable> {
                               size: 18,
                             ))))
               ]),
-              Stack(children: [
-                Align(
-                    alignment: columnsWidth[userDefinedColumns[i]] ==
-                            columnsBigWidth[userDefinedColumns[i]]
-                        ? Alignment.topCenter
-                        : Alignment.center,
-                    heightFactor: 2.5,
-                    child: Text(userDefinedColumns[i],
-                        maxLines: 1,
-                        style: _columnTextStyle,
-                        textAlign: TextAlign.center)),
-                Align(
-                    alignment: Alignment.topRight,
+              SizedBox(
+                height: 84,
+                child: SingleChildScrollView(
                     child: Container(
-                        padding: const EdgeInsets.fromLTRB(0, 0, 0, 0),
-                        width: 30,
-                        height: 30,
-                        child: InkWell(
-                            customBorder: CircleBorder(),
-                            onTap: () async {
-                              await _removeColumn(i);
-                              setState(() {});
-                            },
-                            child: Icon(
-                              Icons.close,
-                              size: 24,
-                            ))))
-              ]),
+                        alignment: Alignment.center,
+                        width:
+                            columnsBigWidth[userDefinedColumns[i]]!.toDouble(),
+                        child: columnsWidth[userDefinedColumns[i]] ==
+                                columnsBigWidth[userDefinedColumns[i]]
+                            ? Stack(children: [
+                                Align(
+                                    alignment: Alignment.topCenter,
+                                    heightFactor: 2.5,
+                                    child: SizedBox(child: text)),
+                                Align(
+                                    alignment: Alignment.topRight,
+                                    child: Container(
+                                        padding: const EdgeInsets.fromLTRB(
+                                            0, 0, 0, 0),
+                                        width: 30,
+                                        height: 30,
+                                        child: button))
+                              ])
+                            : RotatedBox(
+                                quarterTurns: 3,
+                                child: Row(children: [text, button]),
+                              ))),
+              )
             ],
           ),
           width: columnsWidth[userDefinedColumns[i]]!.toDouble(),
