@@ -115,6 +115,7 @@ class _UserTableState extends State<UserTable> {
     } else {
       columnsWidth[name] = columnsBigWidth[name]!;
     }
+    if (Platform.isWindows) _saveState();
   }
 
   void _sortUsers() {
@@ -491,10 +492,10 @@ class _UserTableState extends State<UserTable> {
         _getBodyWidget(),
         Container(
             height: 104,
-            alignment: Alignment.bottomLeft,
+            alignment: Alignment.centerLeft,
             child: Container(
                 width: min(MediaQuery.of(context).size.width - 150, 500),
-                height: 85,
+                height: 20,
                 child: FlutterSlider(
                   trackBar: const FlutterSliderTrackBar(
                     inactiveTrackBar: BoxDecoration(
@@ -519,9 +520,7 @@ class _UserTableState extends State<UserTable> {
                               cursor: SystemMouseCursors.resizeColumn))),
                   handlerHeight: double.infinity,
                   touchSize: 10,
-                  visibleTouchArea: false,
                   selectByTap: false,
-                  jump: false,
                   values: [_nameColumnWidth],
                   tooltip: FlutterSliderTooltip(
                     disabled: true,
@@ -859,8 +858,11 @@ class _UserTableState extends State<UserTable> {
         height: 104,
         padding: const EdgeInsets.fromLTRB(5, 0, 0, 0),
         alignment: Alignment.center));
+
     for (var i = 0; i < months.length; i++) {
+
       num _sum = 0;
+
       for (var user in users) {
         if (user.status == UserStatus.toEdit) break;
         _sum += user.properties[i] ?? 0;
@@ -869,7 +871,7 @@ class _UserTableState extends State<UserTable> {
         Text(columns[i + 3],
             style: _columnTextStyle, textAlign: TextAlign.center),
         Text(_sum.toStringAsFixed(2),
-            textAlign: TextAlign.center, style: _columnTextStyle)
+            textAlign: TextAlign.center, style: _columnTextStyle, maxLines: 1)
       ];
       _columns.add(Container(
           child: Column(
@@ -898,8 +900,9 @@ class _UserTableState extends State<UserTable> {
                               size: 18,
                             ))))
               ]),
+              texts[1],
               SizedBox(
-                  height: 84,
+                  height: 60,
                   child: SingleChildScrollView(
                       child: Container(
                     alignment: Alignment.center,
@@ -911,15 +914,9 @@ class _UserTableState extends State<UserTable> {
                             : 3,
                         child: columnsWidth[columns[i + 3]] ==
                                 columnsBigWidth[columns[i + 3]]
-                            ? Column(children: texts)
-                            : Row(children: [texts[0], Text('  '), texts[1]])),
+                            ? Column(children: [texts[0]])
+                            : Row(children: [texts[0]])),
                   )))
-              // Expanded(
-              //     child: Text(columns[i + 3],
-              //         style: _columnTextStyle, textAlign: TextAlign.center)),
-              // Expanded(
-              //     child: Text(_sum.toStringAsFixed(2),
-              //         textAlign: TextAlign.center, style: _columnTextStyle))
             ],
           ),
           width: columnsWidth[columns[i + 3]]!.toDouble(),
