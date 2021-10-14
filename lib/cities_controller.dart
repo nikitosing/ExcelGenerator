@@ -726,7 +726,7 @@ class _CitiesControllerState extends State<CitiesController>
           await getSavePath(suggestedName: fileName, acceptedTypeGroups: [
         XTypeGroup(label: 'Excel', extensions: ['xlsx', 'xls'])
       ]);
-      if (path!.substring(path.indexOf('.'), path.indexOf('.') + 4) != '.xls') {
+      if (path!.substring(path.lastIndexOf('.'), path.lastIndexOf('.') + 4) != '.xls') {
         path += '.xlsx';
       }
       await file.saveTo(path);
