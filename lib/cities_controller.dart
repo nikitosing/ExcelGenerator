@@ -458,7 +458,13 @@ class _CitiesControllerState extends State<CitiesController>
 
         for (int i = 0; i < columnsForAffiliate.length; ++i) {
           var cellStyle = CellStyle(
-              bold: true, fontSize: 10, textWrapping: TextWrapping.WrapText);
+              bold: true,
+              fontSize: 10,
+              textWrapping: TextWrapping.WrapText,
+              rotation: affiliate.columnsWidth[columnsForAffiliate[i]] ==
+                      affiliate.columnsBigWidth[columnsForAffiliate[i]]
+                  ? 0
+                  : 90);
           sheet.updateCell(
               CellIndex.indexByColumnRow(columnIndex: i, rowIndex: 0),
               columnsForAffiliate[i],
@@ -695,9 +701,11 @@ class _CitiesControllerState extends State<CitiesController>
           users[i].memorizeProperties();
         }
         sheet.setColAutoFit(1);
-        sheet.setColWidth(2, 15);
-        for (var col = 0; col < userDefinedColumns.length; ++col) {
-          sheet.setColAutoFit(col + columns.length);
+        for (var col = 2; col < columnsForAffiliate.length; ++col) {
+          // sheet.setColAutoFit(col + columns.length);
+
+          sheet.setColWidth(col,
+              affiliate.columnsWidth[columnsForAffiliate[col]]!.toDouble() / 10);
         }
         //sheet.setColAutoFit(2);
       }
@@ -762,7 +770,6 @@ class _CitiesControllerState extends State<CitiesController>
           contentType: 'application/vnd.ms-excel',
         )
       ];
-
 
     if (kReleaseMode) {
       try {
