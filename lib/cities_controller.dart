@@ -274,7 +274,7 @@ class _CitiesControllerState extends State<CitiesController>
 
       var table = excel.tables[tableName];
       int row = 1;
-      int column = 15;
+      int column = 2;
 
       while (table!
               .cell(
@@ -284,9 +284,14 @@ class _CitiesControllerState extends State<CitiesController>
         var name = table
             .cell(CellIndex.indexByColumnRow(columnIndex: column, rowIndex: 0))
             .value;
-        affiliate.userDefinedColumns.add(name);
-        affiliate.columnsBigWidth[name] = 200;
-        affiliate.columnsWidth[name] = 200;
+        var width = table
+            .cell(CellIndex.indexByColumnRow(columnIndex: column + 1000, rowIndex: 0))
+            .value;
+        if (column >= 15) {
+          affiliate.userDefinedColumns.add(name);
+          affiliate.columnsBigWidth[name] = 200;
+        }
+        affiliate.columnsWidth[name] = width ?? affiliate.columnsBigWidth[name];
         affiliate.userDefinedColumnsTypes.add(Types.text);
         column++;
       }
@@ -460,7 +465,7 @@ class _CitiesControllerState extends State<CitiesController>
           var cellStyle = CellStyle(
               bold: true,
               fontSize: 10,
-              textWrapping: TextWrapping.WrapText,
+              textWrapping: TextWrapping.Clip,
               rotation: affiliate.columnsWidth[columnsForAffiliate[i]] ==
                       affiliate.columnsBigWidth[columnsForAffiliate[i]]
                   ? 0
@@ -469,6 +474,9 @@ class _CitiesControllerState extends State<CitiesController>
               CellIndex.indexByColumnRow(columnIndex: i, rowIndex: 0),
               columnsForAffiliate[i],
               cellStyle: cellStyle);
+          sheet.updateCell(
+              CellIndex.indexByColumnRow(columnIndex: i + 1000, rowIndex: 0),
+              affiliate.columnsWidth[columnsForAffiliate[i]] ?? null);
         }
 
         int row = 2;
@@ -556,22 +564,6 @@ class _CitiesControllerState extends State<CitiesController>
             var _style = user.toPaint[i + 2]
                 ? _cellStyleEdited(column, row)
                 : _cellStyle;
-
-            // if (user.isMemorized) {
-            //   if (i >= columns.length) {
-            //     if (i < user.initUser.properties.length) {
-            //       _style = user.properties[i] == user.initUser.properties[i]
-            //           ? _cellStyle
-            //           : _cellStyleEdited(column, row);
-            //     }
-            //   } else {
-            //     _style = i < user.initUser.properties.length
-            //         ? user.properties[i] == user.initUser.properties[i]
-            //             ? _cellStyle
-            //             : _cellStyleEdited(column, row)
-            //         : _cellStyle;
-            //   }
-            // }
 
             var _getNullValueForCustomType = () {
               if (i < months.length) {
@@ -703,9 +695,8 @@ class _CitiesControllerState extends State<CitiesController>
         sheet.setColAutoFit(1);
         for (var col = 2; col < columnsForAffiliate.length; ++col) {
           // sheet.setColAutoFit(col + columns.length);
-
           sheet.setColWidth(col,
-              affiliate.columnsWidth[columnsForAffiliate[col]]!.toDouble() / 10);
+              affiliate.columnsWidth[columnsForAffiliate[col]]!.toDouble() / 7);
         }
         //sheet.setColAutoFit(2);
       }
@@ -726,7 +717,8 @@ class _CitiesControllerState extends State<CitiesController>
           await getSavePath(suggestedName: fileName, acceptedTypeGroups: [
         XTypeGroup(label: 'Excel', extensions: ['xlsx', 'xls'])
       ]);
-      if (path!.substring(path.lastIndexOf('.'), path.lastIndexOf('.') + 4) != '.xls') {
+      if (path!.substring(path.lastIndexOf('.'), path.lastIndexOf('.') + 4) !=
+          '.xls') {
         path += '.xlsx';
       }
       await file.saveTo(path);
